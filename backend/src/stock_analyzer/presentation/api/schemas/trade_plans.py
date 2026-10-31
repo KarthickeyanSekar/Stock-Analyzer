@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
+from stock_analyzer.application.use_cases.journal.trade_plans import JournalSummary
 from stock_analyzer.domain.journal.trade_plan import (
     DEFAULT_STOP_PCT,
     DEFAULT_SUCCESS_TOLERANCE_PP,
@@ -83,4 +84,48 @@ class TradePlanResponse(BaseModel):
                 float(plan.actual_return_pct) if plan.actual_return_pct is not None else None
             ),
             notes=plan.notes,
+        )
+
+
+def _counts(outcomes: dict[PlanOutcome, int]) -> dict[str, int]:
+    return {outcome.value: outcomes.get(outcome, 0) for outcome in PlanOutcome}
+
+
+class CategoryRecordResponse(BaseModel):
+    """Track record for one holding category."""
+
+    category: HoldingCategory
+    closed: int
+    outcomes: dict[str, int]
+    avg_bias_pp: float | None
+
+
+class JournalSummaryResponse(BaseModel):
+    """Journal headline numbers; ``avg_bias_pp`` > 0 means the model was too cautious."""
+
+    active: int
+    closed: int
+    outcomes: dict[str, int]
+    success_rate: float | None
+    avg_bias_pp: float | None
+    by_category: list[CategoryRecordResponse]
+
+    @classmethod
+    def from_domain(cls, summary: JournalSummary) -> "JournalSummaryResponse":
+        """Map the journal summary."""
+        return cls(
+            active=summary.active,
+            closed=summary.closed,
+            outcomes=_counts(summary.outcomes),
+            success_rate=float(summary.success_rate) if summary.success_rate is not None else None,
+            avg_bias_pp=float(summary.avg_bias_pp) if summary.avg_bias_pp is not None else None,
+            by_category=[
+                CategoryRecordResponse(
+                    category=r.category,
+                    closed=r.closed,
+                    outcomes=_counts(r.outcomes),
+                    avg_bias_pp=float(r.avg_bias_pp) if r.avg_bias_pp is not None else None,
+                )
+                for r in summary.by_category
+            ],
         )

@@ -61,6 +61,7 @@ A `Makefile` wraps these:
 | `make infra` | Only db + redis + telemetry (to run api/web from VS Code) |
 | `make db-*` | `db-upgrade`, `db-downgrade`, `db-revision m="…"`, `db-current`, `db-history`, `db-shell`, `db-reset` (dev only) ([17](17-database-backend.md#database-change-control)) |
 | `make redis-*` | `redis-shell`, `redis-info`, `redis-keys p="…"`, `redis-flush` (dev only) |
+| `make ui-shots` | Real-browser screenshots of every screen (light, dark, phone) into `frontend/screenshots/` |
 | `make test` / `make lint` | pytest + Vitest / ruff, mypy, import-linter, ESLint in containers |
 | `make down`, `make logs`, `make prod`, `make api-client`, `make format`, `make setup` | Stop, logs, production stack, regenerate the TS client, format, local install |
 

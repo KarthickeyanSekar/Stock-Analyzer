@@ -16,6 +16,11 @@ export function formatPct(value: number, digits = 1): string {
   return value > 0 ? `+${rounded}%` : `−${rounded.slice(1)}%`;
 }
 
+/** Format a difference between percentages in percentage points, e.g. +2.6 pp or −0.4 pp. */
+export function formatPp(value: number, digits = 1): string {
+  return formatPct(value, digits).replace('%', ' pp');
+}
+
 /** Format a 0–1 probability as a whole percentage, e.g. 0.41 → "41%". */
 export function formatProbability(value: number): string {
   return `${Math.round(value * 100).toString()}%`;

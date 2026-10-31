@@ -15,6 +15,18 @@ export function useStockSearch(query: string) {
   });
 }
 
+export function useStockOverview() {
+  return useQuery({
+    queryKey: ['stocks', 'overview'],
+    queryFn: async () => {
+      const { data, response } = await apiClient.GET('/api/stocks/overview');
+      if (!response.ok || !data) throw new Error(`Overview failed: ${String(response.status)}`);
+      return data;
+    },
+    staleTime: 60_000,
+  });
+}
+
 export function useStockPredictions(symbol: string) {
   return useQuery({
     queryKey: ['stocks', symbol, 'predictions'],

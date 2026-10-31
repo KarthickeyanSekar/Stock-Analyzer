@@ -10,6 +10,7 @@ from stock_analyzer.presentation.api.dependencies import get_container
 from stock_analyzer.presentation.api.schemas.stocks import (
     CandleResponse,
     PredictionResponse,
+    StockOverviewResponse,
     StockPredictionsResponse,
     StockResponse,
 )
@@ -27,6 +28,15 @@ async def search_stocks(
     """Return stocks whose symbol or name contains ``query``."""
     stocks = await container.stock_queries.search(query, limit)
     return [StockResponse.from_domain(stock) for stock in stocks]
+
+
+@router.get(
+    "/overview", response_model=list[StockOverviewResponse], summary="Stocks table overview"
+)
+async def stocks_overview(container: ContainerDep) -> list[StockOverviewResponse]:
+    """Return every stock with last close, day change, 1Y return and the 1Y prediction."""
+    rows = await container.stock_queries.overview()
+    return [StockOverviewResponse.from_domain(row) for row in rows]
 
 
 @router.get("/{symbol}", response_model=StockResponse, summary="Get one stock")

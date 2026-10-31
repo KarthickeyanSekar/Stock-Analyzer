@@ -28,3 +28,5 @@ coverage/
 !.vscode/settings.json
 !.vscode/extensions.json
 .idea/
+# Visual review output (make ui-shots)
+/frontend/screenshots/

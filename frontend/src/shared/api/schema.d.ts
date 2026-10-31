@@ -44,6 +44,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stocks/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stocks table overview
+         * @description Return every stock with last close, day change, 1Y return and the 1Y prediction.
+         */
+        get: operations["stocks_overview_api_stocks_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stocks/{symbol}": {
         parameters: {
             query?: never;
@@ -122,6 +142,26 @@ export interface paths {
          * @description Start a plan; the latest prediction for the category is locked into it.
          */
         post: operations["create_trade_plan_api_trade_plans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade-plans/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Journal summary
+         * @description Return counts, success rate and model bias, overall and per holding category.
+         */
+        get: operations["journal_summary_api_trade_plans_summary_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -236,6 +276,21 @@ export interface components {
             volume: number;
         };
         /**
+         * CategoryRecordResponse
+         * @description Track record for one holding category.
+         */
+        CategoryRecordResponse: {
+            category: components["schemas"]["HoldingCategory"];
+            /** Closed */
+            closed: number;
+            /** Outcomes */
+            outcomes: {
+                [key: string]: number;
+            };
+            /** Avg Bias Pp */
+            avg_bias_pp: number | null;
+        };
+        /**
          * CloseTradePlanBody
          * @description Record the exit; the outcome is calculated by the server.
          */
@@ -321,6 +376,26 @@ export interface components {
          */
         HoldingCategory: "50D" | "100D" | "200D" | "300D" | "1Y" | "2Y" | "3Y";
         /**
+         * JournalSummaryResponse
+         * @description Journal headline numbers; ``avg_bias_pp`` > 0 means the model was too cautious.
+         */
+        JournalSummaryResponse: {
+            /** Active */
+            active: number;
+            /** Closed */
+            closed: number;
+            /** Outcomes */
+            outcomes: {
+                [key: string]: number;
+            };
+            /** Success Rate */
+            success_rate: number | null;
+            /** Avg Bias Pp */
+            avg_bias_pp: number | null;
+            /** By Category */
+            by_category: components["schemas"]["CategoryRecordResponse"][];
+        };
+        /**
          * PlanOutcome
          * @description Calculated result of a closed plan.
          * @enum {string}
@@ -394,6 +469,25 @@ export interface components {
             plugin_name: string;
             /** Is Ok */
             is_ok: boolean;
+        };
+        /**
+         * StockOverviewResponse
+         * @description One row of the Stocks table.
+         */
+        StockOverviewResponse: {
+            stock: components["schemas"]["StockResponse"];
+            /** Last Close */
+            last_close: number | null;
+            /** Last Date */
+            last_date: string | null;
+            /** Day Change Pct */
+            day_change_pct: number | null;
+            /** Return 1Y Pct */
+            return_1y_pct: number | null;
+            /** Median 1Y Pct */
+            median_1y_pct: number | null;
+            /** Prob Up 1Y */
+            prob_up_1y: number | null;
         };
         /**
          * StockPredictionsResponse
@@ -545,6 +639,26 @@ export interface operations {
             };
         };
     };
+    stocks_overview_api_stocks_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockOverviewResponse"][];
+                };
+            };
+        };
+    };
     get_stock_api_stocks__symbol__get: {
         parameters: {
             query?: never;
@@ -690,6 +804,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    journal_summary_api_trade_plans_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalSummaryResponse"];
                 };
             };
         };

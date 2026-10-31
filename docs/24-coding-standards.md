@@ -254,6 +254,20 @@ frontend/src/
 Rules: features import from `shared`, never from each other's internals (only through `index.ts`);
 components focus on display; data fetching lives in hooks; no business calculations in the UI (the backend does them).
 
+## 6b. Frontend UI rules
+| Rule | Detail |
+|---|---|
+| Design tokens only | Colours from CSS variables in `src/index.css` (shadcn tokens + `gain`, `loss`, `warning`, `synthetic`); no raw palette classes or hex in `app/`, `pages/`, `features/` (checked by `npm run lint:ui`) |
+| Icons | Lucide (`lucide-react`); no emoji in UI text; icon-only buttons have `aria-label` |
+| Numbers | `tabular-nums`; `formatInr`, `formatPct`, `formatProbability`; gain/loss shown with sign/arrow + colour |
+| Components | shadcn/ui from `shared/ui`; no native `<select>`, no hand-rolled modals or toasts |
+| States | Skeleton, empty and error states for every data view |
+| Motion | 150–250 ms; `motion-safe:` variants so `prefers-reduced-motion` disables animation |
+| Responsive | Phone (< 640 px), tablet, desktop; bottom navigation on phones; touch targets ≥ 40 px |
+| Theme | Light and dark through the `dark` class; follows the system unless the user toggles |
+
+Spec and screen designs: [28 – UI/UX Redesign Plan (End to End) 🎨](28-ui-ux-redesign-plan.md).
+
 ## 7. Code quality rules
 ### Python
 - Python **3.12**, **type hints everywhere**; **mypy --strict** must pass

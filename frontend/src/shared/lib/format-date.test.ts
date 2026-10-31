@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatDateTimeIst } from './format-date';
+import { formatDate, formatDateTimeIst } from './format-date';
 
 describe('formatDateTimeIst', () => {
   it('converts UTC to IST', () => {
@@ -12,5 +12,11 @@ describe('formatDateTimeIst', () => {
 
     // Assert
     expect(result).toContain('2:45:00');
+  });
+});
+
+describe('formatDate', () => {
+  it('formats an ISO date without shifting the day', () => {
+    expect(formatDate('2026-10-30')).toBe('30 Oct 2026');
   });
 });

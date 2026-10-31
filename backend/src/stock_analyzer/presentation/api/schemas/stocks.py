@@ -9,6 +9,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
+from stock_analyzer.application.use_cases.stocks.queries import StockOverview
 from stock_analyzer.domain.market.holding_category import HoldingCategory
 from stock_analyzer.domain.prediction.prediction import Prediction
 from stock_analyzer.domain.pricing.candle import Candle
@@ -115,3 +116,32 @@ class StockPredictionsResponse(BaseModel):
     stock: StockResponse
     last_close: CandleResponse | None
     predictions: list[PredictionResponse]
+
+
+def _num(value: Decimal | None) -> float | None:
+    return float(value) if value is not None else None
+
+
+class StockOverviewResponse(BaseModel):
+    """One row of the Stocks table."""
+
+    stock: StockResponse
+    last_close: float | None
+    last_date: date | None
+    day_change_pct: float | None
+    return_1y_pct: float | None
+    median_1y_pct: float | None
+    prob_up_1y: float | None
+
+    @classmethod
+    def from_domain(cls, row: StockOverview) -> "StockOverviewResponse":
+        """Map a stock overview row."""
+        return cls(
+            stock=StockResponse.from_domain(row.stock),
+            last_close=float(row.last_close.close) if row.last_close else None,
+            last_date=row.last_close.trade_date if row.last_close else None,
+            day_change_pct=_num(row.day_change_pct),
+            return_1y_pct=_num(row.return_1y_pct),
+            median_1y_pct=_num(row.median_1y_pct),
+            prob_up_1y=_num(row.prob_up_1y),
+        )

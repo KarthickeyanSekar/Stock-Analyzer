@@ -16,7 +16,7 @@ REDIS_CONTAINER ?= RedisDev
 LOAD_ENV := set -a; . ./.env; set +a
 
 .PHONY: help bootstrap setup dev-db dev-db-stop dev-network dev dev-file dev-data infra down prod \
-        test lint format api-client logs \
+        test lint format api-client logs ui-shots \
         seed predict poc-data db-upgrade db-downgrade db-revision db-current db-history db-shell db-reset \
         redis-shell redis-info redis-keys redis-flush
 
@@ -79,6 +79,10 @@ lint:          ## ruff, mypy, import-linter, ESLint, Prettier in containers
 format:        ## Auto-format backend and frontend (in containers, writes to the mounted source)
 	$(API_RUN) sh -c "ruff format . && ruff check --fix ."
 	$(DEV) run --rm --no-deps web npm run format
+
+ui-shots:      ## Screenshots of every screen (light, dark, phone) into frontend/screenshots; app must be running
+	docker run --rm --network container:stock-analyzer-web-1 -v "$(CURDIR)/frontend:/work" -w /work \
+	  mcr.microsoft.com/playwright:v1.49.1-noble sh -c "npm i --no-save --silent playwright@1.49.1 && node scripts/ui-screenshots.mjs"
 
 api-client:    ## Regenerate the TypeScript API client (api must be running on :8000)
 	cd frontend && npm run api-client

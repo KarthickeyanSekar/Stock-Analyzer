@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatInr, formatPct, formatProbability } from './format-number';
+import { formatInr, formatPct, formatPp, formatProbability } from './format-number';
 
 describe('formatInr', () => {
   it('uses Indian digit grouping', () => {
@@ -19,5 +19,12 @@ describe('formatPct', () => {
 describe('formatProbability', () => {
   it('shows whole percentages', () => {
     expect(formatProbability(0.4149)).toBe('41%');
+  });
+});
+
+describe('formatPp', () => {
+  it('uses percentage points, not percent', () => {
+    expect(formatPp(2.61)).toBe('+2.6 pp');
+    expect(formatPp(-0.42, 2)).toBe('−0.42 pp');
   });
 });

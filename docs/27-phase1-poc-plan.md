@@ -1,4 +1,4 @@
-<!-- nav -->[← Previous](26-ml-pipeline.md) · [🏠 Index](README.md)
+<!-- nav -->[← Previous](26-ml-pipeline.md) · [🏠 Index](README.md) · [Next →](28-ui-ux-redesign-plan.md)
 
 # 27 – Phase 1 POC Plan (Synthetic Data) 🧪
 
@@ -113,4 +113,4 @@ Branching: work happens on `feature/phase1-foundation` (or one `feature/phase1-m
 - [🏠 Index](README.md)
 
 ---
-<!-- nav -->[← Previous](26-ml-pipeline.md) · [🏠 Index](README.md)
+<!-- nav -->[← Previous](26-ml-pipeline.md) · [🏠 Index](README.md) · [Next →](28-ui-ux-redesign-plan.md)
