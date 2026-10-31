@@ -29,6 +29,10 @@ Follow the conventions in `docs/00-how-to-plan.md`.
 - Exceptions: folder trees, sample outputs and config files stay as plain code blocks.
 - When the architecture changes, update the diagrams in `07-architecture.md` and `14-docker-deployment.md` too.
 
+## Deliverables folder
+- `docs/deliverables/` is **not** numbered and not part of the NN sequence. It has its own `README.md` index and nav (Docs index · Deliverables · Previous/Next phase).
+- New phase → copy `docs/deliverables/TEMPLATE.md` to `phase-NN-<name>.md` and add a row to `docs/deliverables/README.md`.
+
 ## Steps
 1. Choose the number following the rule above, and a lowercase hyphenated name: `docs/NN-short-name.md`.
 2. Write the content with the template from section 4 of `00-how-to-plan.md`: `# NN – Title`, a **Purpose** line, then sections built from tables and lists, then a **Related** list.

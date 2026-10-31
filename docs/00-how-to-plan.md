@@ -16,8 +16,8 @@ A guide to the planning process, the documents it needs, and how they are writte
 | 7 | **Design the structure:** architecture, database, code standards | [07](07-architecture.md), [17](17-database-backend.md), [24](24-coding-standards.md) |
 | 8 | **List the quality needs:** reliability, security, users, compliance | [08](08-non-functional.md), [19](19-auth-multi-user.md) |
 | 9 | **Plan how it runs:** Docker, environments, 24/7 operation, everything to set up | [14](14-docker-deployment.md), [20](20-environments-dev-test-prod.md), [25](25-infrastructure-services-inventory.md) |
-| 10 | **Sequence the work** into phases | [09](09-roadmap.md) |
-| 11 | **Track open decisions** and resolve them | [27](27-open-questions.md) |
+| 10 | **Sequence the work** into phases and **define each deliverable's outcome** | [09](09-roadmap.md), [deliverables/](deliverables/README.md) |
+| 11 | **Track open decisions** and resolve them | [28](28-open-questions.md) |
 | 12 | **Review and iterate:** update docs as decisions are made | All |
 
 ## 2. Requirements checklist
@@ -36,7 +36,7 @@ Use this to check that the planning is complete.
 - [x] Environments defined (local dev/test in Docker, Linux prod later)
 - [x] Roadmap phases agreed
 - [ ] Data points researched ([21](21-stock-analysis-datapoints.md#research-tracker), in progress)
-- [ ] All [open questions](27-open-questions.md) answered (remaining ones belong to later phases)
+- [ ] All [open questions](28-open-questions.md) answered (remaining ones belong to later phases)
 
 ## 3. Planning skills
 | Skill | What it means here |
@@ -81,7 +81,7 @@ These are for planning docs. Code, naming and code documentation rules are in [2
 - **Diagrams in Mermaid** (` ```mermaid ` blocks) for architecture, data flows, sequences and state machines. Never use ASCII-art diagrams. Folder trees and output examples stay as plain code blocks.
 - **Code blocks** for folder layouts, output examples and config
 - **Emoji markers:** 🟢 short-term, 🔵 long-term, ⚠️ warnings
-- **Decisions:** mark them as `_TBD_` until decided, then record them in [27](27-open-questions.md)
+- **Decisions:** mark them as `_TBD_` until decided, then record them in [28](28-open-questions.md)
 - Keep each doc focused on **one topic**
 
 ## 6. Linking rules (for easy navigation)

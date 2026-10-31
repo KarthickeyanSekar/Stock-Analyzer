@@ -6,7 +6,8 @@ Instructions for Claude when working in this repository. Humans: start with [REA
 Stock Analyzer predicts how much an NSE stock may return over a chosen **holding category**
 (50D · 100D · 200D · 300D · 1Y · 2Y · 3Y) and lets users track plans in a **manual trade journal**.
 India (NSE; BSE optional) now, world markets later, so keep code **market-agnostic** (market, currency, timezone, calendar per stock).
-**Long-term is built first**; short-term (1 day – 2 weeks) comes later. Current phase: **Phase 1 – Foundation** ([docs/09-roadmap.md](docs/09-roadmap.md)).
+**Long-term is built first**; short-term (1 day – 2 weeks) comes later. Current phase: **Phase 1 – Foundation, as a POC on synthetic data** ([docs/27-phase1-poc-plan.md](docs/27-phase1-poc-plan.md)).
+Synthetic records use `source_provider = "mock"` and the UI shows a SYNTHETIC badge; never present them as real prices.
 
 ## Non-negotiable product rules
 - **Predictions are pure statistics / ML.** An LLM never produces a number (prices, %, probabilities). OpenAI is optional, for explanations only.
@@ -25,7 +26,7 @@ Backend: `backend/src/stock_analyzer/` in Clean Architecture layers. Dependencie
 - `application/`: use cases (`VerbNoun.execute()`) and **ports** (ABC interfaces).
 - `infrastructure/`: adapters (SQLAlchemy repositories, provider plugins, security, telemetry, config).
 - `presentation/`: FastAPI routers/schemas and job entry points. Wiring only in `bootstrap.py`.
-Frontend: `frontend/src/` is feature-based (`app/`, `pages/`, `features/<feature>/`, `shared/`). Features import each other only via `index.ts`.
+Frontend: **kebab-case file names, PascalCase component names**. `frontend/src/` is feature-based (`app/`, `pages/`, `features/<feature>/`, `shared/`). Features import each other only via `index.ts`.
 UI uses **shadcn/ui + Tailwind 4** (components in `shared/ui/`). Server data only via TanStack Query; no business maths in the UI.
 
 Full rules, naming tables and examples: [docs/24-coding-standards.md](docs/24-coding-standards.md). Follow them exactly.
@@ -71,6 +72,7 @@ The Makefile must stay compatible with **GNU Make 3.81** (macOS default): no `.O
 - Commit or push only when the user asks.
 
 ## Documentation rules
+- **Deliverables & outcomes** live in `docs/deliverables/` (one `phase-NN-*.md` per phase, from `TEMPLATE.md`). Before starting a deliverable, read its outcome and acceptance criteria; when finishing, record the evidence and set its status. Never mark ✅ without evidence for every criterion.
 - Planning docs live in `docs/NN-name.md`. Use the **`/plan-doc` skill** when adding or restructuring docs.
 - **Open Questions is always the last numbered doc.** A new doc takes its number and Open Questions moves up by one; update every link.
 - Diagrams are always **Mermaid**. Every doc has top and bottom nav bars and a Related section; the README index lists every doc.

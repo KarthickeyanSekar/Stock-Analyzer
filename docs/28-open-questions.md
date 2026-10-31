@@ -1,6 +1,6 @@
-<!-- nav -->[← Previous](26-ml-pipeline.md) · [🏠 Index](README.md)
+<!-- nav -->[← Previous](27-phase1-poc-plan.md) · [🏠 Index](README.md)
 
-# 27 – Open Questions
+# 28 – Open Questions
 
 | # | Question | Options | Decision |
 |---|---|---|---|
@@ -61,6 +61,8 @@
 | 53 | Can regular users create invite codes? | Admins only, users too | Proposed: **admins only** (setting to allow users) · _TBD_ |
 
 | 54 | TimescaleDB on the dev database? (the standalone `-oss` image can't load the default TSL build) | (a) set `timescaledb.license = 'apache'` in the container's server config + restart; (b) switch the container to the full `timescale/timescaledb-ha:pg16` image (as in `compose.yaml`); (c) use compose's own `db` (`make dev-data`) | ✅ **(b) Full image** `timescale/timescaledb-ha:pg16.15-ts2.31.0` (same volume and versions); extensions installed; `compose.yaml` pinned to the same image ([25](25-infrastructure-services-inventory.md#current-local-dev-setup-verified-2026-10-31)) |
+| 55 | Frontend file naming? (code uses kebab-case, doc 24 says PascalCase) | kebab-case files (`trade-plan-table.tsx`, shadcn style), PascalCase files | ✅ **kebab-case file names, PascalCase component names** (matches shadcn/ui and the existing code; doc 24 updated) |
+| 56 | Start with a POC on synthetic data? | POC first, real API first | ✅ **POC on synthetic data first** (NIFTY 50 × 5 years, mock provider), then real API integration ([27](27-phase1-poc-plan.md)) |
 
 ## Related
 - [00 – How to Plan This Project](00-how-to-plan.md)
@@ -68,4 +70,4 @@
 - [🏠 Index](README.md)
 
 ---
-<!-- nav -->[← Previous](26-ml-pipeline.md) · [🏠 Index](README.md)
+<!-- nav -->[← Previous](27-phase1-poc-plan.md) · [🏠 Index](README.md)
