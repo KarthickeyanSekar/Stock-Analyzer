@@ -74,9 +74,10 @@ The Makefile must stay compatible with **GNU Make 3.81** (macOS default): no `.O
 ## Documentation rules
 - **Deliverables & outcomes** live in `docs/deliverables/` (one `phase-NN-*.md` per phase, from `TEMPLATE.md`). Before starting a deliverable, read its outcome and acceptance criteria; when finishing, record the evidence and set its status. Never mark ✅ without evidence for every criterion.
 - Planning docs live in `docs/NN-name.md`. Use the **`/plan-doc` skill** when adding or restructuring docs.
-- **Open Questions is always the last numbered doc.** A new doc takes its number and Open Questions moves up by one; update every link.
+- **Append, never renumber:** a new doc gets the next number (`max(NN) + 1`); existing docs are never renamed or renumbered (keeps links and git history intact).
+- The **decision log** is `docs/decisions/open-questions.md` (not numbered, stable path). New questions are appended with the next Q number.
 - Diagrams are always **Mermaid**. Every doc has top and bottom nav bars and a Related section; the README index lists every doc.
-- When a decision is made, record it as ✅ in Open Questions **and** update every doc it affects. Keep the docs matching the code.
+- When a decision is made, record it as ✅ in `docs/decisions/open-questions.md` **and** update every doc it affects. Keep the docs matching the code.
 
 ## Working with the user
 - The user writes quickly and informally. Restate the interpretation when a request is ambiguous, and ask before anything hard to undo

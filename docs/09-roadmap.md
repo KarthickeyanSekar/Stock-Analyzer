@@ -34,7 +34,7 @@ timeline
 
 ## Related
 - [01 – Overview & Goals](01-overview.md)
-- [28 – Open Questions](28-open-questions.md)
+- [Open Questions & Decision Log 🗳️](decisions/open-questions.md)
 - [🏠 Index](README.md)
 
 ---

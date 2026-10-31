@@ -17,7 +17,7 @@ A guide to the planning process, the documents it needs, and how they are writte
 | 8 | **List the quality needs:** reliability, security, users, compliance | [08](08-non-functional.md), [19](19-auth-multi-user.md) |
 | 9 | **Plan how it runs:** Docker, environments, 24/7 operation, everything to set up | [14](14-docker-deployment.md), [20](20-environments-dev-test-prod.md), [25](25-infrastructure-services-inventory.md) |
 | 10 | **Sequence the work** into phases and **define each deliverable's outcome** | [09](09-roadmap.md), [deliverables/](deliverables/README.md) |
-| 11 | **Track open decisions** and resolve them | [28](28-open-questions.md) |
+| 11 | **Track open decisions** and resolve them | [Open Questions](decisions/open-questions.md) |
 | 12 | **Review and iterate:** update docs as decisions are made | All |
 
 ## 2. Requirements checklist
@@ -36,7 +36,7 @@ Use this to check that the planning is complete.
 - [x] Environments defined (local dev/test in Docker, Linux prod later)
 - [x] Roadmap phases agreed
 - [ ] Data points researched ([21](21-stock-analysis-datapoints.md#research-tracker), in progress)
-- [ ] All [open questions](28-open-questions.md) answered (remaining ones belong to later phases)
+- [ ] All [open questions](decisions/open-questions.md) answered (remaining ones belong to later phases)
 
 ## 3. Planning skills
 | Skill | What it means here |
@@ -49,11 +49,14 @@ Use this to check that the planning is complete.
 | **Iteration** | Docs are living documents. Update them, don't freeze them |
 
 ## 4. How to create a new doc
-1. **Name it** `NN-short-name.md`. `NN` is a two-digit number in reading order; use lowercase words with hyphens.
-2. **Start from the template** below.
-3. **Add a row** for it in the [README index](README.md).
-4. **Add navigation links** (top and bottom) and update the neighbouring docs' Previous/Next links.
-5. **Link related docs** inline wherever another doc is mentioned.
+1. **Name it** `NN-short-name.md`, where `NN` is the **next number after the highest existing doc**; use lowercase words with hyphens.
+2. **Never renumber or rename existing docs.** New docs are always appended, so links and git history stay intact.
+3. **Start from the template** below.
+4. **Append a row** for it at the end of the [README index](README.md).
+5. **Add navigation links** (top and bottom), and add a `Next →` link to the previous last doc.
+6. **Link related docs** inline wherever another doc is mentioned.
+7. **Decisions** go in the decision log, [decisions/open-questions.md](decisions/open-questions.md): not numbered, with a fixed path. New questions are appended with the next Q number.
+8. **Phase outcomes** go in [deliverables/](deliverables/README.md), one file per phase from its template.
 
 ### Template
 ```markdown
@@ -81,7 +84,7 @@ These are for planning docs. Code, naming and code documentation rules are in [2
 - **Diagrams in Mermaid** (` ```mermaid ` blocks) for architecture, data flows, sequences and state machines. Never use ASCII-art diagrams. Folder trees and output examples stay as plain code blocks.
 - **Code blocks** for folder layouts, output examples and config
 - **Emoji markers:** 🟢 short-term, 🔵 long-term, ⚠️ warnings
-- **Decisions:** mark them as `_TBD_` until decided, then record them in [28](28-open-questions.md)
+- **Decisions:** mark them as `_TBD_` until decided, then record them in [Open Questions](decisions/open-questions.md)
 - Keep each doc focused on **one topic**
 
 ## 6. Linking rules (for easy navigation)
