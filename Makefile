@@ -89,9 +89,9 @@ db-upgrade:    ## Apply all pending migrations
 db-downgrade:  ## Revert the last migration
 	$(API_RUN) alembic downgrade -1
 
-db-revision:   ## New migration from model changes: make db-revision m="add trade plans"
-	@[ -n "$(m)" ] || { echo 'Usage: make db-revision m="short description"'; exit 1; }
-	$(API_RUN) alembic revision --autogenerate -m "$(m)"
+db-revision:   ## New migration from model changes: make db-revision m="add trade plans" id=0004
+	@[ -n "$(m)" ] && [ -n "$(id)" ] || { echo 'Usage: make db-revision m="short description" id=<next 4-digit number>'; exit 1; }
+	$(API_RUN) alembic revision --autogenerate --rev-id "$(id)" -m "$(m)"
 
 db-current:    ## Show the database's current migration
 	$(API_RUN) alembic current -v
