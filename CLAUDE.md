@@ -46,6 +46,7 @@ smooth motion, responsive (phone, tablet, desktop). Full spec: [docs/28-ui-ux-re
   always respect `prefers-reduced-motion` (use the `motion-safe:` variant).
 - **Responsive:** phone < 640 px (bottom nav, stacked cards, tables as cards), tablet, desktop (sidebar). Touch targets ≥ 40 px.
 - **Theme:** light + dark via the `dark` class (follows the system, user toggle remembered).
+- **Verify visually:** after UI changes run `make ui-shots` and look at the screenshots (it fails on page errors).
 
 ## Naming (short version)
 Python: `snake_case` modules/functions, `PascalCase` classes, ports named by role (`MarketDataProvider`),
@@ -64,6 +65,7 @@ DB: plural `snake_case` tables, `<singular>_id` FKs. API: `/api/<plural-kebab>`.
 | `make dev-db` | Start the dev database + Redis (`compose.devdata.yaml`) |
 | `make db-upgrade` / `db-revision m="…"` / `db-downgrade` / `db-current` / `db-shell` | Database migrations and access |
 | `make redis-shell` / `redis-keys` / `redis-info` | Redis access |
+| `make ui-shots` | Screenshots of every screen (light, dark, phone) into `frontend/screenshots/`; review them after UI changes |
 | `make seed` / `make predict` / `make poc-data` | POC data: synthetic NIFTY 50 (mock provider) + baseline predictions |
 URLs: web http://localhost:5173 · api http://localhost:8000/docs · Grafana http://localhost:3000.
 The Makefile must stay compatible with **GNU Make 3.81** (macOS default): no `.ONESHELL` or newer functions.
