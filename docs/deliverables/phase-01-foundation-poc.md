@@ -1,4 +1,4 @@
-[🏠 Docs index](../README.md) · [🎯 Deliverables](README.md) · [Next phase →](phase-02-trade-journal.md)
+[🏠 Docs index](../README.md) · [🎯 Deliverables](README.md) · [Next phase →](phase-01b-ui-redesign.md)
 
 # Phase 1 – Foundation (POC on synthetic data)
 
