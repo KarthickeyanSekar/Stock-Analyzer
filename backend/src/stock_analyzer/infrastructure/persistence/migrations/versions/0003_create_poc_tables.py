@@ -282,7 +282,9 @@ def upgrade() -> None:
         ),
         sa.Column("closed_at", sa.DateTime(timezone=True), nullable=True),
         sa.CheckConstraint(
-            "(status = 'ACTIVE' AND outcome IS NULL AND exit_date IS NULL AND exit_price IS NULL) OR (status = 'CLOSED' AND outcome IS NOT NULL AND exit_date IS NOT NULL AND exit_price IS NOT NULL)",
+            "(status = 'ACTIVE' AND outcome IS NULL AND exit_date IS NULL AND exit_price IS NULL)"
+            " OR (status = 'CLOSED' AND outcome IS NOT NULL AND exit_date IS NOT NULL"
+            " AND exit_price IS NOT NULL)",
             name=op.f("ck_trade_plans_closed_has_exit"),
         ),
         sa.CheckConstraint(
