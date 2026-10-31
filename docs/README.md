@@ -2,7 +2,7 @@
 
 Planning documents for a stock analysis and prediction application: **Python (FastAPI) backend + React frontend**, running in Docker.
 
-**Status:** ✅ Planning complete → next: **Phase 1 – Foundation** ([09 – Roadmap](09-roadmap.md))
+**Status:** ✅ Planning complete → **Phase 1 – Foundation as a POC on synthetic data** ([27 – Phase 1 POC Plan](27-phase1-poc-plan.md))
 
 ## Key decisions at a glance
 | Area | Decision |
@@ -18,7 +18,7 @@ Planning documents for a stock analysis and prediction application: **Python (Fa
 | Users | Personal + other users: **OAuth sign-in (Google / Microsoft) + invite code** to sign up |
 | Later phases | WhatsApp notifications, remote access via hosted deployment |
 
-Full decision log: [27 – Open Questions](27-open-questions.md) · Everything to set up: [25 – Infrastructure, Services & Requirements Inventory 🧰](25-infrastructure-services-inventory.md).
+Full decision log: [Open Questions & Decision Log 🗳️](decisions/open-questions.md) · Everything to set up: [25 – Infrastructure, Services & Requirements Inventory 🧰](25-infrastructure-services-inventory.md).
 
 | # | Document | What it covers |
 |---|----------|----------------|
@@ -49,7 +49,13 @@ Full decision log: [27 – Open Questions](27-open-questions.md) · Everything t
 | 24 | [Coding Standards & Clean Architecture](24-coding-standards.md) | Layers, OOP patterns, naming conventions, folder structure, quality rules, Definition of Done |
 | 25 | [Infrastructure, Services & Requirements](25-infrastructure-services-inventory.md) | Everything needed: infra, Docker services, accounts, tools, ports, config, costs, setup checklist |
 | 26 | [ML Pipeline & Model Operations](26-ml-pipeline.md) | Features, labels, training, quality gates, registry, nightly predictions, monitoring |
-| 27 | [Open Questions](27-open-questions.md) | Decisions made and still to be made |
+| 27 | [Phase 1 POC Plan](27-phase1-poc-plan.md) | Synthetic-data POC: scope, data generator, baseline predictions, milestones M0–M7 |
+
+## Decision log
+Every question and decision: [🗳️ decisions/open-questions.md](decisions/open-questions.md) (stable path, not numbered).
+
+## Deliverables & outcomes
+What "done" means for every phase, with acceptance criteria and evidence: [🎯 deliverables/](deliverables/README.md).
 
 ## Start here
 New to these docs? Read [00 – How to Plan This Project](00-how-to-plan.md) first, then follow the **Next →** links.

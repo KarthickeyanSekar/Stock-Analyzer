@@ -78,23 +78,28 @@ Image versions are pinned to exact tags when the compose files are written.
 **Compose profiles:** `api` and `web` always run; `data` adds `db` + `redis`; `telemetry` adds `otel-lgtm`.
 
 ### Current local dev setup (verified 2026-10-31)
-| Piece | What runs | How the api reaches it |
-|---|---|---|
-| Database | Standalone container **`timescaledb`** (`timescale/timescaledb-ha:pg16.15-ts2.31.0`, full build), volume `timescale_data`, database `dev_stock_analyzer` | Hostname `db` on the persistent network **`stock-analyzer-devdata`** |
-| Redis | Standalone container **`RedisDev`** (`redis:7.4.12-alpine3.21`) | Hostname `redis` on `stock-analyzer-devdata` |
-| api, web, otel-lgtm | Compose (`make dev`) | — |
+Everything is defined in the repo, so a new machine needs only `git clone` → **`make bootstrap`** → `make dev`.
 
-- `make dev-network` creates `stock-analyzer-devdata` and attaches both containers (run automatically by `make dev`, `dev-file` and `dev-data`); the network survives `make down`
-- Container names can be overridden: `make dev DB_CONTAINER=… REDIS_CONTAINER=…`
-- Extensions installed in `dev_stock_analyzer`: ✅ `timescaledb` 2.31.0 (license `timescale`, hypertables tested), ✅ `vector` 0.8.7, ✅ `pgcrypto` 1.3
-- ⚠️ **Use the full image, never `-oss`.** The `-oss` build can't load the TimescaleDB TSL library, and `CREATE EXTENSION timescaledb` there breaks the database's connections. The dev container was switched from `-oss` to the full image on 2026-10-31 (same volume, same versions); the old `-oss` container was removed afterwards (the data volume `timescale_data` is shared and kept)
-- Both standalone containers use `restart: unless-stopped` (set 2026-10-31), so they come back after a reboot or Docker restart
+| Piece | Defined in | Container / volume | How the api reaches it |
+|---|---|---|---|
+| Database | **`compose.devdata.yaml`** (project `stock-analyzer-devdata`) | **`timescaledb`** (`timescale/timescaledb-ha:pg16.15-ts2.31.0`, full build), volume `timescale_data`, database from `SA_DB_NAME` | Host `db` on network **`stock-analyzer-devdata`** |
+| Redis | `compose.devdata.yaml` | **`RedisDev`** (`redis:7.4.12-alpine3.21`), volume **`redis_data`** | Host `redis` on `stock-analyzer-devdata` |
+| api, web, otel-lgtm | `compose.yaml` + `compose.dev.yaml` (`make dev`) | — | — |
+| Bootstrap | `scripts/bootstrap-dev.sh` (`make bootstrap`) | Creates `.env` (random DB password, Fernet master key), starts db + Redis, runs migrations | — |
+
+- `make dev-db` creates the network if needed and starts both containers (`up -d --wait`); `make dev` runs it first. `make down` never stops them
+- Schema: Alembic migrations `0001` (extensions) and `0002` (markets, stocks, `prices_daily` hypertable); see [17](17-database-backend.md#database-change-control)
+- Extensions: ✅ `timescaledb` 2.31.0 (license `timescale`), ✅ `vector` 0.8.7, ✅ `pgcrypto` 1.3, created by migration `0001`
+- ⚠️ **Use the full image, never `-oss`.** The `-oss` build can't load the TimescaleDB TSL library, and `CREATE EXTENSION timescaledb` there breaks the database's connections (happened once on 2026-10-31; switched to the full image, same volume)
+- Both containers use `restart: unless-stopped`; Redis uses RDB snapshots (`appendonly` turns on in Phase 6)
 - The app connects as `postgres` (superuser) in dev; a dedicated limited user comes later
 
 ## 3. Volumes & data
 | Volume | Used by | Contents | Backed up |
 |---|---|---|---|
-| `pgdata` | db | All database data | ✅ nightly |
+| `timescale_data` | dev `timescaledb` | Dev database data | Optional |
+| `redis_data` | dev `RedisDev` | Redis snapshots | ❌ (rebuildable) |
+| `pgdata` | compose `db` (profile `data`, prod) | All database data | ✅ nightly |
 | `models` | worker, api | Trained model files | ✅ weekly |
 | `backups` | db (backup job) | `pg_dump` files | Copied off-site |
 | `redisdata` | redis | Cache (can be rebuilt) | ❌ |

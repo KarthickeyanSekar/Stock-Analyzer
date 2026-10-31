@@ -204,9 +204,11 @@ Avoid abbreviations except well-known domain terms (`roce`, `pe_ratio`, `eps`, `
 ### TypeScript / React
 | Item | Convention | Example |
 |---|---|---|
-| Component (and its file) | `PascalCase.tsx` | `TradePlanTable.tsx` |
-| Hook | `useCamelCase.ts` | `useTradePlans.ts` |
-| Utility / module | `camelCase.ts` | `formatCurrency.ts` |
+| **File names** (all frontend files) | `kebab-case` (same as shadcn/ui) | `trade-plan-table.tsx`, `use-trade-plans.ts`, `format-currency.ts` |
+| Component (inside the file) | `PascalCase` | `export function TradePlanTable()` |
+| Hook (inside the file) | `useCamelCase` | `export function useTradePlans()` |
+| Utility function | `camelCase` | `formatCurrency()` |
+| Test file | same name + `.test.ts(x)` | `format-currency.test.ts` |
 | Folder | `kebab-case` | `trade-journal/` |
 | Types / interfaces | `PascalCase`, no `I` prefix | `TradePlan`, `ScreenerFilters` |
 | Props type | `<Component>Props` | `TradePlanTableProps` |
@@ -235,8 +237,8 @@ frontend/src/
 ├── features/               # one folder per feature, self-contained
 │   ├── trade-journal/
 │   │   ├── api/            # queries & mutations (TanStack Query) using the generated client
-│   │   ├── components/     # TradePlanTable.tsx, ClosePlanDialog.tsx
-│   │   ├── hooks/          # useTradePlans.ts
+│   │   ├── components/     # trade-plan-table.tsx, close-plan-dialog.tsx
+│   │   ├── hooks/          # use-trade-plans.ts
 │   │   ├── model/          # types, Zod schemas, pure helpers
 │   │   └── index.ts        # public exports of the feature
 │   ├── screener/

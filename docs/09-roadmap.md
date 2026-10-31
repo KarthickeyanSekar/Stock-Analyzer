@@ -4,6 +4,8 @@
 
 **Focus: long-term first** (50 days – multi-year). Short-term comes later.
 
+**Phase 1 starts as a POC on synthetic data** (mock provider, baseline predictions, thin journal and UI); real APIs follow. Plan: [27](27-phase1-poc-plan.md). Outcomes and acceptance criteria per phase: [deliverables/](deliverables/README.md).
+
 | Phase | Scope | Outcome |
 |---|---|---|
 | 1 – Foundation | Clean Architecture skeleton + lint/type/test tooling ([24](24-coding-standards.md)), Provider plugin registry + admin provider settings screen ([22](22-provider-configuration-ui.md)), Local Docker dev/test setup ([20](20-environments-dev-test-prod.md)), PostgreSQL (TimescaleDB, pgvector), FastAPI skeleton, React (Vite) frontend skeleton ([23](23-frontend-react.md)), mock provider + first market data API connector, **NIFTY 50** history backfill (all NSE stocks later). Setup checklist: [25](25-infrastructure-services-inventory.md#11-setup-checklist-before-phase-1) | Clean data in the database |
@@ -32,7 +34,7 @@ timeline
 
 ## Related
 - [01 – Overview & Goals](01-overview.md)
-- [27 – Open Questions](27-open-questions.md)
+- [Open Questions & Decision Log 🗳️](decisions/open-questions.md)
 - [🏠 Index](README.md)
 
 ---

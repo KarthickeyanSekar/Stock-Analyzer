@@ -8,7 +8,9 @@ FROM base AS dev
 COPY pyproject.toml ./
 COPY src ./src
 RUN pip install --no-cache-dir -e ".[dev]"
-COPY . .
+# Owned by the app user so tools can write caches (.ruff_cache, .mypy_cache, .pytest_cache) as non-root.
+COPY --chown=app:app . .
+RUN chown app:app /app
 USER app
 CMD ["uvicorn", "stock_analyzer.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--app-dir", "src"]
 

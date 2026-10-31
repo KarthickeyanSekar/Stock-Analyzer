@@ -1,4 +1,7 @@
 # Throwaway stack for automated tests: no ports, no persistent volume.
+# Own project name, so test runs never replace the running dev containers (project `stock-analyzer`).
+name: stock-analyzer-test
+
 services:
   db:
     volumes: !reset []
