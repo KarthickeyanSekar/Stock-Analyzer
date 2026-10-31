@@ -53,15 +53,19 @@ docker compose -f compose.yaml -f compose.prod.yaml --env-file .env.prod up -d
 A `Makefile` wraps these:
 | Target | What it does |
 |---|---|
-| `make dev` | api + web + telemetry (Grafana) with hot reload; attaches the standalone dev DB/Redis via `make dev-network` |
+| `make bootstrap` | Fresh clone: `.env` with generated secrets, dev db + Redis, migrations ([scripts/bootstrap-dev.sh](../scripts/bootstrap-dev.sh)) |
+| `make dev-db` / `dev-db-stop` | Start / stop the dev database + Redis (`compose.devdata.yaml`, own compose project) |
+| `make dev` | api + web + telemetry (Grafana) with hot reload; starts `dev-db` first |
 | `make dev-file` | Same, but telemetry goes to `./telemetry/*.jsonl` (no Grafana) |
 | `make dev-data` | Same as dev, plus compose's own `db` + `redis` (profile `data`) |
 | `make infra` | Only db + redis + telemetry (to run api/web from VS Code) |
-| `make dev-network` | Persistent network `stock-analyzer-devdata`: `timescaledb` → `db`, `RedisDev` → `redis` |
+| `make db-*` | `db-upgrade`, `db-downgrade`, `db-revision m="…"`, `db-current`, `db-history`, `db-shell`, `db-reset` (dev only) ([17](17-database-backend.md#database-change-control)) |
+| `make redis-*` | `redis-shell`, `redis-info`, `redis-keys p="…"`, `redis-flush` (dev only) |
 | `make test` / `make lint` | pytest + Vitest / ruff, mypy, import-linter, ESLint in containers |
 | `make down`, `make logs`, `make prod`, `make api-client`, `make format`, `make setup` | Stop, logs, production stack, regenerate the TS client, format, local install |
 
 Images are pinned: `timescale/timescaledb-ha:pg16.15-ts2.31.0` (full build, never `-oss`) and `redis:7.4.12-alpine3.21`.
+Compose **projects** are separate, so they never replace each other's containers: `stock-analyzer` (app: api, web, telemetry), `stock-analyzer-devdata` (dev db + Redis), `stock-analyzer-test` (tests).
 Compose **profiles**: `data` (db + redis) and `telemetry` (Grafana `otel-lgtm`). Current dev setup details: [25](25-infrastructure-services-inventory.md#current-local-dev-setup-verified-2026-10-31).
 
 ## Differences per environment

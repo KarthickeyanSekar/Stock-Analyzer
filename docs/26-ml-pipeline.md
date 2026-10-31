@@ -1,4 +1,4 @@
-<!-- nav -->[← Previous](25-infrastructure-services-inventory.md) · [🏠 Index](README.md) · [Next →](27-open-questions.md)
+<!-- nav -->[← Previous](25-infrastructure-services-inventory.md) · [🏠 Index](README.md) · [Next →](27-phase1-poc-plan.md)
 
 # 26 – ML Pipeline & Model Operations 🤖
 
@@ -165,4 +165,4 @@ handles missing values, and is explainable with feature importance / SHAP. Deep 
 - [🏠 Index](README.md)
 
 ---
-<!-- nav -->[← Previous](25-infrastructure-services-inventory.md) · [🏠 Index](README.md) · [Next →](27-open-questions.md)
+<!-- nav -->[← Previous](25-infrastructure-services-inventory.md) · [🏠 Index](README.md) · [Next →](27-phase1-poc-plan.md)

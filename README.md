@@ -7,11 +7,14 @@ Planning docs live in [docs/](docs/README.md).
 
 ## Quick start (Docker)
 ```bash
-cp .env.example .env
-make dev        # web http://localhost:5173 · api http://localhost:8000/docs · Grafana http://localhost:3000
-make dev-data   # same, plus PostgreSQL + Redis (not needed yet)
-make down       # stop everything
+git clone https://github.com/KarthickeyanSekar/Stock-Analyzer.git && cd Stock-Analyzer
+make bootstrap  # once: .env + secrets, PostgreSQL + Redis, migrations, synthetic POC data + predictions
+make dev        # open http://localhost:5173/stocks · api http://localhost:8000/docs · Grafana :3000
+make down       # stop the app (database + Redis keep running; make dev-db-stop stops them)
 ```
+POC walkthrough (synthetic data): [docs/deliverables/phase-01-demo.md](docs/deliverables/phase-01-demo.md). Reload data: `make poc-data`.
+Database: `make db-upgrade`, `make db-revision m="…"`, `make db-shell`. Redis: `make redis-keys`, `make redis-info`.
+Rules: [docs/17-database-backend.md](docs/17-database-backend.md#database-change-control).
 
 ## Telemetry (OpenTelemetry)
 The API records traces, metrics and logs with OpenTelemetry. Nothing leaves your machine. Pick where they go:

@@ -143,6 +143,53 @@ ML tables (`features_daily`, `model_versions` status `CANDIDATE` / `ACTIVE` / `R
 Other tables: `job_runs` (every scheduled job, its status and duration), `daily_returns` (EOD report),
 `holidays` (NSE calendar), `app_settings`.
 
+## Database change control
+### PostgreSQL: versioned migrations (Alembic)
+```mermaid
+flowchart LR
+    A["1 · change a model<br/>persistence/models/*.py"] --> B["2 · make db-revision m='…'"]
+    B --> C["3 · review the migration<br/>(hypertables, pgvector, extensions by hand)"]
+    C --> D["4 · make db-upgrade"]
+    D --> E["5 · round-trip + drift check<br/>db-downgrade · db-upgrade · alembic check"]
+    E --> F["6 · commit model + migration together"]
+    F --> G["prod: migrate on deploy<br/>alembic upgrade head"]
+```
+| Piece | Location |
+|---|---|
+| Config | `backend/alembic.ini` (the URL comes from `SA_DATABASE_URL`, never from the file) |
+| Environment | `infrastructure/persistence/migrations/env.py` (async engine; ignores TimescaleDB-owned tables and indexes) |
+| Migrations | `infrastructure/persistence/migrations/versions/NNNN_<slug>.py` (sequential IDs) |
+| Models | `infrastructure/persistence/models/` with the naming convention `pk_`, `ix_`, `uq_`, `fk_`, `ck_` |
+
+| Migration | Contents |
+|---|---|
+| `0001_create_extensions` | `timescaledb`, `vector`, `pgcrypto` (`IF NOT EXISTS`) |
+| `0002_create_markets_stocks_prices_daily` | `markets`, `stocks` (market, currency, timezone), `prices_daily` as a hypertable (1-year chunks) |
+
+**Rules:** schema changes only through migrations; review every generated file; every migration must downgrade cleanly;
+never edit a merged migration (fix forward); `alembic check` must report no drift.
+
+### Redis: key registry (no schema)
+Redis holds only data that can be rebuilt, so it has no migrations. `infrastructure/cache/keys.py` is the single source of truth:
+| Key | Pattern | TTL |
+|---|---|---|
+| Latest snapshot | `sa:{env}:v1:quote:{market}:{symbol}` | 2 h |
+| Job queue | `sa:{env}:v1:jobs:{queue}` | none (consumed by the worker) |
+| Job lock | `sa:{env}:v1:lock:{job}` | 30 min |
+| Provider rate limit | `sa:{env}:v1:ratelimit:{provider}:{window}` | 1 min |
+
+**Rules:** no key built outside the registry; `{env}` keeps dev/test/prod apart; every non-queue key has a TTL (unit-tested);
+a value format change bumps the version (`v2`) and old keys expire.
+
+### Commands
+| Command | Use |
+|---|---|
+| `make db-upgrade` / `db-downgrade` / `db-revision m="…"` / `db-current` / `db-history` | Migrations |
+| `make db-shell` | `psql` in the dev database (read; no schema edits) |
+| `make db-reset` | Dev only: drop + recreate the dev database and migrate (asks for `RESET`) |
+| `make redis-shell` / `redis-info` / `redis-keys p="sa:dev:*"` | Inspect Redis (`SCAN`, never `KEYS`) |
+| `make redis-flush` | Dev only: delete `sa:dev:*` keys (asks for `FLUSH`) |
+
 ## What pgvector is used for
 Each stock-day is turned into a numeric **feature vector** (momentum, volatility, valuation, quality, trend …).
 For a new setup, the app finds the **most similar past setups** and shows what happened next:

@@ -33,7 +33,7 @@ Every number in the report is calculated, never generated.
 - Each signal opens a **virtual position** at the next day's open price (no look-ahead)
 - Exits follow the rules in [12 – Entry & Exit Strategy ⏱️](12-entry-exit-strategy.md)
 - Costs (brokerage, STT, charges) are deducted so returns are **net**
-- Real-money orders only later, and only if you choose them (see [Open Questions](27-open-questions.md))
+- Real-money orders only later, and only if you choose them (see [Open Questions](decisions/open-questions.md))
 
 ## Report contents
 ```
