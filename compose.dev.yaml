@@ -1,0 +1,26 @@
+# Hot reload: Vite on :5173, Uvicorn --reload on :8000, DB/Redis exposed for local tools.
+services:
+  db:
+    ports: ["5432:5432"]
+  redis:
+    ports: ["6379:6379"]
+  otel-lgtm:
+    ports: ["4318:4318"]   # OTLP/HTTP, for an API launched from VS Code
+  api:
+    build: { target: dev }
+    environment: { SA_ENV: dev }
+    ports: ["8000:8000"]
+    volumes: [./backend:/app, ./telemetry:/app/telemetry]
+    # devdata: reach the standalone dev containers as db / redis (see `make dev-network`)
+    networks: [default, devdata]
+  web:
+    build: { target: dev }
+    environment: { VITE_API_PROXY_TARGET: http://api:8000 }
+    ports: ["5173:5173"]
+    volumes: [./frontend:/app, /app/node_modules]
+
+networks:
+  # Created by `make dev-network`; survives `make down`, unlike the project's default network.
+  devdata:
+    name: stock-analyzer-devdata
+    external: true

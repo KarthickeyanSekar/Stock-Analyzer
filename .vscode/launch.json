@@ -1,0 +1,59 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Backend: FastAPI",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["stock_analyzer.main:app", "--reload", "--port", "8000", "--app-dir", "src"],
+      "cwd": "${workspaceFolder}/backend",
+      "python": "${workspaceFolder}/backend/.venv/bin/python",
+      "env": {
+        "SA_ENV": "dev",
+        "SA_DATABASE_URL": "postgresql+asyncpg://stock_analyzer:change-me@localhost:5432/stock_analyzer",
+        "SA_REDIS_URL": "redis://localhost:6379/0",
+        "SA_OTEL_ENABLED": "false",
+        "SA_OTEL_ENDPOINT": "http://localhost:4318"
+      },
+      "jinja": true,
+      "justMyCode": true
+    },
+    {
+      "name": "Backend: pytest",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["-q"],
+      "cwd": "${workspaceFolder}/backend",
+      "python": "${workspaceFolder}/backend/.venv/bin/python"
+    },
+    {
+      "name": "Frontend: Vite",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "cwd": "${workspaceFolder}/frontend"
+    },
+    {
+      "name": "Frontend: Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/frontend/src",
+      "preLaunchTask": "Frontend: Vite dev server"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full stack (backend + frontend)",
+      "configurations": ["Backend: FastAPI", "Frontend: Vite"],
+      "stopAll": true
+    },
+    {
+      "name": "Full stack + Chrome debugging",
+      "configurations": ["Backend: FastAPI", "Frontend: Chrome"],
+      "stopAll": true
+    }
+  ]
+}

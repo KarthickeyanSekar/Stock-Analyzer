@@ -1,0 +1,8 @@
+# Production: nginx serves the static build on :8080 and proxies /api.
+services:
+  api:
+    build: { target: prod }
+    environment: { SA_ENV: prod }
+  web:
+    build: { target: prod }
+    ports: ["8080:80"]

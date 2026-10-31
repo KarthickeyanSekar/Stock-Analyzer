@@ -1,0 +1,58 @@
+# Base stack shared by every environment; overlay with compose.dev/test/prod.yaml.
+# Default services: api + web. Add db + redis with --profile data,
+# and the Grafana/OpenTelemetry stack with --profile telemetry.
+name: stock-analyzer
+
+services:
+  db:
+    profiles: [data]
+    # Full build (not -oss): the -oss image can't load the TimescaleDB TSL library. Same as the dev container.
+    image: timescale/timescaledb-ha:pg16.15-ts2.31.0
+    environment:
+      POSTGRES_USER: ${SA_DB_USER:-stock_analyzer}
+      POSTGRES_PASSWORD: ${SA_DB_PASSWORD:-stock_analyzer}
+      POSTGRES_DB: ${SA_DB_NAME:-stock_analyzer}
+      TZ: Asia/Kolkata
+    volumes: [pgdata:/home/postgres/pgdata/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    profiles: [data]
+    image: redis:7.4.12-alpine3.21
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+    restart: unless-stopped
+
+  otel-lgtm:
+    profiles: [telemetry]
+    # Grafana + Tempo (traces) + Loki (logs) + Prometheus (metrics) + OTel Collector
+    image: grafana/otel-lgtm:0.8.1
+    ports: ["3000:3000"]
+    volumes: [otel-data:/data]
+    restart: unless-stopped
+
+  api:
+    build: { context: ./backend }
+    env_file: .env
+    environment:
+      TZ: Asia/Kolkata
+      SA_OTEL_EXPORTER: ${SA_OTEL_EXPORTER:-otlp}   # otlp → Grafana, file → ./telemetry/*.jsonl
+      SA_OTEL_ENDPOINT: http://otel-lgtm:4318
+      SA_OTEL_FILE_DIR: /app/telemetry
+    volumes: [./telemetry:/app/telemetry]
+    # db/redis are opt-in (profile "data") until a feature needs them: make dev-data
+    restart: unless-stopped
+
+  web:
+    build: { context: ./frontend }
+    depends_on: [api]
+    restart: unless-stopped
+
+volumes:
+  pgdata: {}
+  otel-data: {}
