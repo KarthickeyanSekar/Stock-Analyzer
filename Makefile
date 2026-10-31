@@ -68,11 +68,11 @@ logs:          ## Follow container logs
 
 test:          ## pytest + Vitest in containers
 	$(TEST) run --rm --build api
-	$(TEST) run --rm --build web
+	$(TEST) run --rm --build --no-deps web
 
 lint:          ## ruff, mypy, import-linter, ESLint, Prettier in containers
 	$(TEST) run --rm --build api sh -c "ruff check . && ruff format --check . && mypy src tests && lint-imports"
-	$(TEST) run --rm --build web npm run lint
+	$(TEST) run --rm --build --no-deps web npm run lint
 
 format:        ## Auto-format backend and frontend (in containers, writes to the mounted source)
 	$(API_RUN) sh -c "ruff format . && ruff check --fix ."

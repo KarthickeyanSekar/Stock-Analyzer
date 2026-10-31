@@ -65,6 +65,7 @@ A `Makefile` wraps these:
 | `make down`, `make logs`, `make prod`, `make api-client`, `make format`, `make setup` | Stop, logs, production stack, regenerate the TS client, format, local install |
 
 Images are pinned: `timescale/timescaledb-ha:pg16.15-ts2.31.0` (full build, never `-oss`) and `redis:7.4.12-alpine3.21`.
+Compose **projects** are separate, so they never replace each other's containers: `stock-analyzer` (app: api, web, telemetry), `stock-analyzer-devdata` (dev db + Redis), `stock-analyzer-test` (tests).
 Compose **profiles**: `data` (db + redis) and `telemetry` (Grafana `otel-lgtm`). Current dev setup details: [25](25-infrastructure-services-inventory.md#current-local-dev-setup-verified-2026-10-31).
 
 ## Differences per environment

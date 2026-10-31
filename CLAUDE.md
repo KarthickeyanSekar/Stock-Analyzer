@@ -58,6 +58,8 @@ The Makefile must stay compatible with **GNU Make 3.81** (macOS default): no `.O
 - PostgreSQL = container **`timescaledb`** (`timescale/timescaledb-ha:pg16.15-ts2.31.0`, volume `timescale_data`), host **`db`**.
   Redis = container **`RedisDev`** (`redis:7.4.12-alpine3.21`, volume `redis_data`), host **`redis`**. Network `stock-analyzer-devdata`.
 - **Never use the `-oss` TimescaleDB image**: it can't load the TSL library and `CREATE EXTENSION timescaledb` breaks the database.
+- Compose projects are separate: `stock-analyzer` (app), `stock-analyzer-devdata` (db + Redis), `stock-analyzer-test` (tests),
+  so `make test`/`make lint` never replace the running dev containers. Frontend test/lint runs use `--no-deps`.
 - The api reads `.env` only when its container is created: after editing `.env`, recreate it
   (`docker compose -f compose.yaml -f compose.dev.yaml --profile telemetry up -d --no-deps --force-recreate api`).
 - Never print, log or commit secrets (`.env`, `SA_MASTER_KEY`, DB passwords). Mask them in any command output.
