@@ -44,18 +44,35 @@ DB: plural `snake_case` tables, `<singular>_id` FKs. API: `/api/<plural-kebab>`.
 | `make test` | pytest + Vitest in containers |
 | `make lint` | ruff, ruff format, mypy (strict), import-linter, ESLint/Prettier in containers |
 | `make api-client` | Regenerate the TS client after any API change |
-| `make dev-network` | Attach the standalone dev containers to the `stock-analyzer-devdata` network |
+| `make bootstrap` | Fresh clone: `.env` + secrets, db + Redis, migrations |
+| `make dev-db` | Start the dev database + Redis (`compose.devdata.yaml`) |
+| `make db-upgrade` / `db-revision m="…"` / `db-downgrade` / `db-current` / `db-shell` | Database migrations and access |
+| `make redis-shell` / `redis-keys` / `redis-info` | Redis access |
 URLs: web http://localhost:5173 · api http://localhost:8000/docs · Grafana http://localhost:3000.
 The Makefile must stay compatible with **GNU Make 3.81** (macOS default): no `.ONESHELL` or newer functions.
 
-## Local infrastructure (dev)
-- PostgreSQL = standalone container **`timescaledb`** (`timescale/timescaledb-ha:pg16.15-ts2.31.0`, volume `timescale_data`, DB `dev_stock_analyzer`),
-  reachable from the api as host **`db`**. Redis = standalone container **`RedisDev`**, host **`redis`**. Both on network `stock-analyzer-devdata`.
+## Local infrastructure (dev): everything is in the repo
+- Fresh clone: `make bootstrap` (creates `.env` + secrets, starts db + Redis, runs migrations), then `make dev`.
+- Dev database + Redis are defined in **`compose.devdata.yaml`**, a separate compose project, so `make down` never stops them.
+  Start/stop with `make dev-db` / `make dev-db-stop`. Never create dev containers by hand: change the compose file instead.
+- PostgreSQL = container **`timescaledb`** (`timescale/timescaledb-ha:pg16.15-ts2.31.0`, volume `timescale_data`), host **`db`**.
+  Redis = container **`RedisDev`** (`redis:7.4.12-alpine3.21`, volume `redis_data`), host **`redis`**. Network `stock-analyzer-devdata`.
 - **Never use the `-oss` TimescaleDB image**: it can't load the TSL library and `CREATE EXTENSION timescaledb` breaks the database.
-- Extensions present: `timescaledb`, `vector`, `pgcrypto`. Schema changes go through **Alembic migrations** only.
 - The api reads `.env` only when its container is created: after editing `.env`, recreate it
   (`docker compose -f compose.yaml -f compose.dev.yaml --profile telemetry up -d --no-deps --force-recreate api`).
 - Never print, log or commit secrets (`.env`, `SA_MASTER_KEY`, DB passwords). Mask them in any command output.
+
+## Database change control
+**PostgreSQL: Alembic migrations only** (`backend/alembic.ini`, `infrastructure/persistence/migrations/versions/NNNN_*.py`).
+1. Change the models in `infrastructure/persistence/models/` (import new models in `models/__init__.py`).
+2. `make db-revision m="…"`, then **review** the file: autogenerate misses hypertables, pgvector indexes and extensions (add with `op.execute`).
+3. `make db-upgrade`, then check `make db-downgrade` + `make db-upgrade` round-trips, and `alembic check` reports no drift.
+4. Commit the model and its migration together. **Never edit a merged migration**: fix forward with a new one.
+5. Never change the schema by hand (psql, GUI tools). `make db-shell` is for reading; `make db-reset` is dev only.
+- Migration IDs are sequential (`0001`, `0002`, …): pass `--rev-id` with the next number when autogenerate picks a random one.
+**Redis: no schema.** Every key is defined in `infrastructure/cache/keys.py` (`sa:{env}:{version}:…`); never build keys elsewhere.
+Every cache/lock/rate-limit key has a TTL (enforced by a unit test); only job queues may have none. A format change = new version (`v2`).
+Use `make redis-keys`, `make redis-info`; `make redis-flush` deletes only `sa:<env>:*` keys and only in dev.
 
 ## Testing and quality
 - No CI: `make lint` and `make test` (in containers) plus pre-commit hooks are the only gate. Run both before declaring work done.

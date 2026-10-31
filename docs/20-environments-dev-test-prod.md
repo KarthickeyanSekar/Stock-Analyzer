@@ -53,11 +53,14 @@ docker compose -f compose.yaml -f compose.prod.yaml --env-file .env.prod up -d
 A `Makefile` wraps these:
 | Target | What it does |
 |---|---|
-| `make dev` | api + web + telemetry (Grafana) with hot reload; attaches the standalone dev DB/Redis via `make dev-network` |
+| `make bootstrap` | Fresh clone: `.env` with generated secrets, dev db + Redis, migrations ([scripts/bootstrap-dev.sh](../scripts/bootstrap-dev.sh)) |
+| `make dev-db` / `dev-db-stop` | Start / stop the dev database + Redis (`compose.devdata.yaml`, own compose project) |
+| `make dev` | api + web + telemetry (Grafana) with hot reload; starts `dev-db` first |
 | `make dev-file` | Same, but telemetry goes to `./telemetry/*.jsonl` (no Grafana) |
 | `make dev-data` | Same as dev, plus compose's own `db` + `redis` (profile `data`) |
 | `make infra` | Only db + redis + telemetry (to run api/web from VS Code) |
-| `make dev-network` | Persistent network `stock-analyzer-devdata`: `timescaledb` → `db`, `RedisDev` → `redis` |
+| `make db-*` | `db-upgrade`, `db-downgrade`, `db-revision m="…"`, `db-current`, `db-history`, `db-shell`, `db-reset` (dev only) ([17](17-database-backend.md#database-change-control)) |
+| `make redis-*` | `redis-shell`, `redis-info`, `redis-keys p="…"`, `redis-flush` (dev only) |
 | `make test` / `make lint` | pytest + Vitest / ruff, mypy, import-linter, ESLint in containers |
 | `make down`, `make logs`, `make prod`, `make api-client`, `make format`, `make setup` | Stop, logs, production stack, regenerate the TS client, format, local install |
 

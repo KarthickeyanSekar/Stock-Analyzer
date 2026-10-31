@@ -6,13 +6,13 @@
 holding category, start a journal plan, close it and see the outcome calculated. Everything runs on **synthetic data** behind the
 real provider ports, so switching to a real API later needs no code changes outside a new plugin.
 
-**Status:** 🔵 Planned · **Branch:** `feature/phase1-foundation` · **Plan:** [27 – Phase 1 POC Plan (Synthetic Data) 🧪](../27-phase1-poc-plan.md)
+**Status:** 🟡 In progress · **Branch:** `feature/phase1-foundation` · **Plan:** [27 – Phase 1 POC Plan (Synthetic Data) 🧪](../27-phase1-poc-plan.md)
 
 ## Deliverables
 | ID | Deliverable | Outcome (what is true when done) | Status |
 |---|---|---|---|
-| D1.0 | Tooling | Quality checks run automatically and pass before any feature code is added | ⚪ |
-| D1.1 | Database schema | The POC tables exist in `dev_stock_analyzer` and can be created and rolled back by migrations | ⚪ |
+| D1.0 | Tooling | Quality checks run automatically and pass before any feature code is added | 🟡 |
+| D1.1 | Database schema | The POC tables exist in `dev_stock_analyzer` and can be created and rolled back by migrations | 🟡 |
 | D1.2 | Domain core | Money, percentages, holding categories, the trading calendar and the journal rules behave correctly and are proven by tests | ⚪ |
 | D1.3 | Synthetic data + mock provider | 5 years of realistic, repeatable NIFTY 50 data is loaded through the real provider ports | ⚪ |
 | D1.4 | Baseline predictions | Every stock has a prediction (range + target probabilities) for every holding category, with no future data used | ⚪ |
@@ -28,10 +28,10 @@ real provider ports, so switching to a real API later needs no code changes outs
 | # | Acceptance criterion | How to verify (evidence) | Result |
 |---|---|---|---|
 | 1 | pre-commit hooks installed and run on commit | `pre-commit run --all-files` passes | ⬜ |
-| 2 | Lint, format, mypy (strict), import-linter, ESLint pass | `make lint` exits 0 | ⬜ |
-| 3 | Backend and frontend tests pass | `make test` exits 0 | ⬜ |
+| 2 | Lint, format, mypy (strict), import-linter, ESLint pass | `make lint` exits 0 | ✅ 2026-10-31 (after Dockerfile cache fix) |
+| 3 | Backend and frontend tests pass | `make test` exits 0 | ✅ 2026-10-31 |
 | 4 | shadcn/ui initialised with Tailwind 4 | `frontend/components.json` exists; a Button renders in a test | ⬜ |
-| 5 | Frontend file naming decided (Q55) and doc 24 updated | Q55 ✅ in Open Questions | ⬜ |
+| 5 | Frontend file naming decided (Q55) and doc 24 updated | Q55 ✅ in Open Questions | ✅ 2026-10-31 |
 
 ---
 
@@ -41,10 +41,14 @@ real provider ports, so switching to a real API later needs no code changes outs
 | # | Acceptance criterion | How to verify (evidence) | Result |
 |---|---|---|---|
 | 1 | Tables: `markets`, `stocks`, `prices_daily`, `fundamentals`, `corporate_actions`, `predictions`, `model_versions`, `trade_plans`, `plan_daily_status`, `providers`, `provider_assignments`, `job_runs` | `alembic upgrade head` succeeds; `\dt` lists them | ⬜ |
-| 2 | `prices_daily` is a TimescaleDB hypertable | `select * from timescaledb_information.hypertables` shows it | ⬜ |
+| 2 | `prices_daily` is a TimescaleDB hypertable | `select * from timescaledb_information.hypertables` shows it | ✅ 2026-10-31 |
 | 3 | Market-agnostic columns present (`market`, `currency`, `timezone` on stocks) | Schema test | ⬜ |
-| 4 | Migrations roll back cleanly | `alembic downgrade base` then `upgrade head` succeed | ⬜ |
+| 4 | Migrations roll back cleanly | `alembic downgrade base` then `upgrade head` succeed | ✅ 2026-10-31 (round trip on `dev_stock_analyzer`) |
 | 5 | Repository integration tests pass against a throwaway DB | `make test` (integration) | ⬜ |
+| 6 | Alembic configured; `make db-*` commands work | `make db-upgrade` / `db-current` → `0002 (head)` | ✅ 2026-10-31: 0001 extensions, 0002 markets/stocks/prices_daily |
+| 7 | Models and migrations match | `alembic check` → "No new upgrade operations detected" | ✅ 2026-10-31 |
+| 8 | Redis key registry with TTL rule | `tests/unit/infrastructure/test_redis_keys.py` | ✅ 2026-10-31 (6 tests) |
+| 9 | Fresh clone reproducible from the repo | `git clone` → `make bootstrap` → `make dev` on a clean machine | ⬜ (needs a clean run) |
 
 ---
 
@@ -147,3 +151,4 @@ real provider ports, so switching to a real API later needs no code changes outs
 | Date | Change | Reason |
 |---|---|---|
 | 2026-10-31 | Phase 1 defined as a POC on synthetic data | Prove the flow before paying for APIs (Q56) |
+| 2026-10-31 | D1.1 extended: Alembic commands, drift check, Redis key registry, reproducible bootstrap | Database control + clone-and-run setup |

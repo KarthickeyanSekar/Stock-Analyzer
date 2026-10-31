@@ -1,0 +1,48 @@
+# Dev database + Redis as their own compose project, so `make down` never stops them
+# and a fresh clone can recreate them with `make dev-db` (or `make bootstrap`).
+# The api reaches them as hosts `db` and `redis` on the stock-analyzer-devdata network.
+name: stock-analyzer-devdata
+
+services:
+  timescaledb:
+    # Full build, never -oss: the -oss image can't load the TimescaleDB TSL library.
+    image: timescale/timescaledb-ha:pg16.15-ts2.31.0
+    container_name: timescaledb
+    environment:
+      # Only used when the volume is first initialised; an existing volume keeps its users.
+      POSTGRES_USER: ${SA_DB_USER:?set SA_DB_USER in .env}
+      POSTGRES_PASSWORD: ${SA_DB_PASSWORD:?set SA_DB_PASSWORD in .env}
+      POSTGRES_DB: ${SA_DB_NAME:?set SA_DB_NAME in .env}
+      TZ: Asia/Kolkata
+    ports: ["5432:5432"]
+    volumes: [timescale_data:/home/postgres/pgdata/data]
+    networks:
+      devdata: { aliases: [db] }
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4.12-alpine3.21
+    container_name: RedisDev
+    # RDB snapshots only; switch to --appendonly yes once the job queue holds durable work (Phase 6).
+    command: ["redis-server", "--save", "3600 1 300 100 60 10000", "--appendonly", "no"]
+    volumes: [redis_data:/data]
+    networks:
+      devdata: { aliases: [redis] }
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+    restart: unless-stopped
+
+volumes:
+  timescale_data: { name: timescale_data }
+  redis_data: { name: redis_data }
+
+networks:
+  # Created by `make dev-db`; shared with the api from compose.dev.yaml.
+  devdata:
+    name: stock-analyzer-devdata
+    external: true
