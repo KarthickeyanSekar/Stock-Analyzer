@@ -14,6 +14,7 @@ from stock_analyzer.presentation.api.dependencies import get_container
 from stock_analyzer.presentation.api.schemas.trade_plans import (
     CloseTradePlanBody,
     CreateTradePlanBody,
+    JournalSummaryResponse,
     TradePlanResponse,
 )
 
@@ -44,6 +45,12 @@ async def create_trade_plan(
 async def list_trade_plans(container: ContainerDep) -> list[TradePlanResponse]:
     """Return every plan, newest first."""
     return await _respond(container, await container.trade_plans.list_all())
+
+
+@router.get("/summary", response_model=JournalSummaryResponse, summary="Journal summary")
+async def journal_summary(container: ContainerDep) -> JournalSummaryResponse:
+    """Return counts, success rate and model bias, overall and per holding category."""
+    return JournalSummaryResponse.from_domain(await container.trade_plans.summary())
 
 
 @router.get("/{plan_id}", response_model=TradePlanResponse, summary="Get one plan")

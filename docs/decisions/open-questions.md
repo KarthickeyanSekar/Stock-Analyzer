@@ -74,9 +74,9 @@ update its row **and** every doc it affects.
 | 57 | Where does the decision log live, and how are new docs numbered? | Last numbered doc (renumbered each time), separate folder | ✅ **Separate folder** `docs/decisions/open-questions.md` (stable path); new docs are **appended** with the next number and existing docs are **never renumbered** (keeps links and git history intact) |
 | 58 | What feels most "sloppy" in the POC UI? | Layout, colours, typography, density, predictions display, forms | ✅ **All of it: UI, UX and interaction design (IX)** need a full rework, not patches |
 | 59 | Reference apps for the look and feel? | Kite, Tickertape, Screener, TradingView, other | ✅ **Kite-like:** clean, minimal, fast and data-dense (the feel, not Zerodha's brand or assets), modern, with smooth animation |
-| 60 | Default theme? | Light, dark, follow the system | Proposed: **follow the system**, with a toggle · _TBD_ |
+| 60 | Default theme? | Light, dark, follow the system | ✅ **Follow the system**, with a toggle that is remembered (proposal applied) |
 | 61 | Phone support priority? | Desktop first, phone now | ✅ **Responsive now:** phone, tablet and desktop are all first-class in the redesign |
-| 62 | Design process? | Clickable HTML mockups first, straight to code | Proposed: **mockups first, review gate before code** · _TBD_ |
+| 62 | Design process? | Clickable HTML mockups first, straight to code | ✅ **Build in code directly**; two mockups (Stock detail, Home) on the design canvas serve as the visual reference |
 
 ## Related
 - [00 – How to Plan This Project](../00-how-to-plan.md)
