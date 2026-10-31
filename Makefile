@@ -6,6 +6,8 @@ PROD := docker compose -f compose.yaml -f compose.prod.yaml --profile telemetry
 DEVDATA := docker compose -f compose.devdata.yaml
 # One-off command in the api image with the source mounted (alembic, scripts).
 API_RUN := $(DEV) run --rm --no-deps api
+# Batch jobs: no telemetry export (nothing to trace for a one-off CLI run).
+JOB_RUN := $(DEV) run --rm --no-deps -e SA_OTEL_ENABLED=false api
 
 DEV_NET         := stock-analyzer-devdata
 DB_CONTAINER    ?= timescaledb
@@ -15,7 +17,7 @@ LOAD_ENV := set -a; . ./.env; set +a
 
 .PHONY: help bootstrap setup dev-db dev-db-stop dev-network dev dev-file dev-data infra down prod \
         test lint format api-client logs \
-        db-upgrade db-downgrade db-revision db-current db-history db-shell db-reset \
+        seed predict db-upgrade db-downgrade db-revision db-current db-history db-shell db-reset \
         redis-shell redis-info redis-keys redis-flush
 
 help:          ## List targets
@@ -80,6 +82,14 @@ format:        ## Auto-format backend and frontend (in containers, writes to the
 
 api-client:    ## Regenerate the TypeScript API client (api must be running on :8000)
 	cd frontend && npm run api-client
+
+# --- Data jobs (POC: synthetic data) ------------------------------------------------------
+
+seed:          ## Load synthetic NIFTY 50 data (mock provider, 5 years); safe to re-run
+	$(JOB_RUN) python -m stock_analyzer.presentation.jobs.seed
+
+predict:       ## Compute baseline predictions for every stock and holding category
+	$(JOB_RUN) python -m stock_analyzer.presentation.jobs.predict
 
 # --- PostgreSQL (schema changes only through Alembic migrations) -------------------------
 

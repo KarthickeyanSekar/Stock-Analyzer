@@ -5,7 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from stock_analyzer.bootstrap import Container, build_container
-from stock_analyzer.presentation.api.routers import health
+from stock_analyzer.presentation.api.error_handlers import register_error_handlers
+from stock_analyzer.presentation.api.routers import admin_providers, health, stocks, trade_plans
 
 
 def create_app(container: Container | None = None) -> FastAPI:
@@ -20,7 +21,9 @@ def create_app(container: Container | None = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.include_router(health.router)
+    register_error_handlers(app)
+    for module in (health, stocks, trade_plans, admin_providers):
+        app.include_router(module.router)
     if container.settings.otel_enabled:
         FastAPIInstrumentor.instrument_app(app)
     return app

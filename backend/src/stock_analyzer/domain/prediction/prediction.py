@@ -37,3 +37,4 @@ class Prediction:
     prob_hit: dict[int, Decimal] = field(default_factory=dict)
     sample_size: int = 0
     model_version: str = ""
+    id: int | None = None

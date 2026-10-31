@@ -98,11 +98,30 @@ class ProviderRepository(Protocol):
 class UnitOfWork(Protocol):
     """One database transaction; use as ``async with uow: ... await uow.commit()``."""
 
-    stocks: StockRepository
-    prices: PriceRepository
-    predictions: PredictionRepository
-    trade_plans: TradePlanRepository
-    providers: ProviderRepository
+    @property
+    def stocks(self) -> StockRepository:
+        """Stock repository bound to this transaction."""
+        ...
+
+    @property
+    def prices(self) -> PriceRepository:
+        """Price repository bound to this transaction."""
+        ...
+
+    @property
+    def predictions(self) -> PredictionRepository:
+        """Prediction repository bound to this transaction."""
+        ...
+
+    @property
+    def trade_plans(self) -> TradePlanRepository:
+        """Trade plan repository bound to this transaction."""
+        ...
+
+    @property
+    def providers(self) -> ProviderRepository:
+        """Provider repository bound to this transaction."""
+        ...
 
     async def __aenter__(self) -> Self:
         """Start the transaction."""
