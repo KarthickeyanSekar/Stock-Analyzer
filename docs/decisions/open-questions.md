@@ -72,10 +72,10 @@ update its row **and** every doc it affects.
 | 55 | Frontend file naming? (code uses kebab-case, doc 24 says PascalCase) | kebab-case files (`trade-plan-table.tsx`, shadcn style), PascalCase files | ✅ **kebab-case file names, PascalCase component names** (matches shadcn/ui and the existing code; doc 24 updated) |
 | 56 | Start with a POC on synthetic data? | POC first, real API first | ✅ **POC on synthetic data first** (NIFTY 50 × 5 years, mock provider), then real API integration ([27](../27-phase1-poc-plan.md)) |
 | 57 | Where does the decision log live, and how are new docs numbered? | Last numbered doc (renumbered each time), separate folder | ✅ **Separate folder** `docs/decisions/open-questions.md` (stable path); new docs are **appended** with the next number and existing docs are **never renumbered** (keeps links and git history intact) |
-| 58 | What feels most "sloppy" in the POC UI? | Layout, colours, typography, density, predictions display, forms | _TBD_ ([28](../28-ui-ux-redesign-plan.md#11-questions-for-you)) |
-| 59 | Reference apps for the look and feel? | Kite, Tickertape, Screener, TradingView, other | _TBD_ |
+| 58 | What feels most "sloppy" in the POC UI? | Layout, colours, typography, density, predictions display, forms | ✅ **All of it: UI, UX and interaction design (IX)** need a full rework, not patches |
+| 59 | Reference apps for the look and feel? | Kite, Tickertape, Screener, TradingView, other | ✅ **Kite-like:** clean, minimal, fast and data-dense (the feel, not Zerodha's brand or assets), modern, with smooth animation |
 | 60 | Default theme? | Light, dark, follow the system | Proposed: **follow the system**, with a toggle · _TBD_ |
-| 61 | Phone support priority? | Desktop first, phone now | Proposed: **desktop first, phone layout in UI-6** · _TBD_ |
+| 61 | Phone support priority? | Desktop first, phone now | ✅ **Responsive now:** phone, tablet and desktop are all first-class in the redesign |
 | 62 | Design process? | Clickable HTML mockups first, straight to code | Proposed: **mockups first, review gate before code** · _TBD_ |
 
 ## Related
