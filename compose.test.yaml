@@ -1,0 +1,13 @@
+# Throwaway stack for automated tests: no ports, no persistent volume.
+services:
+  db:
+    volumes: !reset []
+  api:
+    build: { target: dev }
+    environment: { SA_ENV: test, SA_OTEL_ENABLED: "false" }
+    command: ["pytest", "--cov=stock_analyzer"]
+    restart: "no"
+  web:
+    build: { target: dev }
+    command: ["npm", "test"]
+    restart: "no"

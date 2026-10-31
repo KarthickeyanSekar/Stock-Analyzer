@@ -1,0 +1,82 @@
+# CLAUDE.md
+
+Instructions for Claude when working in this repository. Humans: start with [README.md](README.md) and [docs/README.md](docs/README.md).
+
+## Project in one paragraph
+Stock Analyzer predicts how much an NSE stock may return over a chosen **holding category**
+(50D · 100D · 200D · 300D · 1Y · 2Y · 3Y) and lets users track plans in a **manual trade journal**.
+India (NSE; BSE optional) now, world markets later, so keep code **market-agnostic** (market, currency, timezone, calendar per stock).
+**Long-term is built first**; short-term (1 day – 2 weeks) comes later. Current phase: **Phase 1 – Foundation** ([docs/09-roadmap.md](docs/09-roadmap.md)).
+
+## Non-negotiable product rules
+- **Predictions are pure statistics / ML.** An LLM never produces a number (prices, %, probabilities). OpenAI is optional, for explanations only.
+- **Every prediction has a range and a probability**, never a single certain number. Headline format: `+9% (−6…+24%) · 41% chance of +20%`.
+- **No broker, no orders.** The app never places trades. Journal values are entered manually; prices and fundamentals come from data-only APIs.
+- **No scrapers, bhavcopy parsers or unofficial data libraries** (yfinance, jugaad-data …). Only managed APIs through provider plugins.
+- **Provider credentials are configured in the admin UI** and stored encrypted (Fernet, `SA_MASTER_KEY`). `.env` holds bootstrap values only.
+- Journal rules: one start, one planned end, one exit; prediction **locked** at start; outcome **calculated**
+  (equal within tolerance = SUCCESS, above = PARTIAL + tuning required, below = FAILURE; default tolerance ±0.5 pp).
+- Money and percentages use `Decimal`-based value objects, never floats. Datetimes are timezone-aware; store UTC, display in market time.
+
+## Architecture (enforced by import-linter)
+Backend: `backend/src/stock_analyzer/` in Clean Architecture layers. Dependencies point **inwards only**:
+`presentation → infrastructure → application → domain`.
+- `domain/`: pure Python business rules (entities, value objects, calculators). **No** fastapi, sqlalchemy, pydantic, redis, apscheduler, opentelemetry.
+- `application/`: use cases (`VerbNoun.execute()`) and **ports** (ABC interfaces).
+- `infrastructure/`: adapters (SQLAlchemy repositories, provider plugins, security, telemetry, config).
+- `presentation/`: FastAPI routers/schemas and job entry points. Wiring only in `bootstrap.py`.
+Frontend: `frontend/src/` is feature-based (`app/`, `pages/`, `features/<feature>/`, `shared/`). Features import each other only via `index.ts`.
+UI uses **shadcn/ui + Tailwind 4** (components in `shared/ui/`). Server data only via TanStack Query; no business maths in the UI.
+
+Full rules, naming tables and examples: [docs/24-coding-standards.md](docs/24-coding-standards.md). Follow them exactly.
+
+## Naming (short version)
+Python: `snake_case` modules/functions, `PascalCase` classes, ports named by role (`MarketDataProvider`),
+implementations prefixed by technology/vendor (`SqlAlchemyTradePlanRepository`, `EodhdMarketDataProvider`),
+errors end in `Error`, booleans `is_/has_/can_`, units as suffixes (`target_pct`, `latency_ms`), `…_date` vs `…_at`.
+DB: plural `snake_case` tables, `<singular>_id` FKs. API: `/api/<plural-kebab>`. Env vars: `SA_` prefix.
+
+## Commands (everything runs in Docker)
+| Command | Use |
+|---|---|
+| `make dev` | api + web + Grafana with hot reload (runs `make dev-network` first) |
+| `make test` | pytest + Vitest in containers |
+| `make lint` | ruff, ruff format, mypy (strict), import-linter, ESLint/Prettier in containers |
+| `make api-client` | Regenerate the TS client after any API change |
+| `make dev-network` | Attach the standalone dev containers to the `stock-analyzer-devdata` network |
+URLs: web http://localhost:5173 · api http://localhost:8000/docs · Grafana http://localhost:3000.
+The Makefile must stay compatible with **GNU Make 3.81** (macOS default): no `.ONESHELL` or newer functions.
+
+## Local infrastructure (dev)
+- PostgreSQL = standalone container **`timescaledb`** (`timescale/timescaledb-ha:pg16.15-ts2.31.0`, volume `timescale_data`, DB `dev_stock_analyzer`),
+  reachable from the api as host **`db`**. Redis = standalone container **`RedisDev`**, host **`redis`**. Both on network `stock-analyzer-devdata`.
+- **Never use the `-oss` TimescaleDB image**: it can't load the TSL library and `CREATE EXTENSION timescaledb` breaks the database.
+- Extensions present: `timescaledb`, `vector`, `pgcrypto`. Schema changes go through **Alembic migrations** only.
+- The api reads `.env` only when its container is created: after editing `.env`, recreate it
+  (`docker compose -f compose.yaml -f compose.dev.yaml --profile telemetry up -d --no-deps --force-recreate api`).
+- Never print, log or commit secrets (`.env`, `SA_MASTER_KEY`, DB passwords). Mask them in any command output.
+
+## Testing and quality
+- No CI: `make lint` and `make test` (in containers) plus pre-commit hooks are the only gate. Run both before declaring work done.
+- Domain/application code gets unit tests (fake ports, no I/O); repositories/providers get integration tests with recorded fixtures.
+- Include a data-leakage test for anything that builds features or labels (no future data).
+- Definition of Done: [docs/24-coding-standards.md](docs/24-coding-standards.md#9-definition-of-done-every-change).
+
+## Git workflow
+- `master` is the stable branch. It changes **only by merging a PR from `develop`**; never commit or push to `master` directly.
+- `develop` is the integration branch. New work goes on `feature/<short-name>` or `fix/<short-name>` from `develop`,
+  merged back into `develop` by PR.
+- Remote: `origin` = github.com/KarthickeyanSekar/Stock-Analyzer. PRs use the GitHub CLI (`gh`).
+- Conventional Commits: `feat(journal): …`, `fix(providers): …`, `docs: …`, `chore: …`.
+- Commit or push only when the user asks.
+
+## Documentation rules
+- Planning docs live in `docs/NN-name.md`. Use the **`/plan-doc` skill** when adding or restructuring docs.
+- **Open Questions is always the last numbered doc.** A new doc takes its number and Open Questions moves up by one; update every link.
+- Diagrams are always **Mermaid**. Every doc has top and bottom nav bars and a Related section; the README index lists every doc.
+- When a decision is made, record it as ✅ in Open Questions **and** update every doc it affects. Keep the docs matching the code.
+
+## Working with the user
+- The user writes quickly and informally. Restate the interpretation when a request is ambiguous, and ask before anything hard to undo
+  (deleting containers or volumes, recreating databases, force operations).
+- Explain options as a comparison table with a recommendation, then record the decision in the docs.

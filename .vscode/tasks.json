@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup: install backend + frontend",
+      "type": "shell",
+      "command": "make setup",
+      "problemMatcher": []
+    },
+    {
+      "label": "Infra: start db + redis",
+      "type": "shell",
+      "command": "make infra",
+      "problemMatcher": []
+    },
+    {
+      "label": "Infra: stop",
+      "type": "shell",
+      "command": "make down",
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: Vite dev server",
+      "type": "npm",
+      "script": "dev",
+      "path": "frontend",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": { "regexp": "^$" },
+        "background": { "activatesOn": { "regexp": "VITE" }, "beginsPattern": "VITE", "endsPattern": "Local:" }
+      }
+    },
+    {
+      "label": "Regenerate API client",
+      "type": "shell",
+      "command": "make api-client",
+      "problemMatcher": []
+    }
+  ]
+}
