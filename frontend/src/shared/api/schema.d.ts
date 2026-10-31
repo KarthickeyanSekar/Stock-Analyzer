@@ -24,10 +24,279 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search stocks
+         * @description Return stocks whose symbol or name contains ``query``.
+         */
+        get: operations["search_stocks_api_stocks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stocks/{symbol}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get one stock
+         * @description Return one stock by NSE symbol.
+         */
+        get: operations["get_stock_api_stocks__symbol__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stocks/{symbol}/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Daily candles
+         * @description Return daily candles between ``from`` and ``to`` (inclusive).
+         */
+        get: operations["get_prices_api_stocks__symbol__prices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stocks/{symbol}/predictions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Latest prediction per holding category
+         * @description Return the latest baseline prediction for every holding category.
+         */
+        get: operations["get_predictions_api_stocks__symbol__predictions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List plans
+         * @description Return every plan, newest first.
+         */
+        get: operations["list_trade_plans_api_trade_plans_get"];
+        put?: never;
+        /**
+         * Start a plan
+         * @description Start a plan; the latest prediction for the category is locked into it.
+         */
+        post: operations["create_trade_plan_api_trade_plans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade-plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get one plan
+         * @description Return one plan.
+         */
+        get: operations["get_trade_plan_api_trade_plans__plan_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade-plans/{plan_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close a plan
+         * @description Record the exit. The outcome (SUCCESS / PARTIAL / FAILURE) is calculated, never sent.
+         */
+        post: operations["close_trade_plan_api_trade_plans__plan_id__close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List providers
+         * @description Return every configured provider.
+         */
+        get: operations["list_providers_api_admin_providers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/providers/{plugin_name}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test a connection
+         * @description Check that the provider can reach its data source.
+         */
+        post: operations["test_provider_api_admin_providers__plugin_name__test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * CandleResponse
+         * @description One daily candle.
+         */
+        CandleResponse: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Open */
+            open: number;
+            /** High */
+            high: number;
+            /** Low */
+            low: number;
+            /** Close */
+            close: number;
+            /** Adj Close */
+            adj_close: number;
+            /** Volume */
+            volume: number;
+        };
+        /**
+         * CloseTradePlanBody
+         * @description Record the exit; the outcome is calculated by the server.
+         */
+        CloseTradePlanBody: {
+            /**
+             * Exit Date
+             * Format: date
+             */
+            exit_date: string;
+            /** Exit Price */
+            exit_price: number | string;
+            /**
+             * Exited Early
+             * @default false
+             */
+            exited_early: boolean;
+            /** Notes */
+            notes?: string | null;
+        };
+        /**
+         * CreateTradePlanBody
+         * @description Start a plan. Omit ``entry_price`` / ``target_pct`` to use the close and the prediction.
+         */
+        CreateTradePlanBody: {
+            /**
+             * Symbol
+             * @example RELIANCE
+             */
+            symbol: string;
+            /** @example 50D */
+            category: components["schemas"]["HoldingCategory"];
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /** Entry Price */
+            entry_price?: number | string | null;
+            /**
+             * Target Pct
+             * @example 10
+             */
+            target_pct?: number | string | null;
+            /**
+             * Stop Pct
+             * @default -7
+             */
+            stop_pct: number | string;
+            /**
+             * Success Tolerance Pp
+             * @default 0.5
+             */
+            success_tolerance_pp: number | string;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
         /**
          * HealthResponse
          * @description Liveness information returned by ``GET /api/health``.
@@ -44,6 +313,175 @@ export interface components {
              * Format: date-time
              */
             server_time: string;
+        };
+        /**
+         * HoldingCategory
+         * @description A planned holding period, entered by users in calendar days.
+         * @enum {string}
+         */
+        HoldingCategory: "50D" | "100D" | "200D" | "300D" | "1Y" | "2Y" | "3Y";
+        /**
+         * PlanOutcome
+         * @description Calculated result of a closed plan.
+         * @enum {string}
+         */
+        PlanOutcome: "SUCCESS" | "PARTIAL" | "FAILURE" | "EXITED_EARLY";
+        /**
+         * PlanStatus
+         * @description Lifecycle state of a plan.
+         * @enum {string}
+         */
+        PlanStatus: "ACTIVE" | "CLOSED";
+        /**
+         * PredictionResponse
+         * @description Prediction for one holding category (headline = median % with range + target odds).
+         */
+        PredictionResponse: {
+            category: components["schemas"]["HoldingCategory"];
+            /** Calendar Days */
+            calendar_days: number;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** P10 Pct */
+            p10_pct: number;
+            /** P50 Pct */
+            p50_pct: number;
+            /** P90 Pct */
+            p90_pct: number;
+            /**
+             * Prob Up
+             * @description Share of past windows that ended higher (0-1)
+             */
+            prob_up: number;
+            /**
+             * Prob Hit
+             * @description Target % → probability before the stop
+             */
+            prob_hit: {
+                [key: string]: number;
+            };
+            /**
+             * Cagr P50 Pct
+             * @description Median per year; only for 1Y and longer
+             */
+            cagr_p50_pct: number | null;
+            /** Model Version */
+            model_version: string;
+        };
+        /**
+         * ProviderResponse
+         * @description A configured provider.
+         */
+        ProviderResponse: {
+            /** Plugin Name */
+            plugin_name: string;
+            /** Kind */
+            kind: string;
+            /** Display Name */
+            display_name: string;
+            /** Is Enabled */
+            is_enabled: boolean;
+        };
+        /**
+         * ProviderTestResponse
+         * @description Result of a connection test.
+         */
+        ProviderTestResponse: {
+            /** Plugin Name */
+            plugin_name: string;
+            /** Is Ok */
+            is_ok: boolean;
+        };
+        /**
+         * StockPredictionsResponse
+         * @description A stock, its last close and the latest prediction per holding category.
+         */
+        StockPredictionsResponse: {
+            stock: components["schemas"]["StockResponse"];
+            last_close: components["schemas"]["CandleResponse"] | null;
+            /** Predictions */
+            predictions: components["schemas"]["PredictionResponse"][];
+        };
+        /**
+         * StockResponse
+         * @description A stock and whether its data is synthetic (shown with a SYNTHETIC badge).
+         */
+        StockResponse: {
+            /** Symbol */
+            symbol: string;
+            /** Name */
+            name: string;
+            /** Exchange */
+            exchange: string;
+            /** Market */
+            market: string;
+            /** Sector */
+            sector: string | null;
+            /** Currency */
+            currency: string;
+            /** Is Synthetic */
+            is_synthetic: boolean;
+        };
+        /**
+         * TradePlanResponse
+         * @description A journal plan with its locked prediction values and outcome.
+         */
+        TradePlanResponse: {
+            /** Id */
+            id: number;
+            /** Symbol */
+            symbol: string;
+            category: components["schemas"]["HoldingCategory"];
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * Planned End Date
+             * Format: date
+             */
+            planned_end_date: string;
+            /** Entry Price */
+            entry_price: number;
+            /** Target Pct */
+            target_pct: number;
+            /** Target Price */
+            target_price: number;
+            /** Stop Pct */
+            stop_pct: number;
+            /** Stop Price */
+            stop_price: number;
+            /** Success Tolerance Pp */
+            success_tolerance_pp: number;
+            /** Prediction Id */
+            prediction_id: number | null;
+            status: components["schemas"]["PlanStatus"];
+            outcome: components["schemas"]["PlanOutcome"] | null;
+            /** Exit Date */
+            exit_date: string | null;
+            /** Exit Price */
+            exit_price: number | null;
+            /** Actual Return Pct */
+            actual_return_pct: number | null;
+            /** Notes */
+            notes: string | null;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
         };
     };
     responses: never;
@@ -70,6 +508,305 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    search_stocks_api_stocks_get: {
+        parameters: {
+            query?: {
+                /** @description Part of the symbol or name */
+                query?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_stock_api_stocks__symbol__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_prices_api_stocks__symbol__prices_get: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path: {
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CandleResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_predictions_api_stocks__symbol__predictions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockPredictionsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_trade_plans_api_trade_plans_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradePlanResponse"][];
+                };
+            };
+        };
+    };
+    create_trade_plan_api_trade_plans_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTradePlanBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradePlanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_trade_plan_api_trade_plans__plan_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradePlanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_trade_plan_api_trade_plans__plan_id__close_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseTradePlanBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradePlanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_providers_api_admin_providers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderResponse"][];
+                };
+            };
+        };
+    };
+    test_provider_api_admin_providers__plugin_name__test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plugin_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderTestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

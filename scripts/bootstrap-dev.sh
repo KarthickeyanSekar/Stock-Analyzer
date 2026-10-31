@@ -37,6 +37,9 @@ make dev-db
 say "Applying database migrations"
 make db-upgrade
 
+say "Loading the POC: synthetic NIFTY 50 data + baseline predictions"
+make poc-data
+
 if command -v pre-commit >/dev/null 2>&1; then
   say "Installing git hooks"
   pre-commit install
@@ -44,4 +47,4 @@ else
   echo "pre-commit not found: run 'make setup' later to install the git hooks."
 fi
 
-say "Done. Start the app with: make dev"
+say "Done. Start the app with: make dev, then open http://localhost:5173/stocks"

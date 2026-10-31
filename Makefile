@@ -17,7 +17,7 @@ LOAD_ENV := set -a; . ./.env; set +a
 
 .PHONY: help bootstrap setup dev-db dev-db-stop dev-network dev dev-file dev-data infra down prod \
         test lint format api-client logs \
-        seed predict db-upgrade db-downgrade db-revision db-current db-history db-shell db-reset \
+        seed predict poc-data db-upgrade db-downgrade db-revision db-current db-history db-shell db-reset \
         redis-shell redis-info redis-keys redis-flush
 
 help:          ## List targets
@@ -90,6 +90,8 @@ seed:          ## Load synthetic NIFTY 50 data (mock provider, 5 years); safe to
 
 predict:       ## Compute baseline predictions for every stock and holding category
 	$(JOB_RUN) python -m stock_analyzer.presentation.jobs.predict
+
+poc-data: seed predict  ## POC data in one step: seed + predict (run after db-upgrade)
 
 # --- PostgreSQL (schema changes only through Alembic migrations) -------------------------
 
