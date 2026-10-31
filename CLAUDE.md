@@ -63,8 +63,10 @@ The Makefile must stay compatible with **GNU Make 3.81** (macOS default): no `.O
 - Definition of Done: [docs/24-coding-standards.md](docs/24-coding-standards.md#9-definition-of-done-every-change).
 
 ## Git workflow
-- `master` holds only the empty root commit. **Never commit to `master`.**
-- `develop` is the integration branch. New work goes on `feature/<short-name>` or `fix/<short-name>` from `develop`.
+- `master` is the stable branch. It changes **only by merging a PR from `develop`**; never commit or push to `master` directly.
+- `develop` is the integration branch. New work goes on `feature/<short-name>` or `fix/<short-name>` from `develop`,
+  merged back into `develop` by PR.
+- Remote: `origin` = github.com/KarthickeyanSekar/Stock-Analyzer. PRs use the GitHub CLI (`gh`).
 - Conventional Commits: `feat(journal): …`, `fix(providers): …`, `docs: …`, `chore: …`.
 - Commit or push only when the user asks.
 
