@@ -36,7 +36,7 @@ Frontend and API are served from the **same origin** (`/` and `/api`), so there 
 | Language / build | TypeScript, Vite, Node.js 22 LTS (build only) |
 | Routing | React Router |
 | Server data, caching | TanStack Query |
-| UI components | **shadcn/ui** (Radix UI + Tailwind CSS); light and dark themes |
+| UI components | ✅ **shadcn/ui** (Radix UI + Tailwind CSS 4); light and dark themes. Components are copied into `shared/ui/` and owned by the project. daisyUI was considered and not chosen (CSS-only, no built-in interactive behaviour) |
 | Tables (screener, journal, providers) | TanStack Table: sorting, filtering, column choice |
 | Forms + validation | React Hook Form + Zod (validation rules shared with the API schema) |
 | Price charts | **TradingView Lightweight Charts** (candlesticks, moving averages, plan target/stop lines) |

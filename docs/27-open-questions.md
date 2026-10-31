@@ -7,7 +7,7 @@
 | 1 | Which market? | India (NSE/BSE), US, both, crypto | ✅ **India (NSE/BSE) now**; **world markets later** (design stays market-agnostic) |
 | 2 | Short-term horizon? | 1 day, 5 days, 2 weeks | ✅ **1 day – 2 weeks** |
 | 3 | Long-term method? | Rule-based scoring, ML forecast, both | ✅ **Both** (score + ML return forecast, e.g., "hold 50 days → +20%") |
-| 4 | Main "percentage" output? | % change, probability up, CAGR, portfolio P/L | _TBD_ |
+| 4 | Main "percentage" output? | % change, probability up, CAGR, portfolio P/L | ✅ **Headline: expected return % with range (p10–p90) + probability of hitting the target**; CAGR only for 1Y+ to compare holding periods; P/L % in the journal and reports ([01](01-overview.md#percentage-outputs-where-each-is-shown)) |
 | 5 | Who uses it? | Personal / learning, or other users | ✅ **Pet project: personal + other users**, with OAuth sign-in ([19](19-auth-multi-user.md)) |
 | 6 | Interface? | Streamlit, React, CLI | ✅ **React + TypeScript (Vite) frontend + FastAPI backend** ([23](23-frontend-react.md)) |
 | 7 | Data budget? | Free only, or paid APIs | _TBD_ |
@@ -49,7 +49,7 @@
 | 43 | Deep research of every data point | Tracker in [21](21-stock-analysis-datapoints.md#research-tracker) | 🔬 In progress (you, separately) |
 | 44 | How are data providers configured? | `.env` / code, in-app UI | ✅ **In-app admin UI** with plugins, encrypted credentials and automatic failover ([22](22-provider-configuration-ui.md)) |
 | 45 | Which market data and fundamentals API to start with? | Market data + fundamentals: EODHD, FMP, TrueData, Trendlyne (all in the catalog) | _TBD_ (can be changed later in the UI) |
-| 46 | UI component library? | shadcn/ui + Tailwind, MUI, Ant Design | Proposed: **shadcn/ui + Tailwind** · _TBD_ |
+| 46 | UI component library? | shadcn/ui + Tailwind, MUI, Ant Design, daisyUI | ✅ **shadcn/ui + Tailwind CSS 4** (Radix-based, accessible, code in `shared/ui/`); daisyUI considered but not chosen: CSS-only, so dialogs, comboboxes and menus would need extra code ([23](23-frontend-react.md#frontend-stack)) |
 | 47 | SPA (Vite) or Next.js? | Vite SPA, Next.js | Proposed: **Vite SPA** (backend handles auth and data) · _TBD_ |
 | 48 | Coding standards & architecture? | — | ✅ **Clean Architecture + OOP + naming conventions** ([24](24-coding-standards.md)) |
 | 49 | Does the data provider include **delisted stocks** and **historical index membership** (to avoid survivorship bias)? | Check during the API trial | _TBD_ ([26](26-ml-pipeline.md#1-data-preparation-avoiding-the-classic-traps)) |

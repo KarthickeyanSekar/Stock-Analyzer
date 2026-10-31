@@ -39,12 +39,18 @@ Every recommendation comes with **when to enter, how long to hold and when to ex
 Merges both engines into one summary card and highlights where they disagree
 (e.g., "short-term weak, long-term strong" → possible buying opportunity).
 
-## Meanings of "percentage"
-- Predicted % price change over a horizon
-- Probability (%) of the price going up
-- % gain/loss on holdings
-- % threshold alerts
-- Expected annual return (CAGR %) and fair-value upside %
+## Percentage outputs: where each is shown
+✅ Decision (Q4). Example: RELIANCE at ₹1,000, 50-day category.
+
+| Output | Meaning | Example | Shown in |
+|---|---|---|---|
+| **Expected return % + range** (headline) | Median predicted return and the p10–p90 range | **+9%** (−6% … +24%) | Stock view, screener |
+| **Probability of hitting the target** (headline) | Chance of reaching the target % before the stop-loss | **41%** chance of +20% | Stock view, screener, journal (locked at start) |
+| Probability up | Chance of any gain at the end of the period | 64% | Stock view (secondary) |
+| **CAGR** | Return per year, to compare long holds fairly | 3Y +44% ≈ **13%/yr** vs 1Y 15%/yr | Holding-period comparison, **1Y and longer only** (misleading for short holds) |
+| **P/L %** | Real gain/loss of your plans, vs NIFTY 50 | +5.0% (day 12/50); all plans +3.2% vs NIFTY +1.8% | Trade journal, daily report |
+
+Headline format everywhere: *"+9% (−6…+24%) · 41% chance of +20%"*.
 
 ## Current focus
 1. **Long-term first** (50 days – multi-year); short-term later

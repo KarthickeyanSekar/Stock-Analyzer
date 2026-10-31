@@ -42,6 +42,8 @@ P(+20%)    8%      18%     31%     39%     43%     68%     81%
 Best risk-adjusted: 1Y (LTCG)
 ```
 
+**Display rule (Q4):** headline = median % with range + probability of the target; the **CAGR** row is shown only for 1Y, 2Y and 3Y ([01](01-overview.md#percentage-outputs-where-each-is-shown)).
+
 ## Filter inputs
 Any data point from [21 – Stock Analysis Data Points 🧮](21-stock-analysis-datapoints.md) can also be used as a filter (e.g., ROCE > 20%, pledge = 0%).
 
