@@ -18,7 +18,7 @@ LOAD_ENV := set -a; . ./.env; set +a
 
 .PHONY: help bootstrap setup dev-db dev-db-stop dev-network dev dev-file dev-data infra down prod \
         test lint format api-client logs e2e e2e-update ui-shots \
-        seed predict track features train model-rollback ml-data real-data poc-data db-upgrade db-downgrade db-revision db-current db-history db-shell db-reset \
+        seed predict track features train model-rollback ml-data validate real-data poc-data db-upgrade db-downgrade db-revision db-current db-history db-shell db-reset \
         redis-shell redis-info redis-keys redis-flush
 
 help:          ## List targets
@@ -116,6 +116,10 @@ train:         ## Train + evaluate + gate ML models per category; report -> docs
 model-rollback: ## Re-activate the previous ML model of a category: make model-rollback c=1Y
 	@[ -n "$(c)" ] || { echo 'Usage: make model-rollback c=<50D|100D|200D|300D|1Y|2Y|3Y>'; exit 1; }
 	$(JOB_RUN) python -m stock_analyzer.presentation.jobs.rollback "$(c)"
+
+validate:      ## Backtest + calibration + journal review with a go/no-go verdict -> docs/reports/validation.md
+	$(JOB_RUN) python -m stock_analyzer.presentation.jobs.validate
+	@mkdir -p docs/reports && cp backend/var/reports/validation.md docs/reports/validation.md
 
 real-data:     ## Replace synthetic data with the primary provider's (asks for confirmation), then rebuild ML
 	@printf 'This DELETES the synthetic prices, fundamentals, features and labels (journal plans stay).\nType REAL to continue: '; \
