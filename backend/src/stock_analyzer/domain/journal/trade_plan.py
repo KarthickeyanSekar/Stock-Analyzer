@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from enum import StrEnum
+from uuid import UUID
 
 from stock_analyzer.domain.market.holding_category import HoldingCategory
 from stock_analyzer.domain.shared.errors import DomainError
@@ -94,6 +95,7 @@ class TradePlan:
     exit_price: Decimal | None = None
     actual_return_pct: Decimal | None = None
     notes: str | None = None
+    owner_id: UUID | None = None  # the user who started it (None: created before accounts)
     id: int | None = None
 
     @classmethod
@@ -113,6 +115,7 @@ class TradePlan:
         reference_close: Decimal | None = None,
         parent_plan_id: int | None = None,
         notes: str | None = None,
+        owner_id: UUID | None = None,
     ) -> "TradePlan":
         """Start a plan; the target and tolerance are locked from this moment."""
         if entry_price <= 0:
@@ -144,6 +147,7 @@ class TradePlan:
             ),
             parent_plan_id=parent_plan_id,
             notes=notes,
+            owner_id=owner_id,
         )
 
     @property

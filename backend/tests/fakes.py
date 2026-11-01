@@ -6,7 +6,9 @@ from dataclasses import replace
 from datetime import date, datetime
 from types import TracebackType
 from typing import Self
+from uuid import UUID
 
+from stock_analyzer.application.ports.auth import AuditEntry, LoginRequest, SessionRecord
 from stock_analyzer.application.ports.ml import Analog
 from stock_analyzer.domain.analysis.features import Features, embedding
 from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
@@ -19,6 +21,8 @@ from stock_analyzer.domain.prediction.model_version import ModelStatus, ModelVer
 from stock_analyzer.domain.prediction.prediction import Prediction
 from stock_analyzer.domain.pricing.candle import Candle
 from stock_analyzer.domain.stock.stock import Stock
+from stock_analyzer.domain.users.invite import InviteCode
+from stock_analyzer.domain.users.user import User
 
 
 class InMemoryStore:
@@ -32,7 +36,14 @@ class InMemoryStore:
         self.predictions: dict[tuple[int, date, str, str], Prediction] = {}
         self.plans: dict[int, TradePlan] = {}
         self.snapshots: dict[int, dict[date, PlanProgress]] = {}
-        self.settings: JournalSettings | None = None
+        self.settings: dict[UUID | None, JournalSettings] = {}
+        self.users: dict[UUID, User] = {}
+        self.sessions: dict[str, SessionRecord] = {}
+        self.login_requests: dict[str, LoginRequest] = {}
+        self.invites: dict[UUID, InviteCode] = {}
+        self.redemptions: list[tuple[UUID, UUID]] = []
+        self.audit: list[AuditEntry] = []
+        self.watchlists: dict[UUID, list[int]] = {}
         self.features: dict[tuple[str, int, date], Features] = {}
         self.labels: dict[tuple[str, int, date], Label] = {}
         self.models: list[ModelVersion] = []
@@ -168,8 +179,18 @@ class FakeTradePlans:
         plan = self._s.plans.get(plan_id)
         return replace(plan) if plan else None
 
-    async def list_all(self) -> list[TradePlan]:
-        return [replace(p) for p in sorted(self._s.plans.values(), key=lambda p: -(p.id or 0))]
+    async def list_all(self, owner_id: UUID | None = None) -> list[TradePlan]:
+        return [
+            replace(p)
+            for p in sorted(self._s.plans.values(), key=lambda p: -(p.id or 0))
+            if owner_id is None or p.owner_id == owner_id
+        ]
+
+    async def claim_unowned(self, owner_id: UUID) -> int:
+        unowned = [p for p in self._s.plans.values() if p.owner_id is None]
+        for plan in unowned:
+            plan.owner_id = owner_id
+        return len(unowned)
 
     async def update(self, plan: TradePlan) -> None:
         self._s.plans[plan.id or 0] = replace(plan)
@@ -227,11 +248,15 @@ class FakeSettings:
     def __init__(self, store: InMemoryStore) -> None:
         self._s = store
 
-    async def get(self) -> JournalSettings:
-        return self._s.settings or JournalSettings()
+    async def get(self, user_id: UUID | None = None) -> JournalSettings:
+        return self._s.settings.get(user_id) or JournalSettings()
 
-    async def save(self, settings: JournalSettings) -> None:
-        self._s.settings = settings
+    async def save(self, settings: JournalSettings, user_id: UUID | None = None) -> None:
+        self._s.settings[user_id] = settings
+
+    async def claim_unowned(self, user_id: UUID) -> None:
+        if user_id not in self._s.settings and None in self._s.settings:
+            self._s.settings[user_id] = self._s.settings.pop(None)
 
 
 class FakeFeatures:
@@ -334,6 +359,130 @@ class FakeModels:
         return [m for m in reversed(self._s.models) if m.category is category]
 
 
+class FakeUsers:
+    def __init__(self, store: InMemoryStore) -> None:
+        self._s = store
+
+    async def get(self, user_id: UUID) -> User | None:
+        user = self._s.users.get(user_id)
+        return replace(user) if user else None
+
+    async def by_subject(self, provider: str, subject: str) -> User | None:
+        found = next(
+            (
+                u
+                for u in self._s.users.values()
+                if (u.provider, u.provider_subject) == (provider, subject)
+            ),
+            None,
+        )
+        return replace(found) if found else None
+
+    async def add(self, user: User) -> User:
+        self._s.users[user.id] = replace(user)
+        return user
+
+    async def update(self, user: User) -> None:
+        self._s.users[user.id] = replace(user)
+
+    async def list_all(self) -> list[User]:
+        return [replace(u) for u in self._s.users.values()]
+
+    async def delete(self, user_id: UUID) -> None:
+        self._s.users.pop(user_id, None)
+        self._s.plans = {k: p for k, p in self._s.plans.items() if p.owner_id != user_id}
+        self._s.settings.pop(user_id, None)
+        self._s.watchlists.pop(user_id, None)
+        self._s.redemptions = [r for r in self._s.redemptions if r[1] != user_id]
+
+
+class FakeSessions:
+    def __init__(self, store: InMemoryStore) -> None:
+        self._s = store
+
+    async def add(self, record: SessionRecord) -> None:
+        self._s.sessions[record.token_hash] = record
+
+    async def get(self, token_hash: str) -> SessionRecord | None:
+        return self._s.sessions.get(token_hash)
+
+    async def extend(self, token_hash: str, expires_at: datetime) -> None:
+        record = self._s.sessions[token_hash]
+        self._s.sessions[token_hash] = replace(record, expires_at=expires_at)
+
+    async def delete(self, token_hash: str) -> None:
+        self._s.sessions.pop(token_hash, None)
+
+    async def delete_for_user(self, user_id: UUID) -> None:
+        self._s.sessions = {k: v for k, v in self._s.sessions.items() if v.user_id != user_id}
+
+
+class FakeLoginRequests:
+    def __init__(self, store: InMemoryStore) -> None:
+        self._s = store
+
+    async def add(self, request: LoginRequest) -> None:
+        self._s.login_requests[request.state] = request
+
+    async def pop(self, state: str) -> LoginRequest | None:
+        return self._s.login_requests.pop(state, None)
+
+
+class FakeInvites:
+    def __init__(self, store: InMemoryStore) -> None:
+        self._s = store
+
+    async def add(self, invite: InviteCode) -> InviteCode:
+        self._s.invites[invite.id] = replace(invite)
+        return invite
+
+    async def by_code(self, code: str) -> InviteCode | None:
+        found = next((i for i in self._s.invites.values() if i.code == code), None)
+        return replace(found) if found else None
+
+    async def get(self, invite_id: UUID) -> InviteCode | None:
+        found = self._s.invites.get(invite_id)
+        return replace(found) if found else None
+
+    async def update(self, invite: InviteCode) -> None:
+        self._s.invites[invite.id] = replace(invite)
+
+    async def list_all(self) -> list[InviteCode]:
+        return [replace(i) for i in reversed(self._s.invites.values())]
+
+    async def add_redemption(self, invite_id: UUID, user_id: UUID, at: datetime) -> None:
+        self._s.redemptions.append((invite_id, user_id))
+
+
+class FakeAudit:
+    def __init__(self, store: InMemoryStore) -> None:
+        self._s = store
+
+    async def add(self, entry: AuditEntry) -> None:
+        self._s.audit.append(entry)
+
+    async def recent(self, limit: int) -> list[AuditEntry]:
+        return list(reversed(self._s.audit))[:limit]
+
+
+class FakeWatchlists:
+    def __init__(self, store: InMemoryStore) -> None:
+        self._s = store
+
+    async def list_for(self, user_id: UUID) -> list[int]:
+        return list(self._s.watchlists.get(user_id, []))
+
+    async def add(self, user_id: UUID, stock_id: int) -> None:
+        watched = self._s.watchlists.setdefault(user_id, [])
+        if stock_id not in watched:
+            watched.append(stock_id)
+
+    async def remove(self, user_id: UUID, stock_id: int) -> None:
+        watched = self._s.watchlists.get(user_id, [])
+        if stock_id in watched:
+            watched.remove(stock_id)
+
+
 class FakeUnitOfWork:
     """Writes go straight to the shared store (good enough for use-case and API tests)."""
 
@@ -348,6 +497,12 @@ class FakeUnitOfWork:
         self.settings = FakeSettings(store)
         self.features = FakeFeatures(store)
         self.models = FakeModels(store)
+        self.users = FakeUsers(store)
+        self.sessions = FakeSessions(store)
+        self.login_requests = FakeLoginRequests(store)
+        self.invites = FakeInvites(store)
+        self.audit = FakeAudit(store)
+        self.watchlists = FakeWatchlists(store)
 
     async def __aenter__(self) -> Self:
         return self

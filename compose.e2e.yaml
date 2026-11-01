@@ -18,6 +18,10 @@ services:
       SA_ENV: test
       SA_OTEL_ENABLED: "false"
       SA_DATABASE_URL: postgresql+asyncpg://sa_e2e:sa_e2e@db:5432/sa_e2e
+      # The browser tests sign in with the dev-only sign-in as this admin.
+      SA_DEV_LOGIN: "true"
+      SA_ADMIN_EMAILS: admin@e2e.local
+      SA_PUBLIC_URL: http://web:5173
     # Same POC data as `make poc-data` plus features: migrations, synthetic NIFTY 50, features, predictions.
     command:
       - sh

@@ -4,7 +4,16 @@ from collections.abc import Sequence
 from datetime import date
 from types import TracebackType
 from typing import Protocol, Self
+from uuid import UUID
 
+from stock_analyzer.application.ports.auth import (
+    AuditLog,
+    InviteRepository,
+    LoginRequestRepository,
+    SessionRepository,
+    UserRepository,
+    WatchlistRepository,
+)
 from stock_analyzer.application.ports.ml import FeatureRepository, ModelRegistry
 from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
 from stock_analyzer.domain.journal.progress import PlanProgress
@@ -107,8 +116,12 @@ class TradePlanRepository(Protocol):
         """Return one plan, or ``None``."""
         ...
 
-    async def list_all(self) -> list[TradePlan]:
-        """Return every plan, newest first."""
+    async def list_all(self, owner_id: UUID | None = None) -> list[TradePlan]:
+        """Return the owner's plans (every plan when ``owner_id`` is ``None``), newest first."""
+        ...
+
+    async def claim_unowned(self, owner_id: UUID) -> int:
+        """Give plans without an owner to ``owner_id`` (Q73); return how many."""
         ...
 
     async def update(self, plan: TradePlan) -> None:
@@ -133,14 +146,18 @@ class PlanStatusRepository(Protocol):
 
 
 class SettingsRepository(Protocol):
-    """The app-wide journal settings record (Q63)."""
+    """Journal settings per user (Q63 → per user since Phase 5b)."""
 
-    async def get(self) -> JournalSettings:
-        """Return the settings, or the defaults when none are saved yet."""
+    async def get(self, user_id: UUID | None = None) -> JournalSettings:
+        """Return the user's settings, or the defaults when none are saved yet."""
         ...
 
-    async def save(self, settings: JournalSettings) -> None:
-        """Create or replace the settings record."""
+    async def save(self, settings: JournalSettings, user_id: UUID | None = None) -> None:
+        """Create or replace the user's settings."""
+        ...
+
+    async def claim_unowned(self, user_id: UUID) -> None:
+        """Give the pre-accounts settings record to ``user_id`` (Q73)."""
         ...
 
 
@@ -228,6 +245,36 @@ class UnitOfWork(Protocol):
     @property
     def plan_statuses(self) -> PlanStatusRepository:
         """Plan tracking snapshots bound to this transaction."""
+        ...
+
+    @property
+    def users(self) -> UserRepository:
+        """User accounts."""
+        ...
+
+    @property
+    def sessions(self) -> SessionRepository:
+        """Signed-in browsers."""
+        ...
+
+    @property
+    def login_requests(self) -> LoginRequestRepository:
+        """Sign-ins in progress."""
+        ...
+
+    @property
+    def invites(self) -> InviteRepository:
+        """Invite codes."""
+        ...
+
+    @property
+    def audit(self) -> AuditLog:
+        """Audit log."""
+        ...
+
+    @property
+    def watchlists(self) -> WatchlistRepository:
+        """Per-user watchlists."""
         ...
 
     @property

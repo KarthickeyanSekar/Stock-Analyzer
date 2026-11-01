@@ -4,6 +4,7 @@ Percentages are stored as percent points (``20.0000`` = +20%). ``user_id`` is ad
 in Phase 5b together with the users table.
 """
 
+import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -54,6 +55,10 @@ class TradePlanModel(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    # The owner (Phase 5b); NULL for plans started before user accounts (Q73).
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     stock_id: Mapped[int] = mapped_column(ForeignKey("stocks.id"), index=True)
     prediction_id: Mapped[int | None] = mapped_column(ForeignKey("predictions.id"))
     parent_plan_id: Mapped[int | None] = mapped_column(ForeignKey("trade_plans.id"))
@@ -86,7 +91,9 @@ class PlanDailyStatusModel(Base):
 
     __tablename__ = "plan_daily_status"
 
-    plan_id: Mapped[int] = mapped_column(ForeignKey("trade_plans.id"), primary_key=True)
+    plan_id: Mapped[int] = mapped_column(
+        ForeignKey("trade_plans.id", ondelete="CASCADE"), primary_key=True
+    )
     trade_date: Mapped[date] = mapped_column(Date, primary_key=True)
     close: Mapped[Decimal] = mapped_column(PRICE)
     return_pct: Mapped[Decimal] = mapped_column(PCT)
@@ -99,18 +106,20 @@ class PlanDailyStatusModel(Base):
 
 
 class JournalSettingsModel(Base):
-    """The single app-wide journal settings row (Q63; per user from Phase 5b)."""
+    """Journal settings per user; the row without a user is the pre-accounts record (Q73)."""
 
     __tablename__ = "journal_settings"
     __table_args__ = (
-        CheckConstraint("id = 1", name="single_row"),
         CheckConstraint("paper_capital > 0", name="capital_positive"),
         CheckConstraint("risk_pct > 0 AND risk_pct <= 10", name="risk_range"),
         CheckConstraint("success_tolerance_pp >= 0", name="tolerance_non_negative"),
         CheckConstraint("default_stop_pct < 0", name="stop_negative"),
     )
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
+    id: Mapped[int] = mapped_column(Integer, Identity(start=2), primary_key=True)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), unique=True
+    )
     paper_capital: Mapped[Decimal] = mapped_column(Numeric(18, 2))
     risk_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2))
     success_tolerance_pp: Mapped[Decimal] = mapped_column(Numeric(5, 2))

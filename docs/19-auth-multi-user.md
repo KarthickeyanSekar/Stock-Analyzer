@@ -5,6 +5,14 @@
 **Purpose:** let you **and other users** sign in safely with OAuth, keep each user's plans private, and cover what changes
 when the app is no longer personal-only.
 
+
+> **Status (2026-11-01, Phase 5b):** built. Every API needs a session except health and sign-in.
+> Google / Microsoft appear on the sign-in page once their OAuth client id and secret are in `.env`
+> (redirect URI `{SA_PUBLIC_URL}/api/auth/callback/google|microsoft`). Until then use the dev-only
+> sign-in (`SA_DEV_LOGIN=true`, refused in prod). Sessions in the database (Q71), OIDC + PKCE with
+> JWKS verification (Q72), plans from before accounts claimed by the first admin (Q73).
+> Admin › Users: invite codes, disable / enable, audit log. Account › Delete my account.
+
 ## ✅ Decision
 A pet project for personal use **and other users**. Sign-in uses **OAuth 2.0 / OpenID Connect (OIDC)**, with no passwords stored by the app.
 

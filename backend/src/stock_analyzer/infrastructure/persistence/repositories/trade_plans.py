@@ -1,8 +1,9 @@
 """SQLAlchemy trade plan repository."""
 
 from datetime import UTC, datetime
+from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_analyzer.domain.journal.trade_plan import (
@@ -38,6 +39,7 @@ def _to_domain(row: TradePlanModel) -> TradePlan:
         exit_price=row.exit_price,
         actual_return_pct=row.actual_return_pct,
         notes=row.notes,
+        owner_id=row.user_id,
     )
 
 
@@ -62,6 +64,7 @@ class SqlAlchemyTradePlanRepository:
     async def add(self, plan: TradePlan) -> TradePlan:
         """Store a new plan and return it with its id."""
         row = TradePlanModel(
+            user_id=plan.owner_id,
             stock_id=plan.stock_id,
             category=plan.category.value,
             start_date=plan.start_date,
@@ -88,12 +91,22 @@ class SqlAlchemyTradePlanRepository:
         row = await self._session.get(TradePlanModel, plan_id)
         return _to_domain(row) if row else None
 
-    async def list_all(self) -> list[TradePlan]:
-        """Return every plan, newest first."""
+    async def list_all(self, owner_id: UUID | None = None) -> list[TradePlan]:
+        """Return the owner's plans (all when ``owner_id`` is ``None``), newest first."""
+        statement = select(TradePlanModel)
+        if owner_id is not None:
+            statement = statement.where(TradePlanModel.user_id == owner_id)
         rows = await self._session.scalars(
-            select(TradePlanModel).order_by(TradePlanModel.created_at.desc(), TradePlanModel.id)
+            statement.order_by(TradePlanModel.created_at.desc(), TradePlanModel.id)
         )
         return [_to_domain(row) for row in rows]
+
+    async def claim_unowned(self, owner_id: UUID) -> int:
+        """Give plans without an owner to ``owner_id`` (Q73)."""
+        result = await self._session.execute(
+            update(TradePlanModel).where(TradePlanModel.user_id.is_(None)).values(user_id=owner_id)
+        )
+        return int(result.rowcount or 0)  # type: ignore[attr-defined]
 
     async def update(self, plan: TradePlan) -> None:
         """Persist changes to an existing plan."""

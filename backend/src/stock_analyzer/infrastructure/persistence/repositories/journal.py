@@ -1,8 +1,9 @@
 """SQLAlchemy repositories for plan tracking snapshots and journal settings."""
 
 from collections.abc import Sequence
+from uuid import UUID
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import ColumnElement, delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,7 +14,6 @@ from stock_analyzer.infrastructure.persistence.models import (
     PlanDailyStatusModel,
 )
 
-SETTINGS_ROW_ID = 1
 SNAPSHOT_COLUMNS = (
     "close",
     "return_pct",
@@ -90,15 +90,19 @@ class SqlAlchemyPlanStatusRepository:
 
 
 class SqlAlchemySettingsRepository:
-    """The single ``journal_settings`` row."""
+    """``journal_settings``: one row per user; the row without a user predates accounts."""
 
     def __init__(self, session: AsyncSession) -> None:
         """Use ``session`` for every query."""
         self._session = session
 
-    async def get(self) -> JournalSettings:
-        """Return the saved settings, or the defaults when none are saved yet."""
-        row = await self._session.get(JournalSettingsModel, SETTINGS_ROW_ID)
+    def _where(self, user_id: UUID | None) -> ColumnElement[bool]:
+        column = JournalSettingsModel.user_id
+        return column.is_(None) if user_id is None else column == user_id
+
+    async def get(self, user_id: UUID | None = None) -> JournalSettings:
+        """Return the user's settings, or the defaults when none are saved yet."""
+        row = await self._session.scalar(select(JournalSettingsModel).where(self._where(user_id)))
         if row is None:
             return JournalSettings()
         return JournalSettings(
@@ -108,17 +112,31 @@ class SqlAlchemySettingsRepository:
             default_stop_pct=row.default_stop_pct,
         )
 
-    async def save(self, settings: JournalSettings) -> None:
-        """Create or replace the settings row."""
+    async def save(self, settings: JournalSettings, user_id: UUID | None = None) -> None:
+        """Create or replace the user's settings."""
         values = {
             "paper_capital": settings.paper_capital,
             "risk_pct": settings.risk_pct,
             "success_tolerance_pp": settings.success_tolerance_pp,
             "default_stop_pct": settings.default_stop_pct,
         }
-        statement = insert(JournalSettingsModel).values(id=SETTINGS_ROW_ID, **values)
+        row = await self._session.scalar(select(JournalSettingsModel).where(self._where(user_id)))
+        if row is None:
+            self._session.add(JournalSettingsModel(user_id=user_id, **values))
+        else:
+            for key, value in values.items():
+                setattr(row, key, value)
+            row.updated_at = func.now()
+        await self._session.flush()
+
+    async def claim_unowned(self, user_id: UUID) -> None:
+        """Give the pre-accounts record to ``user_id`` unless they already have settings."""
+        if await self._session.scalar(
+            select(JournalSettingsModel.id).where(JournalSettingsModel.user_id == user_id)
+        ):
+            return
         await self._session.execute(
-            statement.on_conflict_do_update(
-                index_elements=["id"], set_=values | {"updated_at": func.now()}
-            )
+            update(JournalSettingsModel)
+            .where(JournalSettingsModel.user_id.is_(None))
+            .values(user_id=user_id)
         )
