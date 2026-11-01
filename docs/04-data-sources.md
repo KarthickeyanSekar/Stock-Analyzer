@@ -74,10 +74,63 @@ Only the maths, not data collection:
 - Store raw API responses and processed data separately
 - Data is licensed for personal use; don't redistribute it
 
+## EODHD: India coverage, plans and API usage (checked 2026-11-02)
+The EODHD plugin is built (Phase 3b, [deliverable](deliverables/phase-03b-real-data.md)); it needs a paid API key.
+
+### India coverage
+- **NSE** tickers use the `.NSE` suffix (e.g. `RELIANCE.NSE`, used by the plugin); **BSE** uses `.BSE`.
+- EODHD's company pages for Indian stocks show daily prices and fundamentals (income statement, balance sheet,
+  cash flow), e.g. [COALINDIA.NSE](https://eodhd.com/financial-summary/COALINDIA.NSE),
+  [BANKINDIA.NSE](https://eodhd.com/financial-summary/BANKINDIA.NSE),
+  [ABBOTINDIA.NSE](https://eodhd.com/financial-summary/ABBOTINDIA.NSE).
+- Fundamentals have gaps for some smaller companies (e.g. [SHANTI.NSE](https://eodhd.com/financial-summary/SHANTI.NSE)
+  shows no EPS). The plugin's field mapping is checked against a live response once a key is added (D3b.2 #5).
+
+### Plans ([eodhd.com/pricing](https://eodhd.com/pricing))
+| Plan | Price (monthly) | Includes | Fit for this app |
+|---|---|---|---|
+| Free (Sandbox) | $0 | 1 year of EOD prices, 20 API calls / day | ❌ too few calls: one NIFTY 50 load needs ~550 |
+| Historian (EOD) | $19.99 | 30+ years of EOD prices, dividends, splits | 🟡 prices only (no fundamentals) |
+| Equity analyst (Fundamentals) | $59.99 | Fundamentals, **no EOD prices** | ❌ the app needs prices |
+| All-in-one | $99.99 | EOD + intraday + live + fundamentals | ✅ everything the app uses |
+
+Paid plans: **100,000 API calls / day**, 1,000 requests / minute. Cost per request: EOD 1 call, intraday and
+news 5, fundamentals 10. Personal and commercial (B2B) plans are sold separately: check the licence before
+others use the app (Q74, owner's legal check).
+
+> With a prices-only plan (Historian) `make real-data` currently stops when the fundamentals request is
+> refused; making fundamentals optional (skip with a warning) is a small follow-up.
+
+### API calls the app needs
+Prices: 1 call per stock per request; fundamentals: 10 calls per stock.
+
+**NIFTY 50 (current universe)**
+| What | When | Calls |
+|---|---|---|
+| First full load (`make real-data`): 10 years of prices + fundamentals | Once | 50 + 500 = **~550** |
+| Daily price update (latest day, 50 stocks) | Every trading day | **~50** |
+| Fundamentals refresh (results change quarterly) | Weekly | 500 / week ≈ **70 / day** |
+| Connection test (Admin › Providers) | Per click | 1 |
+| **Normal day** | | **~50–120** (≈ 550 even with daily fundamentals) |
+
+**All NSE (~2,000 stocks, if the universe grows)**
+| What | Calls |
+|---|---|
+| First full load | ~22,000 (once; fits in one day) |
+| Daily prices | ~2,000 / day |
+| Weekly fundamentals | ~20,000 / week (≈ 3,000 / day) |
+| **Normal day** | **~2,000–5,000** |
+
+Both are far below the 100,000 / day limit, so any paid plan is enough. Today nothing calls EODHD
+automatically: calls happen only on `make real-data` and "Test connection"; the daily update becomes
+automatic with Phase 6 (scheduler).
+
 ## Related
 - [11 – Live Cloud Data (Actual Values)](11-live-cloud-data.md)
 - [02 – Short-Term Analyzer 🟢](02-short-term-analyzer.md)
 - [03 – Long-Term Analyzer 🔵](03-long-term-analyzer.md)
+- [22 – Provider Configuration UI](22-provider-configuration-ui.md)
+- [Phase 3b – Real Market Data](deliverables/phase-03b-real-data.md)
 - [🏠 Index](README.md)
 
 ---
