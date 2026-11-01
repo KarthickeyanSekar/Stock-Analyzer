@@ -3,6 +3,8 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
 ## [Unreleased]
+- **Phase 1 (POC on synthetic data) and Phase 1b (UI redesign) signed off 2026-11-01.**
+
 ### Added
 - Project skeleton: FastAPI backend (Clean Architecture), React + TypeScript frontend, Docker Compose for dev/test/prod.
 - `GET /api/health` endpoint and a backend status card in the UI.

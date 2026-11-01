@@ -20,8 +20,8 @@ flowchart LR
 ## Phases
 | Phase | File | Phase outcome | Status |
 |---|---|---|---|
-| 1 – Foundation (POC, synthetic data) | [phase-01-foundation-poc.md](phase-01-foundation-poc.md) · [demo](phase-01-demo.md) | End-to-end flow works on synthetic data | 🟡 In progress |
-| 1b – UI/UX Redesign | [phase-01b-ui-redesign.md](phase-01b-ui-redesign.md) | The POC flow feels like a finished finance tool | 🟡 Built, awaiting review |
+| 1 – Foundation (POC, synthetic data) | [phase-01-foundation-poc.md](phase-01-foundation-poc.md) · [demo](phase-01-demo.md) | End-to-end flow works on synthetic data | ✅ Signed off 2026-11-01 |
+| 1b – UI/UX Redesign | [phase-01b-ui-redesign.md](phase-01b-ui-redesign.md) | The POC flow feels like a finished finance tool | ✅ Signed off 2026-11-01 |
 | 2 – Trade Journal | [phase-02-trade-journal.md](phase-02-trade-journal.md) | Plans can be tracked manually with honest outcomes | ⚪ Not started |
 | 3 – Long-Term Engine | [phase-03-long-term-engine.md](phase-03-long-term-engine.md) | ML predictions with calibrated ranges beat the baselines | ⚪ Not started |
 | 4 – Screener | [phase-04-screener.md](phase-04-screener.md) | "N days, X% → which stocks?" answered in seconds | ⚪ Not started |

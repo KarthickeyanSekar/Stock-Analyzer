@@ -6,7 +6,7 @@
 holding category, start a journal plan, close it and see the outcome calculated. Everything runs on **synthetic data** behind the
 real provider ports, so switching to a real API later needs no code changes outside a new plugin.
 
-**Status:** 🟢 Built and verified, awaiting your sign-off · **Branch:** `feature/phase1-foundation` … `feature/phase1-finish` · **Plan:** [27 – Phase 1 POC Plan (Synthetic Data) 🧪](../27-phase1-poc-plan.md)
+**Status:** ✅ Complete, signed off 2026-11-01 (follow-ups below) · **Branch:** `feature/phase1-foundation` … `feature/phase1-finish` · **Plan:** [27 – Phase 1 POC Plan (Synthetic Data) 🧪](../27-phase1-poc-plan.md)
 
 ## Deliverables
 | ID | Deliverable | Outcome (what is true when done) | Status |
@@ -138,18 +138,19 @@ real provider ports, so switching to a real API later needs no code changes outs
 ## Phase exit criteria
 - [ ] D1.0 – D1.7 all ✅
 - [x] `make lint` and `make test` pass in containers (2026-11-01; plus `make e2e` 22/22)
-- [ ] Demo walked through end to end on a fresh `make dev`
+- [ ] Demo walked through end to end on a fresh `make dev` (follow-up, accepted at sign-off)
 - [x] Docs and Open Questions updated
-- [ ] Merged into `develop` by PR
+- [x] Merged into `develop` by PR (#3, #4, #5, #6)
 
 ## Sign-off
 | Date | Who | Notes |
 |---|---|---|
-| | | |
+| 2026-11-01 | Karthikeyan Sekar (owner) | Signed off in chat. Accepted as open follow-ups, not yet evidenced: clean-machine `make bootstrap` → `make dev` with an empty Docker cache; demo walkthrough (plan started in < 30 s). |
 
 ## Change log
 | Date | Change | Reason |
 |---|---|---|
+| 2026-11-01 | Signed off by the owner | Phase 1 complete; 2 follow-ups tracked |
 | 2026-10-31 | Phase 1 defined as a POC on synthetic data | Prove the flow before paying for APIs (Q56) |
 | 2026-10-31 | POC built end to end on synthetic data (backend + frontend); open items: pre-commit, DB integration tests, FundamentalsProvider + fundamentals, Playwright, screenshots | Shown to the user for review |
 | 2026-11-01 | Phase 1 finish: `Money`/`Percentage`, Button render test, fresh-clone run, visual regression | Close remaining criteria |

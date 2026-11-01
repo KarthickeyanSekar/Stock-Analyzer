@@ -6,7 +6,7 @@
 finance tool: one consistent design system in light and dark, predictions shown as clear visuals, and every action giving
 clear feedback. Approved by you on mockups **before** it is built.
 
-**Status:** 🟢 Built and verified, awaiting your sign-off · **Branch:** `feature/ui-redesign-plan` (plan), then one branch per slice · **Plan:** [28 – UI/UX Redesign Plan (End to End) 🎨](../28-ui-ux-redesign-plan.md)
+**Status:** ✅ Complete, signed off 2026-11-01 (follow-ups below) · **Branch:** `feature/ui-redesign-plan` (plan), then one branch per slice · **Plan:** [28 – UI/UX Redesign Plan (End to End) 🎨](../28-ui-ux-redesign-plan.md)
 
 ## Deliverables
 | ID | Deliverable | Outcome (what is true when done) | Status |
@@ -98,17 +98,18 @@ clear feedback. Approved by you on mockups **before** it is built.
 ## Phase exit criteria
 - [ ] D1b.0 – D1b.6 all ✅
 - [ ] `make lint` and `make test` pass in containers; Playwright suite passes
-- [ ] Your final walkthrough of the demo script on the new UI
-- [ ] Merged into `develop` by PR
+- [ ] Your final walkthrough of the demo script on the new UI (follow-up, accepted at sign-off)
+- [x] Merged into `develop` by PR (#3, #4, #5, #6)
 
 ## Sign-off
 | Date | Who | Notes |
 |---|---|---|
-| | | |
+| 2026-11-01 | Karthikeyan Sekar (owner) | Signed off in chat. Accepted as open follow-ups, not yet evidenced: clean-machine `make bootstrap` → `make dev` with an empty Docker cache; demo walkthrough (plan started in < 30 s). |
 
 ## Change log
 | Date | Change | Reason |
 |---|---|---|
+| 2026-11-01 | Signed off by the owner | Phase 1b complete; 2 follow-ups tracked |
 | 2026-11-01 | Playwright e2e + visual regression + contrast audit; fixed ⌘K crash, focus ring, raw dates | Close a11y/test criteria |
 | 2026-11-01 | Redesign built in code (shell, design system, all screens); verified with real-browser screenshots | Q62: build in code |
 | 2026-10-31 | Phase 1b defined | POC UI judged unfinished; redesign end to end with a mockup review gate |
