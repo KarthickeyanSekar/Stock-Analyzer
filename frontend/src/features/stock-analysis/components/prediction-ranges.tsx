@@ -1,6 +1,6 @@
 import { Award } from 'lucide-react';
 
-import { chanceOf, rangePosition, RANGE_MAX, RANGE_MIN } from '../model/ranges';
+import { chanceOf, rangePosition, RANGE_MAX, RANGE_MIN, type RangeScale } from '../model/ranges';
 import type { Prediction } from '../model/headline';
 import { cn } from '@/shared/lib/cn';
 import { formatPct, formatProbability } from '@/shared/lib/format-number';
@@ -11,6 +11,7 @@ interface PredictionRangesProps {
   best?: string | null;
   selected: string;
   target: number;
+  scale?: RangeScale;
   onSelect: (category: string) => void;
 }
 
@@ -20,16 +21,17 @@ export function PredictionRanges({
   best = null,
   selected,
   target,
+  scale = { min: RANGE_MIN, max: RANGE_MAX },
   onSelect,
 }: PredictionRangesProps) {
-  const zero = rangePosition(0);
+  const zero = rangePosition(0, scale);
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[600px]" role="listbox" aria-label="Holding periods">
         <div className="grid grid-cols-[56px_minmax(0,1fr)_76px_76px_84px_84px] gap-3 px-4 pb-2 text-xs text-muted-foreground">
           <span>Hold</span>
           <span>
-            Range {formatPct(RANGE_MIN, 0)} … {formatPct(RANGE_MAX, 0)}
+            Range {formatPct(scale.min, 0)} … {formatPct(scale.max, 0)}
           </span>
           <span className="text-right">Median</span>
           <span className="text-right">Chance up</span>
@@ -68,14 +70,14 @@ export function PredictionRanges({
                 <span
                   className="absolute top-1.5 h-2 rounded-full bg-band motion-safe:animate-grow-x"
                   style={{
-                    left: `${String(rangePosition(p.p10_pct))}%`,
-                    width: `${String(rangePosition(p.p90_pct) - rangePosition(p.p10_pct))}%`,
+                    left: `${String(rangePosition(p.p10_pct, scale))}%`,
+                    width: `${String(rangePosition(p.p90_pct, scale) - rangePosition(p.p10_pct, scale))}%`,
                     animationDelay: `${String(index * 50)}ms`,
                   }}
                 />
                 <span
                   className="absolute top-0.5 -ml-2 size-4 rounded-full border-2 border-card bg-primary shadow-sm"
-                  style={{ left: `${String(rangePosition(p.p50_pct))}%` }}
+                  style={{ left: `${String(rangePosition(p.p50_pct, scale))}%` }}
                 />
               </span>
               <span

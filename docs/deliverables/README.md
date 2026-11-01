@@ -30,7 +30,7 @@ flowchart LR
 | 5b – Users | [phase-05b-users.md](phase-05b-users.md) | Others sign up with OAuth + invite code; data separated | 🟡 Built; needs your OAuth apps |
 | 5c – WhatsApp | [phase-05c-whatsapp.md](phase-05c-whatsapp.md) | Daily report and alerts arrive on WhatsApp | ⚪ Not started |
 | 6 – Daily Ops | [phase-06-daily-ops.md](phase-06-daily-ops.md) | Runs unattended 24/7 with a daily returns report | ⚪ Not started |
-| 7 – Short-Term | [phase-07-short-term.md](phase-07-short-term.md) | 1 day – 2 weeks engine available | ⚪ Not started |
+| 7 – Short-Term | [phase-07-short-term.md](phase-07-short-term.md) | 1 day – 2 weeks engine available | ✅ Signed off 2026-11-02 |
 | 8 – Optional add-ons | [phase-08-optional.md](phase-08-optional.md) | LLM explanations, auto paper trading | ⚪ Not started |
 
 **Status values:** ⚪ Not started · 🔵 Planned · 🟡 In progress · ✅ Done · ⛔ Blocked · ❌ Dropped

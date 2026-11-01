@@ -6,9 +6,12 @@ import {
   DEFAULT_TARGET_PCT,
   AnalogsCard,
   PredictionRanges,
+  OutlookCard,
   PriceChart,
-  TARGETS,
+  SetupBadge,
+  SHORT_RANGE,
   TargetOdds,
+  targetsFor,
   useStockPredictions,
   useStockPrices,
   type PriceLine,
@@ -34,6 +37,7 @@ export function StockPage() {
   const prices = useStockPrices(symbol);
   const plans = useTradePlans();
   const [range, setRange] = useState<RangeKey>('1Y');
+  const [horizon, setHorizon] = useState<'long' | 'short'>('long');
   const [category, setCategory] = useState('1Y');
   const [target, setTarget] = useState(DEFAULT_TARGET_PCT);
   const [isSheetOpen, setSheetOpen] = useState(false);
@@ -75,7 +79,14 @@ export function StockPage() {
   const previous = all.at(-2);
   const change = last && previous ? last.close - previous.close : null;
   const changePct = change !== null && previous ? (change / previous.close) * 100 : null;
-  const selected = data?.predictions.find((p) => p.category === category) ?? data?.predictions[0];
+  const isShort = horizon === 'short';
+  const visible = (data?.predictions ?? []).filter((p) => p.is_short_term === isShort);
+  const selected = visible.find((p) => p.category === category) ?? visible[0];
+  const switchHorizon = (next: 'long' | 'short') => {
+    setHorizon(next);
+    setCategory(next === 'short' ? '5D' : '1Y');
+    setTarget(next === 'short' ? 2 : DEFAULT_TARGET_PCT);
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -169,11 +180,25 @@ export function StockPage() {
 
           <Card className="p-0 pt-4">
             <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
-              <div>
+              <div className="flex flex-col gap-2">
                 <CardTitle>Predictions by holding period</CardTitle>
                 <CardDescription>
                   Band = 80% of past outcomes (p10–p90) · dot = median · line = 0%
                 </CardDescription>
+                <ToggleGroup
+                  value={[horizon]}
+                  onValueChange={(value: string[]) => {
+                    if (value[0] === 'short' || value[0] === 'long') switchHorizon(value[0]);
+                  }}
+                  aria-label="Horizon"
+                >
+                  <ToggleGroupItem value="long" size="sm">
+                    Long-term
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="short" size="sm">
+                    Short-term (1–10 days)
+                  </ToggleGroupItem>
+                </ToggleGroup>
               </div>
               <ToggleGroup
                 value={[String(target)]}
@@ -183,7 +208,7 @@ export function StockPage() {
                 aria-label="Target"
                 className="flex-wrap"
               >
-                {TARGETS.map((t) => (
+                {targetsFor(isShort).map((t) => (
                   <ToggleGroupItem key={t} value={String(t)} size="sm">
                     +{t}%
                   </ToggleGroupItem>
@@ -193,8 +218,9 @@ export function StockPage() {
             <CardContent className="px-0">
               {data ? (
                 <PredictionRanges
-                  predictions={data.predictions}
-                  best={data.best_category}
+                  predictions={visible}
+                  best={isShort ? null : data.best_category}
+                  scale={isShort ? SHORT_RANGE : undefined}
                   selected={category}
                   target={target}
                   onSelect={setCategory}
@@ -212,9 +238,13 @@ export function StockPage() {
         </div>
 
         <aside className="flex flex-col gap-6">
+          {data && <OutlookCard predictions={data.predictions} />}
           <Card className="lg:sticky lg:top-20">
             <CardHeader>
-              <CardDescription>Selected · hold {selected?.category ?? '—'}</CardDescription>
+              <CardDescription className="flex items-center gap-2">
+                Selected · hold {selected?.category ?? '—'}
+                {selected?.setup && <SetupBadge setup={selected.setup} />}
+              </CardDescription>
               {selected ? (
                 <p className="flex items-baseline gap-2">
                   <span
@@ -239,7 +269,7 @@ export function StockPage() {
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <p className="text-sm font-medium">
-                Chance of reaching each target before a −7% stop
+                Chance of reaching each target before a {isShort ? '−3%' : '−7%'} stop
               </p>
               {selected ? (
                 <TargetOdds prediction={selected} target={target} />
@@ -291,7 +321,7 @@ export function StockPage() {
           onOpenChange={setSheetOpen}
           symbol={symbol}
           lastClose={{ close: last.close, date: last.date }}
-          predictions={data.predictions}
+          predictions={visible}
           initialCategory={category}
           initialTarget={target}
         />

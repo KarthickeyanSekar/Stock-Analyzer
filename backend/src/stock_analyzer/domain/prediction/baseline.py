@@ -41,7 +41,7 @@ def empirical_prediction(  # noqa: PLR0913 - inputs of a statistical estimate
     as_of: date,
     category: HoldingCategory,
     closes: Sequence[tuple[date, Decimal]],
-    stop_pct: float = DEFAULT_STOP_PCT,
+    stop_pct: float | None = None,
     step: int = DEFAULT_STEP,
 ) -> Prediction | None:
     """Return the baseline prediction, or ``None`` when there are too few past windows.
@@ -51,12 +51,14 @@ def empirical_prediction(  # noqa: PLR0913 - inputs of a statistical estimate
         as_of: Prediction date; closes after this date are ignored (no look-ahead).
         category: Holding category; its approximate trading days define the window.
         closes: ``(trade_date, adjusted close)`` pairs in any order.
-        stop_pct: Stop-loss in percent points (negative), used for target probabilities.
+        stop_pct: Stop-loss in percent points (negative), used for target probabilities;
+            defaults to the category's stop (Q76: -3% short-term, -7% long-term).
         step: Use every ``step``-th start date.
     """
     history = [float(price) for day, price in sorted(closes) if day <= as_of]
     horizon = category.approx_trading_days
-    stop_ratio = 1 + stop_pct / 100
+    stop = float(category.default_stop_pct) if stop_pct is None else stop_pct
+    stop_ratio = 1 + stop / 100
     returns: list[float] = []
     hits = dict.fromkeys(TARGET_PCTS, 0)
 

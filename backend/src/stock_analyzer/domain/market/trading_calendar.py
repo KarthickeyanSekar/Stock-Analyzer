@@ -35,5 +35,15 @@ class TradingCalendar:
         return days
 
     def planned_end_date(self, start: date, category: HoldingCategory) -> date:
-        """Return the plan end: ``start`` + the category's calendar days, on a trading day."""
-        return self.next_trading_day(start + timedelta(days=category.calendar_days))
+        """Return the planned end date of a plan started on ``start``.
+
+        Short-term: N trading sessions later (Q75). Long-term: ``start`` + the category's
+        calendar days, moved to the next trading day (Q28).
+        """
+        sessions = category.sessions
+        if sessions is None:
+            return self.next_trading_day(start + timedelta(days=category.calendar_days))
+        day = start
+        for _ in range(sessions):
+            day = self.next_trading_day(day + timedelta(days=1))
+        return day

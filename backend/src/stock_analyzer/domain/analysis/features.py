@@ -13,7 +13,7 @@ from stock_analyzer.domain.analysis import datapoints as dp
 from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
 from stock_analyzer.domain.pricing.candle import Candle
 
-FEATURE_SET_VERSION = "fs-v1"
+FEATURE_SET_VERSION = "fs-v2"  # v2: short-term technicals (Phase 7)
 QUARTERS_PER_YEAR = 4
 
 FEATURE_NAMES: tuple[str, ...] = (
@@ -32,6 +32,16 @@ FEATURE_NAMES: tuple[str, ...] = (
     "max_drawdown_1y",
     "beta_1y",
     "volume_trend",
+    # Short-term technicals (fs-v2)
+    "rsi_14",
+    "macd_hist_pct",
+    "ema_gap_9_21",
+    "bollinger_pct_b",
+    "obv_trend_20",
+    "return_1d",
+    "return_5d",
+    "return_10d",
+    "volume_spike",
     # Valuation
     "pe",
     "pb",
@@ -46,6 +56,7 @@ FEATURE_NAMES: tuple[str, ...] = (
     "revenue_cagr_3y",
     "debt_to_equity",
 )
+FUNDAMENTAL_NAMES: tuple[str, ...] = FEATURE_NAMES[FEATURE_NAMES.index("pe") :]
 # Ranked within the universe on each date (cross-sectional normalisation).
 RANKED_FEATURES: tuple[str, ...] = (
     "mom_6m",
@@ -108,7 +119,7 @@ def _ttm(quarters: Sequence[QuarterlyFundamentals], field: str, offset: int = 0)
 
 def _fundamental_features(price: float, quarters: Sequence[QuarterlyFundamentals]) -> Features:
     if not quarters:
-        return dict.fromkeys(FEATURE_NAMES[14:])
+        return dict.fromkeys(FUNDAMENTAL_NAMES)
     latest = quarters[-1]
     eps_ttm = _ttm(quarters, "eps")
     bvps = float(latest.book_value_per_share)
@@ -178,6 +189,15 @@ def build_features(
         "max_drawdown_1y": dp.max_drawdown(closes),
         "beta_1y": dp.beta(stock_returns, market_returns),
         "volume_trend": dp.volume_trend(series.volumes),
+        "rsi_14": dp.rsi(closes[-250:]),
+        "macd_hist_pct": dp.macd_histogram_pct(closes[-250:]),
+        "ema_gap_9_21": dp.ema_gap(closes[-120:]),
+        "bollinger_pct_b": dp.bollinger_pct_b(closes),
+        "obv_trend_20": dp.obv_trend(closes, series.volumes),
+        "return_1d": dp.momentum(closes, 1),
+        "return_5d": dp.momentum(closes, 5),
+        "return_10d": dp.momentum(closes, 10),
+        "volume_spike": dp.volume_spike(series.volumes),
     }
     features.update(_fundamental_features(series.last_raw_close, quarters))
     return features
