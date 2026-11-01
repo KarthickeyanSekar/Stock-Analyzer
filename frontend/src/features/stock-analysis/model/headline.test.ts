@@ -13,6 +13,7 @@ const prediction: Prediction = {
   prob_hit: { '5': 0.7, '10': 0.55, '20': 0.41 },
   cagr_p50_pct: null,
   model_version: 'baseline-empirical-v1',
+  is_short_term: false,
 };
 
 describe('predictionHeadline', () => {

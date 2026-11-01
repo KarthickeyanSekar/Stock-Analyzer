@@ -33,9 +33,33 @@ def test_planned_end_date_adds_calendar_days_and_rolls_to_a_trading_day() -> Non
 
 
 def test_categories_cover_the_planned_horizons() -> None:
-    assert [c.value for c in HoldingCategory] == ["50D", "100D", "200D", "300D", "1Y", "2Y", "3Y"]
+    assert [c.value for c in HoldingCategory] == [
+        "1D",
+        "3D",
+        "5D",
+        "10D",
+        "50D",
+        "100D",
+        "200D",
+        "300D",
+        "1Y",
+        "2Y",
+        "3Y",
+    ]
     assert HoldingCategory.D50.approx_trading_days == 34
     assert HoldingCategory.Y1.approx_trading_days == 250
+
+
+def test_short_holds_count_trading_sessions_and_use_a_tighter_stop() -> None:
+    assert [c.value for c in HoldingCategory if c.is_short_term] == ["1D", "3D", "5D", "10D"]
+    assert HoldingCategory.S5.approx_trading_days == 5
+    assert HoldingCategory.S5.default_stop_pct == -3
+    assert HoldingCategory.Y1.default_stop_pct == -7
+    calendar = TradingCalendar()
+    friday = date(2026, 10, 30)
+    assert calendar.planned_end_date(friday, HoldingCategory.S1) == date(2026, 11, 2)  # Monday
+    assert calendar.planned_end_date(friday, HoldingCategory.S5) == date(2026, 11, 6)
+    assert calendar.planned_end_date(friday, HoldingCategory.S10) == date(2026, 11, 13)
 
 
 def test_cagr_is_shown_only_for_one_year_and_longer() -> None:

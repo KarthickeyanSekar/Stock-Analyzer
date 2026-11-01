@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from stock_analyzer.application.use_cases.ml.build_features import BuildFeaturesAndLabels
+from stock_analyzer.domain.prediction.prediction import TARGET_PCTS
 from stock_analyzer.main import create_app
 from tests.conftest import make_container, sign_in
 from tests.fakes import FakeUnitOfWork, InMemoryStore
@@ -89,5 +90,5 @@ def test_analogs_only_use_finished_setups(api: TestClient) -> None:
     similarities = [c["similarity"] for c in body["cases"]]
     assert similarities == sorted(similarities, reverse=True)
     assert body["median_return_pct"] is not None
-    assert set(body["hit_rates"]) == {"5", "10", "15", "20", "25", "30", "40", "50"}
+    assert set(body["hit_rates"]) == {str(t) for t in TARGET_PCTS}
     assert api.get("/api/stocks/NOPE/analogs").status_code == 404

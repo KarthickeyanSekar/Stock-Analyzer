@@ -27,7 +27,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from stock_analyzer.infrastructure.persistence.models.base import Base
 
 PCT = Numeric(9, 4)
-HOLDING_CATEGORIES_SQL = "('50D', '100D', '200D', '300D', '1Y', '2Y', '3Y', '5Y')"
+HOLDING_CATEGORIES_SQL = (
+    "('1D', '3D', '5D', '10D', '50D', '100D', '200D', '300D', '1Y', '2Y', '3Y', '5Y')"
+)
 
 
 class ModelVersionModel(Base):

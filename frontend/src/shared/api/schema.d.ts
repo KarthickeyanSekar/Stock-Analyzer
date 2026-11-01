@@ -1011,10 +1011,10 @@ export interface components {
         };
         /**
          * HoldingCategory
-         * @description A planned holding period, entered by users in calendar days.
+         * @description A planned holding period: short ones in trading sessions, long ones in calendar days.
          * @enum {string}
          */
-        HoldingCategory: "50D" | "100D" | "200D" | "300D" | "1Y" | "2Y" | "3Y";
+        HoldingCategory: "1D" | "3D" | "5D" | "10D" | "50D" | "100D" | "200D" | "300D" | "1Y" | "2Y" | "3Y";
         /**
          * InviteResponse
          * @description An invite code.
@@ -1373,6 +1373,14 @@ export interface components {
             cagr_p50_pct: number | null;
             /** Model Version */
             model_version: string;
+            /**
+             * Is Short Term
+             * @description 1-10 trading sessions (Q75)
+             * @default false
+             */
+            is_short_term: boolean;
+            /** @description Short holds only: favourable / neutral / unfavourable (Q77) */
+            setup?: components["schemas"]["Setup"] | null;
         };
         /**
          * ProviderOption
@@ -1511,6 +1519,12 @@ export interface components {
             /** Is Disabled */
             is_disabled: boolean;
         };
+        /**
+         * Setup
+         * @description How the odds look for a short hold.
+         * @enum {string}
+         */
+        Setup: "FAVOURABLE" | "NEUTRAL" | "UNFAVOURABLE";
         /**
          * SignInOptionsResponse
          * @description Which sign-in methods are available.

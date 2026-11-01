@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useScreener, type ScreenQuery, type ScreenRow } from '../api/use-screener';
-import { useStockOverview } from '@/features/stock-analysis';
+import { targetsFor, useStockOverview } from '@/features/stock-analysis';
 import { EmptyState, ErrorState, SkeletonRows } from '@/shared/components/data-states';
 import { cn } from '@/shared/lib/cn';
 import { formatPct, formatProbability } from '@/shared/lib/format-number';
@@ -12,8 +12,20 @@ import { Label } from '@/shared/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group';
 
-const CATEGORIES = ['50D', '100D', '200D', '300D', '1Y', '2Y', '3Y'] as const;
-const TARGETS = [5, 10, 15, 20, 25, 30, 40, 50];
+const CATEGORIES = [
+  '1D',
+  '3D',
+  '5D',
+  '10D',
+  '50D',
+  '100D',
+  '200D',
+  '300D',
+  '1Y',
+  '2Y',
+  '3Y',
+] as const;
+const SHORT = new Set<string>(['1D', '3D', '5D', '10D']);
 const ANY = 'any';
 const PROBABILITIES = [ANY, '0.3', '0.4', '0.5', '0.6'];
 const WORST = [ANY, '-5', '-10', '-15', '-20'];
@@ -102,7 +114,12 @@ export function ScreenerView() {
             value={[category]}
             onValueChange={(value: string[]) => {
               const next = value[0] as Category | undefined;
-              if (next) setCategory(next);
+              if (!next) return;
+              setCategory(next);
+              // Short holds use +1…+5% targets (Q76): keep the wish within that set.
+              const targets = targetsFor(SHORT.has(next));
+              if (!targets.includes(target))
+                setTarget(targets[Math.min(1, targets.length - 1)] ?? 5);
             }}
             aria-label="Holding period"
             className="flex-wrap"
@@ -124,7 +141,7 @@ export function ScreenerView() {
             aria-label="Target return"
             className="flex-wrap"
           >
-            {TARGETS.map((t) => (
+            {targetsFor(SHORT.has(category)).map((t) => (
               <ToggleGroupItem key={t} value={String(t)} size="sm">
                 +{t}%
               </ToggleGroupItem>
@@ -170,7 +187,7 @@ export function ScreenerView() {
       <p className="text-sm text-muted-foreground" aria-live="polite">
         {isPending
           ? 'Screening…'
-          : `${String(rows.length)} stocks · hold ${category} · chance of ${formatPct(target, 0)} before a −7% stop`}
+          : `${String(rows.length)} stocks · hold ${category} · chance of ${formatPct(target, 0)} before a ${SHORT.has(category) ? '−3%' : '−7%'} stop`}
       </p>
 
       {isError && (

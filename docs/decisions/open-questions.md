@@ -89,6 +89,9 @@ update its row **and** every doc it affects.
 | 72 | How is sign-in implemented and tested without real OAuth apps? | Authlib client, own OIDC code | ✅ **OIDC Authorization Code + PKCE (S256)** with state and nonce, ID token verified against the provider's JWKS (Authlib JOSE); Google and Microsoft via discovery. Tests use a fake identity provider; a **dev-only sign-in** (`SA_DEV_LOGIN=true`, refused when `SA_ENV=prod`) lets you work locally until you register OAuth apps (2026-11-01) |
 | 73 | Who owns the journal plans created before user accounts? | Delete, first admin | ✅ **The first admin** (an email in `SA_ADMIN_EMAILS`) claims plans and settings without an owner on first sign-in (2026-11-01) |
 | 74 | Purpose of the app when others use it, and who checks the legal side (data licence, SEBI)? | — | ✅ **Educational purpose only** (2026-11-01): free, invite-only, no advice and no trading; the owner does the legal check (data-provider licence, SEBI Research Analyst rules) before inviting anyone |
+| 75 | How are short-term holding periods defined? | Calendar days, trading sessions | ✅ **1D, 3D, 5D, 10D = trading sessions** (2026-11-01), added to the same holding categories as 50D–3Y so predictions, training, screener and journal reuse one pipeline; the planned end date is that many sessions after the start |
+| 76 | Targets and stop-loss for short holds? | Same as long-term, smaller | ✅ **Targets +1 / +2 / +3% added** (probabilities now 1…50%); **stop −3%** for short holds (labels, baseline, default for short journal plans), −7% stays for long holds (2026-11-01) |
+| 77 | Short-term "signal" wording? | Buy / Hold / Avoid, neutral statistics | ✅ **Setup: Favourable / Neutral / Unfavourable**, statistics not advice (Q74): favourable when chance up ≥ 55% and median > 0.25% costs; unfavourable when chance up ≤ 45% or median < 0; otherwise neutral (2026-11-01) |
 
 ## Related
 - [00 – How to Plan This Project](../00-how-to-plan.md)

@@ -6,6 +6,14 @@
 
 **Horizon:** 1 day – 2 weeks (swing trading, India NSE/BSE) · **Data:** end-of-day + hourly snapshots (no intraday trading) · **Refresh:** daily
 
+
+> **Status (2026-11-01, Phase 7):** built on daily candles. Holding periods 1D / 3D / 5D / 10D in trading
+> sessions (Q75) share the long-term pipeline (baseline, ML training with gates, screener, journal).
+> Targets +1/+2/+3% and a −3% stop (Q76). Short-term technicals in feature set `fs-v2`: RSI 14, MACD
+> histogram, EMA 9/21 gap, Bollinger %B, OBV trend, 1/5/10-day returns, volume spike. The output shows a
+> **setup** (Favourable / Neutral / Unfavourable, Q77) instead of "Buy / Hold / Avoid": statistics, not
+> advice (Q74). Not yet: sentiment, sector / VIX context, event flags (need real providers).
+
 ## Features / inputs
 ### Technical indicators
 - RSI, MACD, EMA (9/21/50), SMA, Bollinger Bands, ATR, OBV (daily candles; VWAP is left out because there is no intraday data)
@@ -30,7 +38,7 @@
 TCS (NSE) – Next 5 days
 Expected move:       +2.1%  (range −1.5% to +4.8%)
 Probability up:      64%
-Signal:              Buy / Hold / Avoid
+Setup:               Favourable / Neutral / Unfavourable  (statistics, not advice)
 Suggested stop-loss: −2.5%   Target: +4%
 Confidence:          Medium
 ```
