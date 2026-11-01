@@ -19,6 +19,7 @@ export function SignInView() {
   const [email, setEmail] = useState('');
   const error = params.get('error');
   const providers = options.data?.providers ?? [];
+  const devAccounts = options.data?.dev_accounts ?? [];
 
   return (
     <main className="flex min-h-svh items-center justify-center bg-surface p-4">
@@ -66,6 +67,29 @@ export function SignInView() {
               No sign-in method is configured yet. Add Google or Microsoft OAuth credentials to the
               server&apos;s .env.
             </p>
+          )}
+          {options.data?.dev_login && devAccounts.length > 0 && (
+            <div className="flex flex-col gap-2 border-t pt-4">
+              <span className="text-sm font-medium">Developer accounts (local only)</span>
+              {devAccounts.map((account) => (
+                <Button
+                  key={account}
+                  variant="outline"
+                  disabled={devLogin.isPending}
+                  onClick={() => {
+                    devLogin.mutate(
+                      { email: account, invite_code: null },
+                      {
+                        onSuccess: () => void navigate('/', { replace: true }),
+                        onError: (failure) => toast.error(failure.message),
+                      },
+                    );
+                  }}
+                >
+                  <LogIn aria-hidden="true" /> Sign in as {account}
+                </Button>
+              ))}
+            </div>
           )}
           {options.data?.dev_login && (
             <form

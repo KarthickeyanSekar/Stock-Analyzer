@@ -50,7 +50,7 @@ def test_everything_needs_a_session(anonymous_client: TestClient) -> None:
         assert anonymous_client.get(path).status_code == 401, path
     assert anonymous_client.get("/api/health").status_code == 200
     options = anonymous_client.get("/api/auth/options").json()
-    assert options == {"providers": [], "dev_login": True}
+    assert options == {"providers": [], "dev_login": True, "dev_accounts": [ADMIN_EMAIL]}
 
 
 def test_session_cookie_is_http_only_and_lax(anonymous_client: TestClient) -> None:

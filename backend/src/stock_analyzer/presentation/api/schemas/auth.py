@@ -22,13 +22,20 @@ class SignInOptionsResponse(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
-                {"providers": [{"name": "google", "display_name": "Google"}], "dev_login": False}
+                {
+                    "providers": [{"name": "google", "display_name": "Google"}],
+                    "dev_login": True,
+                    "dev_accounts": ["admin@stockanalyzer.com"],
+                }
             ]
         }
     )
 
     providers: list[ProviderOption]
     dev_login: bool
+    dev_accounts: list[str] = Field(
+        default_factory=list, description="One-click dev sign-ins (admin emails); dev only"
+    )
 
 
 class DevLoginBody(BaseModel):

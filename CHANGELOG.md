@@ -3,6 +3,7 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
 ## [Unreleased]
+- Profile page (`/profile`, Account menu › Profile); one-click dev sign-in for admin accounts (default dev account `admin@stockanalyzer.com`), dev only.
 - **Phase 5b – Users:** sign-in with Google / Microsoft (OIDC + PKCE, ID tokens verified against JWKS), database sessions in an HttpOnly cookie, invite codes (`SA-XXXX-XXXX`), admin / user roles, per-user journal plans, settings and watchlist, Admin › Users (invites, disable / enable, audit log), privacy notice and account deletion; dev-only sign-in for local work. Migration 0007; decisions Q71–Q73.
 - **Phase 5 – Validation tools:** point-in-time plan backtest (exit at target / −7% stop / end date) net of 0.25% costs and STCG/LTCG tax vs an equal-weight benchmark, reliability tables and range coverage, journal review, and a go/no-go verdict per holding period (Q69, Q70); `make validate` → `docs/reports/validation.md`. On synthetic data every period is "not decidable".
 - **Phase 4 – Screener:** `GET /api/screener` with holding period, target, chance, worst-likely (p10), quality (0–10) and sector filters; Screener page (table / phone cards, empty state); best risk-adjusted holding period on the stock page; similar past setups via pgvector (`GET /api/stocks/{symbol}/analogs`, migration 0006 with an HNSW index); decisions Q66–Q68.

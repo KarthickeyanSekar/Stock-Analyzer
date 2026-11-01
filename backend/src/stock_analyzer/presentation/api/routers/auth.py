@@ -49,6 +49,10 @@ async def sign_in_options(container: ContainerDep) -> SignInOptionsResponse:
     return SignInOptionsResponse(
         providers=[ProviderOption(name=n, display_name=d) for n, d in auth.providers()],
         dev_login=auth.is_dev_login_enabled,
+        # Listing admin emails is fine on a local dev machine; never shown when dev sign-in is off.
+        dev_accounts=sorted(container.settings.admin_email_set)
+        if auth.is_dev_login_enabled
+        else [],
     )
 
 

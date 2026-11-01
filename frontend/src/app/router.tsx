@@ -5,6 +5,7 @@ import { RequireAuth } from '@/features/auth';
 import { HomePage } from '@/pages/home-page';
 import { JournalPage } from '@/pages/journal-page';
 import { PrivacyPage } from '@/pages/privacy-page';
+import { ProfilePage } from '@/pages/profile-page';
 import { ProvidersPage } from '@/pages/providers-page';
 import { ScreenerPage } from '@/pages/screener-page';
 import { SettingsPage } from '@/pages/settings-page';
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
           { path: '/screener', element: <ScreenerPage /> },
           { path: '/journal', element: <JournalPage /> },
           { path: '/settings', element: <SettingsPage /> },
+          { path: '/profile', element: <ProfilePage /> },
           { path: '/status', element: <StatusPage /> },
           {
             element: <RequireAuth adminOnly />,
