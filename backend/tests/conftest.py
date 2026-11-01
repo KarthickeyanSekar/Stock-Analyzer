@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from datetime import UTC, date, datetime
 
 import pytest
+from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 
 from stock_analyzer.application.use_cases.data.backfill_fundamentals import BackfillFundamentals
@@ -14,11 +15,16 @@ from stock_analyzer.bootstrap import Container
 from stock_analyzer.domain.market.trading_calendar import TradingCalendar
 from stock_analyzer.infrastructure.config.settings import Environment, Settings
 from stock_analyzer.infrastructure.ml.lightgbm_trainer import LightGbmTrainer
+from stock_analyzer.infrastructure.providers.catalog import StaticPluginCatalog
 from stock_analyzer.infrastructure.providers.mock.provider import MockMarketDataProvider
 from stock_analyzer.infrastructure.providers.mock.universe import SAMPLE_HOLIDAYS
+from stock_analyzer.infrastructure.security.fernet_cipher import FernetCipher
 from stock_analyzer.main import create_app
+from tests.eodhd_fixtures import client as eodhd_client
 from tests.fakes import FakeUnitOfWork, InMemoryStore
 
+# A fresh Fernet key per test run (never stored anywhere).
+TEST_MASTER_KEY = Fernet.generate_key().decode()
 FIXED_NOW = datetime(2026, 1, 2, 9, 15, tzinfo=UTC)
 SEED_START = date(2024, 1, 1)
 SEED_END = date(2026, 10, 30)
@@ -38,7 +44,8 @@ def make_container(store: InMemoryStore) -> Container:
         calendar=TradingCalendar(SAMPLE_HOLIDAYS),
         market_data=provider,
         fundamentals=provider,
-        plugins={provider.name: provider},
+        catalog=StaticPluginCatalog(provider, eodhd_client=eodhd_client()),
+        cipher=FernetCipher(TEST_MASTER_KEY),
         trainer=LightGbmTrainer(rounds=30),
     )
 

@@ -2,7 +2,7 @@
 
 from collections.abc import Sequence
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -82,6 +82,11 @@ class SqlAlchemyPlanStatusRepository:
             )
             for r in rows
         ]
+
+    async def delete_all(self) -> int:
+        """Delete every snapshot (rebuilt by ``make track``)."""
+        result = await self._session.execute(delete(PlanDailyStatusModel))
+        return int(result.rowcount or 0)  # type: ignore[attr-defined]
 
 
 class SqlAlchemySettingsRepository:

@@ -1,11 +1,20 @@
 """Market data provider port: implemented by the mock plugin now, real APIs later."""
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import date
 from typing import Protocol
 
 from stock_analyzer.domain.pricing.candle import Candle
 from stock_analyzer.domain.stock.stock import Stock
+
+
+@dataclass(frozen=True, slots=True)
+class ConnectionCheck:
+    """Result of a provider connection test; ``message`` never contains secrets."""
+
+    is_ok: bool
+    message: str
 
 
 class MarketDataProvider(Protocol):
@@ -24,6 +33,6 @@ class MarketDataProvider(Protocol):
         """Return adjusted daily candles for ``symbol`` between ``start`` and ``end``."""
         ...
 
-    def test_connection(self) -> bool:
-        """Return whether the provider is reachable with its configured credentials."""
+    def test_connection(self) -> ConnectionCheck:
+        """Check that the provider is reachable with its configured credentials."""
         ...

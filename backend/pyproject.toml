@@ -19,6 +19,8 @@ dependencies = [
     "opentelemetry-exporter-otlp-proto-http>=1.28",
     "opentelemetry-instrumentation-fastapi>=0.49b0",
     # ML engine (Phase 3, docs/26-ml-pipeline.md): numpy arrays, LightGBM models, isotonic calibration.
+    # Data provider plugins (EODHD) call managed HTTP APIs.
+    "httpx>=0.27",
     "numpy>=2.1",
     "lightgbm>=4.5",
     "scikit-learn>=1.5",

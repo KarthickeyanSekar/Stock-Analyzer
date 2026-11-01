@@ -79,6 +79,7 @@ update its row **and** every doc it affects.
 | 62 | Design process? | Clickable HTML mockups first, straight to code | ✅ **Build in code directly**; two mockups (Stock detail, Home) on the design canvas serve as the visual reference |
 | 63 | Where do journal settings (paper capital, risk %, tolerance) live before user accounts? | One app-wide record, per browser | ✅ **One app-wide settings record** in the database (Settings page); becomes per-user with OAuth in Phase 5b (2026-11-01) |
 | 64 | Number type inside ML features and training? | Decimal everywhere, float inside ML | ✅ **float inside feature vectors and model training** (numpy/LightGBM need it); everything shown or stored for users (prices, returns, ranges, probabilities) stays `Decimal`, rounded at the boundary, as the baseline already does (2026-11-01) |
+| 65 | When switching to real data: which stocks and how much history? | NIFTY 50 / all NSE; 5 / 10 / 20 years | ✅ **NIFTY 50, 10 years** (2026-11-01): same universe as the POC; ~550 EODHD API calls per full load (50 price requests + 50 fundamentals requests × 10 calls); `make real-data` deletes the synthetic data after a confirmation, journal plans stay |
 
 ## Related
 - [00 – How to Plan This Project](../00-how-to-plan.md)

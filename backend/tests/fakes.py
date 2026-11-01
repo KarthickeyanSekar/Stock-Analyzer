@@ -35,6 +35,8 @@ class InMemoryStore:
         self.labels: dict[tuple[str, int, date], Label] = {}
         self.models: list[ModelVersion] = []
         self.providers: dict[str, tuple[str, str, str, bool]] = {}
+        self.credentials: dict[str, dict[str, tuple[bytes, str]]] = {}
+        self.primary: dict[tuple[str, str], str] = {}
 
 
 class FakeStocks:
@@ -82,6 +84,11 @@ class FakePrices:
         self._s.candles.setdefault(stock_id, {}).update({c.trade_date: c for c in candles})
         return len(candles)
 
+    async def delete_by_source(self, source_provider: str) -> int:
+        count = sum(len(c) for c in self._s.candles.values())
+        self._s.candles.clear()  # the fake store holds a single (synthetic) source
+        return count
+
     async def get_candles(
         self, stock_id: int, start: date | None = None, end: date | None = None
     ) -> list[Candle]:
@@ -101,6 +108,11 @@ class FakeFundamentals:
     ) -> int:
         self._s.quarters.setdefault(stock_id, {}).update({q.period_end: q for q in quarters})
         return len(quarters)
+
+    async def delete_by_source(self, source_provider: str) -> int:
+        count = sum(len(q) for q in self._s.quarters.values())
+        self._s.quarters.clear()
+        return count
 
     async def list_quarters(
         self, stock_id: int, known_on: date | None = None
@@ -162,6 +174,26 @@ class FakeProviders:
     async def list_all(self) -> list[tuple[str, str, str, bool]]:
         return list(self._s.providers.values())
 
+    async def set_credential(
+        self, plugin_name: str, field: str, encrypted: bytes, last4: str
+    ) -> None:
+        self._s.credentials.setdefault(plugin_name, {})[field] = (encrypted, last4)
+
+    async def delete_credentials(self, plugin_name: str) -> None:
+        self._s.credentials.pop(plugin_name, None)
+
+    async def credentials(self, plugin_name: str) -> dict[str, bytes]:
+        return {f: v[0] for f, v in self._s.credentials.get(plugin_name, {}).items()}
+
+    async def credential_hints(self, plugin_name: str) -> dict[str, str]:
+        return {f: v[1] for f, v in self._s.credentials.get(plugin_name, {}).items()}
+
+    async def set_primary(self, market_code: str, data_type: str, plugin_name: str) -> None:
+        self._s.primary[(market_code, data_type)] = plugin_name
+
+    async def primary(self, market_code: str, data_type: str) -> str | None:
+        return self._s.primary.get((market_code, data_type))
+
 
 class FakePlanStatuses:
     def __init__(self, store: InMemoryStore) -> None:
@@ -173,6 +205,11 @@ class FakePlanStatuses:
 
     async def list_for_plan(self, plan_id: int) -> list[PlanProgress]:
         return [s for _, s in sorted(self._s.snapshots.get(plan_id, {}).items())]
+
+    async def delete_all(self) -> int:
+        count = sum(len(s) for s in self._s.snapshots.values())
+        self._s.snapshots.clear()
+        return count
 
 
 class FakeSettings:
@@ -213,6 +250,12 @@ class FakeFeatures:
 
     async def load_labels(self, category: HoldingCategory) -> dict[tuple[int, date], Label]:
         return {(s, d): v for (c, s, d), v in self._s.labels.items() if c == category.value}
+
+    async def delete_all(self) -> int:
+        count = len(self._s.features) + len(self._s.labels)
+        self._s.features.clear()
+        self._s.labels.clear()
+        return count
 
 
 class FakeModels:

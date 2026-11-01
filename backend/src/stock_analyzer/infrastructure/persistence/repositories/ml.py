@@ -3,7 +3,7 @@
 from collections.abc import Sequence
 from datetime import date, datetime
 
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -103,6 +103,12 @@ class SqlAlchemyFeatureRepository:
             )
             for r in rows
         }
+
+    async def delete_all(self) -> int:
+        """Delete every feature vector and label (rebuilt by ``make features``)."""
+        features = await self._session.execute(delete(FeatureDailyModel))
+        labels = await self._session.execute(delete(LabelDailyModel))
+        return int((features.rowcount or 0) + (labels.rowcount or 0))  # type: ignore[attr-defined]
 
 
 def _to_domain(row: ModelVersionModel) -> ModelVersion:
