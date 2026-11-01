@@ -189,3 +189,15 @@ def test_summary_reflects_closed_plans(seeded_client: TestClient) -> None:
     assert set(after["outcomes"]) == {"SUCCESS", "PARTIAL", "FAILURE", "EXITED_EARLY"}
     fifty = next(r for r in after["by_category"] if r["category"] == "50D")
     assert fifty["closed"] >= 1
+
+
+def test_short_holds_default_to_a_tight_stop_and_end_in_sessions(seeded_client: TestClient) -> None:
+    plan = start_plan(seeded_client, category="5D", target_pct=2)
+
+    assert plan["stop_pct"] == -3
+    assert plan["planned_end_date"] == "2026-11-06"  # 5 sessions after Friday 30 Oct
+    predictions = seeded_client.get("/api/stocks/INFY/predictions").json()["predictions"]
+    short = {p["category"]: p for p in predictions if p["is_short_term"]}
+    assert set(short) == {"1D", "3D", "5D", "10D"}
+    assert all(p["setup"] in {"FAVOURABLE", "NEUTRAL", "UNFAVOURABLE"} for p in short.values())
+    assert all(p["setup"] is None for p in predictions if not p["is_short_term"])

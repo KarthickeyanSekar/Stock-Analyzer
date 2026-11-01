@@ -117,6 +117,13 @@ def _success_rate(plans: list[TradePlan]) -> Decimal | None:
     return _rate(sum(p.outcome is PlanOutcome.SUCCESS for p in judged), len(judged))
 
 
+def _stop(request: CreateTradePlanRequest, settings_stop: Decimal) -> Decimal:
+    """The typed stop; else -3% for short holds (Q76) or the user's default stop."""
+    if request.stop_pct is not None:
+        return request.stop_pct
+    return request.category.default_stop_pct if request.category.is_short_term else settings_stop
+
+
 def _visible(plan: TradePlan, owner_id: UUID | None) -> bool:
     """Users only see their own plans (``None`` = a job that sees all)."""
     return owner_id is None or plan.owner_id == owner_id
@@ -164,9 +171,7 @@ class TradePlanService:
             planned_end_date=self._calendar.planned_end_date(request.start_date, request.category),
             entry_price=entry_price,
             target_pct=target_pct,
-            stop_pct=request.stop_pct
-            if request.stop_pct is not None
-            else settings.default_stop_pct,
+            stop_pct=_stop(request, settings.default_stop_pct),
             success_tolerance_pp=(
                 request.success_tolerance_pp
                 if request.success_tolerance_pp is not None

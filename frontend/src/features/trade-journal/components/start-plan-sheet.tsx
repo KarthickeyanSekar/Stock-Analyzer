@@ -9,7 +9,7 @@ import {
   type CreateTradePlan,
   type JournalSettings,
 } from '../api/use-trade-plans';
-import { chanceOf, TARGETS, type Prediction } from '@/features/stock-analysis';
+import { chanceOf, targetsFor, type Prediction } from '@/features/stock-analysis';
 import { cn } from '@/shared/lib/cn';
 import { formatDate } from '@/shared/lib/format-date';
 import { formatInr, formatPct, formatProbability } from '@/shared/lib/format-number';
@@ -98,7 +98,11 @@ function StartPlanForm({
   const [category, setCategory] = useState(initialCategory);
   const [target, setTarget] = useState(String(initialTarget));
   const [entry, setEntry] = useState(String(lastClose.close));
-  const [stop, setStop] = useState(String(settings.default_stop_pct));
+  // Short holds default to a -3% stop (Q76); long holds to the user's saved default.
+  const defaultStop = (isShort: boolean) => (isShort ? '-3' : String(settings.default_stop_pct));
+  const [stop, setStop] = useState(
+    defaultStop(predictions.find((p) => p.category === initialCategory)?.is_short_term ?? false),
+  );
   const [tolerance, setTolerance] = useState(String(settings.success_tolerance_pp));
   const prediction = predictions.find((p) => p.category === category);
   const targetPct = Number(target);
@@ -153,6 +157,7 @@ function StartPlanForm({
               aria-pressed={p.category === category}
               onClick={() => {
                 setCategory(p.category);
+                setStop(defaultStop(p.is_short_term));
               }}
               className={cn(
                 'flex min-h-14 flex-col items-start rounded-lg border p-2 text-left text-xs transition-colors duration-150 hover:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none',
@@ -170,7 +175,7 @@ function StartPlanForm({
 
       <Step index={2} title="Target">
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Target presets">
-          {TARGETS.map((t) => (
+          {targetsFor(prediction?.is_short_term ?? false).map((t) => (
             <Button
               key={t}
               size="sm"

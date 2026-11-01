@@ -7,7 +7,7 @@ from decimal import Decimal
 from stock_analyzer.domain.market.holding_category import HoldingCategory
 
 # Targets (+N%) for which the probability of being reached is predicted.
-TARGET_PCTS: tuple[int, ...] = (5, 10, 15, 20, 25, 30, 40, 50)
+TARGET_PCTS: tuple[int, ...] = (1, 2, 3, 5, 10, 15, 20, 25, 30, 40, 50)  # 1-3%: Q76
 
 
 @dataclass(frozen=True, slots=True)

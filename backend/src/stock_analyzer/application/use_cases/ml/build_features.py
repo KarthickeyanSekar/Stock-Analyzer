@@ -82,7 +82,12 @@ class BuildFeaturesAndLabels:
                     i = positions.get(as_of)
                     if i is None:
                         continue
-                    label = make_label(s.closes[i + 1 :], s.closes[i], category.approx_trading_days)
+                    label = make_label(
+                        s.closes[i + 1 :],
+                        s.closes[i],
+                        category.approx_trading_days,
+                        stop_pct=float(category.default_stop_pct),
+                    )
                     if label is not None:
                         rows.append((stock_id, as_of, label))
 

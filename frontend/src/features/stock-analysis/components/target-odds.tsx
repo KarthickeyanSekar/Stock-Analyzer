@@ -1,13 +1,13 @@
-import { chanceOf, TARGETS } from '../model/ranges';
+import { chanceOf, targetsFor } from '../model/ranges';
 import type { Prediction } from '../model/headline';
 import { cn } from '@/shared/lib/cn';
 import { formatPct, formatProbability } from '@/shared/lib/format-number';
 
-/** Bars: chance of reaching each target before the −7% stop, for one holding category. */
+/** Bars: chance of reaching each target before the stop, for one holding category. */
 export function TargetOdds({ prediction, target }: { prediction: Prediction; target: number }) {
   return (
     <ul className="flex flex-col gap-2" aria-label="Chance of reaching each target">
-      {TARGETS.map((t, index) => {
+      {targetsFor(prediction.is_short_term).map((t, index) => {
         const chance = chanceOf(prediction, t);
         const isTarget = t === target;
         return (

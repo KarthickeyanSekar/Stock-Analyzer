@@ -186,3 +186,86 @@ def percentile_ranks(values: dict[int, float | None]) -> dict[int, float | None]
             ranks[key] = average
         i = j + 1
     return ranks
+
+
+# --- Short-term technicals (docs/02-short-term-analyzer.md; Phase 7) ---------------------
+
+
+def ema(values: Sequence[float], span: int) -> list[float]:
+    """Exponential moving average series (seeded with the first value)."""
+    if not values:
+        return []
+    alpha = 2 / (span + 1)
+    result = [values[0]]
+    for value in values[1:]:
+        result.append(alpha * value + (1 - alpha) * result[-1])
+    return result
+
+
+def rsi(closes: Sequence[float], window: int = 14) -> float | None:
+    """Relative strength index (0-100) with Wilder's smoothing."""
+    if len(closes) <= window:
+        return None
+    changes = daily_changes(closes)
+    gains = [max(c, 0.0) for c in changes]
+    losses = [max(-c, 0.0) for c in changes]
+    avg_gain = sum(gains[:window]) / window
+    avg_loss = sum(losses[:window]) / window
+    for gain, loss in zip(gains[window:], losses[window:], strict=True):
+        avg_gain = (avg_gain * (window - 1) + gain) / window
+        avg_loss = (avg_loss * (window - 1) + loss) / window
+    if avg_loss == 0:
+        return 100.0
+    return 100 - 100 / (1 + avg_gain / avg_loss)
+
+
+def daily_changes(closes: Sequence[float]) -> list[float]:
+    """Price differences between consecutive closes."""
+    return [b - a for a, b in pairwise(closes)]
+
+
+def macd_histogram_pct(closes: Sequence[float]) -> float | None:
+    """MACD(12, 26) minus its 9-day signal line, as a share of the price."""
+    if len(closes) < 35:  # noqa: PLR2004 - 26 + 9 sessions for a settled signal line
+        return None
+    macd = [fast - slow for fast, slow in zip(ema(closes, 12), ema(closes, 26), strict=True)]
+    return (macd[-1] - ema(macd, 9)[-1]) / closes[-1]
+
+
+def ema_gap(closes: Sequence[float], fast: int = 9, slow: int = 21) -> float | None:
+    """EMA(fast) ÷ EMA(slow) - 1: positive in a short-term up-trend."""
+    if len(closes) < slow:
+        return None
+    return ema(closes, fast)[-1] / ema(closes, slow)[-1] - 1
+
+
+def bollinger_pct_b(closes: Sequence[float], window: int = 20, width: float = 2.0) -> float | None:
+    """Where the close sits in the Bollinger band: 0 = lower band, 1 = upper band."""
+    if len(closes) < window:
+        return None
+    recent = closes[-window:]
+    mean = sum(recent) / window
+    std = math.sqrt(sum((c - mean) ** 2 for c in recent) / window)
+    if std == 0:
+        return 0.5
+    return (closes[-1] - (mean - width * std)) / (2 * width * std)
+
+
+def obv_trend(closes: Sequence[float], volumes: Sequence[float], window: int = 20) -> float | None:
+    """On-balance volume change over the window ÷ volume traded in it (-1 … 1)."""
+    if len(closes) <= window or len(volumes) < len(closes):
+        return None
+    flow = 0.0
+    for i in range(len(closes) - window, len(closes)):
+        direction = (closes[i] > closes[i - 1]) - (closes[i] < closes[i - 1])
+        flow += direction * volumes[i]
+    traded = sum(volumes[len(closes) - window : len(closes)])
+    return flow / traded if traded else None
+
+
+def volume_spike(volumes: Sequence[float], window: int = 20) -> float | None:
+    """Last session's volume ÷ the average of the previous ``window`` sessions."""
+    if len(volumes) <= window:
+        return None
+    average = sum(volumes[-window - 1 : -1]) / window
+    return volumes[-1] / average if average else None

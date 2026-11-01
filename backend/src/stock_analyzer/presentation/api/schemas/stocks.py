@@ -13,6 +13,7 @@ from stock_analyzer.application.use_cases.stocks.queries import StockOverview
 from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
 from stock_analyzer.domain.market.holding_category import HoldingCategory
 from stock_analyzer.domain.prediction.prediction import Prediction
+from stock_analyzer.domain.prediction.setup import Setup, setup_of
 from stock_analyzer.domain.pricing.candle import Candle
 from stock_analyzer.domain.stock.stock import Stock
 
@@ -139,6 +140,10 @@ class PredictionResponse(BaseModel):
     prob_hit: dict[str, float] = Field(description="Target % → probability before the stop")
     cagr_p50_pct: float | None = Field(description="Median per year; only for 1Y and longer")
     model_version: str
+    is_short_term: bool = Field(default=False, description="1-10 trading sessions (Q75)")
+    setup: Setup | None = Field(
+        default=None, description="Short holds only: favourable / neutral / unfavourable (Q77)"
+    )
 
     @classmethod
     def from_domain(cls, prediction: Prediction) -> "PredictionResponse":
@@ -159,6 +164,8 @@ class PredictionResponse(BaseModel):
                 else None
             ),
             model_version=prediction.model_version,
+            is_short_term=category.is_short_term,
+            setup=setup_of(prediction) if category.is_short_term else None,
         )
 
 

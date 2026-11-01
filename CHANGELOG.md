@@ -3,6 +3,7 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
 ## [Unreleased]
+- **Phase 7 – Short-term engine:** holding periods 1D / 3D / 5D / 10D (trading sessions), targets +1/+2/+3% and a −3% stop, short-term technicals (feature set fs-v2), setup label Favourable / Neutral / Unfavourable; stock page Short-term / Long-term tabs and an Outlook card (5 days vs 1 year); screener and journal accept short holds. Migration 0008; decisions Q75–Q77.
 - Profile page (`/profile`, Account menu › Profile); one-click dev sign-in for admin accounts (default dev account `admin@stockanalyzer.com`), dev only.
 - **Phase 5b – Users:** sign-in with Google / Microsoft (OIDC + PKCE, ID tokens verified against JWKS), database sessions in an HttpOnly cookie, invite codes (`SA-XXXX-XXXX`), admin / user roles, per-user journal plans, settings and watchlist, Admin › Users (invites, disable / enable, audit log), privacy notice and account deletion; dev-only sign-in for local work. Migration 0007; decisions Q71–Q73.
 - **Phase 5 – Validation tools:** point-in-time plan backtest (exit at target / −7% stop / end date) net of 0.25% costs and STCG/LTCG tax vs an equal-weight benchmark, reliability tables and range coverage, journal review, and a go/no-go verdict per holding period (Q69, Q70); `make validate` → `docs/reports/validation.md`. On synthetic data every period is "not decidable".
