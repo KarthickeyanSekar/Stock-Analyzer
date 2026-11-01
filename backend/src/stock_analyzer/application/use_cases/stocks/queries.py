@@ -6,6 +6,7 @@ from decimal import Decimal
 
 from stock_analyzer.application.errors import NotFoundError
 from stock_analyzer.application.ports.repositories import UnitOfWorkFactory
+from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
 from stock_analyzer.domain.market.holding_category import HoldingCategory
 from stock_analyzer.domain.prediction.prediction import Prediction
 from stock_analyzer.domain.pricing.candle import Candle
@@ -119,6 +120,12 @@ class StockQueries:
         stock = await self.get(symbol)
         async with self._uow_factory() as uow:
             return await uow.prices.get_candles(stock.id or 0, start, end)
+
+    async def fundamentals(self, symbol: str) -> list[QuarterlyFundamentals]:
+        """Return the stock's quarterly results, oldest first."""
+        stock = await self.get(symbol)
+        async with self._uow_factory() as uow:
+            return await uow.fundamentals.list_quarters(stock.id or 0)
 
     async def predictions(self, symbol: str) -> StockPredictions:
         """Return the latest prediction per category and the last close."""

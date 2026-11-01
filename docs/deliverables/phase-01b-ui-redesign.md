@@ -48,9 +48,9 @@ clear feedback. Approved by you on mockups **before** it is built.
 | # | Acceptance criterion | How to verify (evidence) | Result |
 |---|---|---|---|
 | 1 | Collapsible sidebar with Lucide icons; Home at `/`, status moved to `/status` | Screenshot | ✅ 2026-11-01: sidebar (desktop), bottom nav (phone), `/status` |
-| 2 | ⌘K command palette finds any stock and page | Playwright | 🟡 2026-11-01: built (⌘K / Ctrl+K); no automated test yet |
+| 2 | ⌘K command palette finds any stock and page | Playwright | ✅ 2026-11-01: `make e2e` `command-palette.e2e.mjs`; caught a crash on open (missing cmdk root), fixed |
 | 3 | Top bar: NSE open/closed + IST time, data badge (SYNTHETIC / provider), theme toggle | Screenshot | ✅ 2026-11-01: live NSE status, SYNTHETIC badge with tooltip, theme toggle |
-| 4 | Full keyboard navigation with visible focus | Manual check | ⬜ Manual check pending |
+| 4 | Full keyboard navigation with visible focus | Manual check | ✅ 2026-11-01: `keyboard.e2e.mjs` checks every Tab stop on 5 screens; found the Journal tab panel without a ring, fixed |
 
 ### D1b.3 – Stock detail
 **Outcome:** the prediction is the clearest thing on the page.
@@ -68,7 +68,7 @@ clear feedback. Approved by you on mockups **before** it is built.
 | # | Acceptance criterion | How to verify (evidence) | Result |
 |---|---|---|---|
 | 1 | Start-plan sheet: category → target → risk → review, with live target/stop prices, end date, suggested amount | Playwright | ✅ 2026-11-01: `start-plan-sheet-desktop-light.png` |
-| 2 | Close dialog with live outcome preview before confirming | Playwright | 🟡 2026-11-01: built; `previewOutcome` unit-tested (mirrors the backend); Playwright flow pending |
+| 2 | Close dialog with live outcome preview before confirming | Playwright | ✅ 2026-11-01: `journal.e2e.mjs` previews Success / Partial / Failure, then closes |
 | 3 | Toasts on success/failure with a link to the plan | Playwright | ✅ 2026-11-01: Sonner toasts with a Journal action |
 | 4 | Plan started in under 30 seconds by a first-time user | Your walkthrough | ⬜ Your walkthrough |
 

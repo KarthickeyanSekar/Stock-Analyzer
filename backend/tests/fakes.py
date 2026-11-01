@@ -6,6 +6,7 @@ from datetime import date
 from types import TracebackType
 from typing import Self
 
+from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
 from stock_analyzer.domain.journal.trade_plan import TradePlan
 from stock_analyzer.domain.prediction.prediction import Prediction
 from stock_analyzer.domain.pricing.candle import Candle
@@ -19,6 +20,7 @@ class InMemoryStore:
         self.markets: dict[str, tuple[str, str, str]] = {}
         self.stocks: dict[int, Stock] = {}
         self.candles: dict[int, dict[date, Candle]] = {}
+        self.quarters: dict[int, dict[date, QuarterlyFundamentals]] = {}
         self.predictions: dict[tuple[int, date, str, str], Prediction] = {}
         self.plans: dict[int, TradePlan] = {}
         self.providers: dict[str, tuple[str, str, str, bool]] = {}
@@ -79,6 +81,26 @@ class FakePrices:
         ]
 
 
+class FakeFundamentals:
+    def __init__(self, store: InMemoryStore) -> None:
+        self._s = store
+
+    async def upsert_quarters(
+        self, stock_id: int, quarters: Sequence[QuarterlyFundamentals], source_provider: str
+    ) -> int:
+        self._s.quarters.setdefault(stock_id, {}).update({q.period_end: q for q in quarters})
+        return len(quarters)
+
+    async def list_quarters(
+        self, stock_id: int, known_on: date | None = None
+    ) -> list[QuarterlyFundamentals]:
+        return [
+            q
+            for _, q in sorted(self._s.quarters.get(stock_id, {}).items())
+            if known_on is None or q.is_known_on(known_on)
+        ]
+
+
 class FakePredictions:
     def __init__(self, store: InMemoryStore) -> None:
         self._s = store
@@ -136,6 +158,7 @@ class FakeUnitOfWork:
     def __init__(self, store: InMemoryStore) -> None:
         self.stocks = FakeStocks(store)
         self.prices = FakePrices(store)
+        self.fundamentals = FakeFundamentals(store)
         self.predictions = FakePredictions(store)
         self.trade_plans = FakeTradePlans(store)
         self.providers = FakeProviders(store)

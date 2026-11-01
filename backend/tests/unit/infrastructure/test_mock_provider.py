@@ -69,3 +69,32 @@ def test_date_range_filter(provider: MockMarketDataProvider) -> None:
 
     assert candles
     assert all(date(2026, 1, 1) <= c.trade_date <= date(2026, 1, 31) for c in candles)
+
+
+def test_quarters_are_point_in_time_and_repeatable(provider: MockMarketDataProvider) -> None:
+    quarters = provider.quarterly_fundamentals("INFY", DEFAULT_START, DEFAULT_END)
+
+    # Nov 2021 .. Sep 2026: 20 quarter ends; the Sep 2026 quarter may still be unannounced
+    assert 19 <= len(quarters) <= 20
+    assert all(q.period_end < q.announced_date <= DEFAULT_END for q in quarters)
+    assert [q.period_end for q in quarters] == sorted(q.period_end for q in quarters)
+    assert quarters == list(
+        MockMarketDataProvider().quarterly_fundamentals("INFY", DEFAULT_START, DEFAULT_END)
+    )
+
+
+def test_quarters_announced_after_the_window_are_hidden(provider: MockMarketDataProvider) -> None:
+    end = date(2024, 4, 15)  # Q4 FY24 (31 Mar) results are not out yet on 15 Apr
+    quarters = provider.quarterly_fundamentals("TCS", DEFAULT_START, end)
+
+    assert quarters
+    assert all(q.announced_date <= end for q in quarters)
+    assert date(2024, 3, 31) not in {q.period_end for q in quarters}
+
+
+def test_fundamentals_are_plausible(provider: MockMarketDataProvider) -> None:
+    for quarter in provider.quarterly_fundamentals("RELIANCE", DEFAULT_START, DEFAULT_END):
+        assert quarter.revenue_cr > quarter.net_profit_cr > 0
+        assert quarter.eps > 0
+        assert quarter.book_value_per_share > 0
+        assert Decimal(0) < quarter.roe_pct < Decimal(100)
