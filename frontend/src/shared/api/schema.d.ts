@@ -144,6 +144,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stocks/{symbol}/analogs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Similar past setups
+         * @description What happened after the setups most similar to this stock's latest one.
+         */
+        get: operations["get_analogs_api_stocks__symbol__analogs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/screener": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Screen stocks
+         * @description Stocks whose latest prediction meets the filters, ranked by the target probability.
+         */
+        get: operations["screen_stocks_api_screener_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/trade-plans/preview": {
         parameters: {
             query?: never;
@@ -360,6 +400,74 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AnalogCaseResponse
+         * @description A similar past setup and its outcome.
+         * @example {
+         *       "as_of": "2024-03-04",
+         *       "is_stopped": false,
+         *       "return_pct": 12.4,
+         *       "similarity": 0.987,
+         *       "symbol": "TCS"
+         *     }
+         */
+        AnalogCaseResponse: {
+            /** Symbol */
+            symbol: string;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Similarity */
+            similarity: number;
+            /** Return Pct */
+            return_pct: number;
+            /** Is Stopped */
+            is_stopped: boolean;
+        };
+        /**
+         * AnalogSummaryResponse
+         * @description Outcome summary of the most similar past setups.
+         * @example {
+         *       "as_of": "2026-10-30",
+         *       "cases": [
+         *         {
+         *           "as_of": "2024-03-04",
+         *           "is_stopped": false,
+         *           "return_pct": 12.4,
+         *           "similarity": 0.987,
+         *           "symbol": "TCS"
+         *         }
+         *       ],
+         *       "category": "1Y",
+         *       "hit_rates": {
+         *         "5": 0.55,
+         *         "10": 0.45,
+         *         "20": 0.2
+         *       },
+         *       "median_return_pct": 9.8,
+         *       "share_up": 0.65,
+         *       "symbol": "INFY"
+         *     }
+         */
+        AnalogSummaryResponse: {
+            /** Symbol */
+            symbol: string;
+            category: components["schemas"]["HoldingCategory"];
+            /** As Of */
+            as_of: string | null;
+            /** Median Return Pct */
+            median_return_pct: number | null;
+            /** Share Up */
+            share_up: number | null;
+            /** Hit Rates */
+            hit_rates: {
+                [key: string]: number;
+            };
+            /** Cases */
+            cases: components["schemas"]["AnalogCaseResponse"][];
+        };
         /**
          * CandleResponse
          * @description One daily candle.
@@ -928,6 +1036,58 @@ export interface components {
             message: string;
         };
         /**
+         * ScreenRowResponse
+         * @description One ranked screener result.
+         * @example {
+         *       "prediction": {
+         *         "as_of": "2026-10-30",
+         *         "calendar_days": 50,
+         *         "category": "50D",
+         *         "model_version": "baseline-empirical-v1",
+         *         "p10_pct": -6.2,
+         *         "p50_pct": 4.1,
+         *         "p90_pct": 15.3,
+         *         "prob_hit": {
+         *           "5": 0.48,
+         *           "10": 0.31,
+         *           "20": 0.12
+         *         },
+         *         "prob_up": 0.61
+         *       },
+         *       "probability": 0.31,
+         *       "probability_max": 0.12,
+         *       "quality": 7,
+         *       "stock": {
+         *         "currency": "INR",
+         *         "exchange": "NSE",
+         *         "is_synthetic": true,
+         *         "market": "IN",
+         *         "name": "Infosys Ltd",
+         *         "sector": "Information Technology",
+         *         "symbol": "INFY"
+         *       }
+         *     }
+         */
+        ScreenRowResponse: {
+            stock: components["schemas"]["StockResponse"];
+            prediction: components["schemas"]["PredictionResponse"];
+            /**
+             * Probability
+             * @description Chance of the requested target before the stop
+             */
+            probability: number | null;
+            /**
+             * Probability Max
+             * @description Chance of the upper end of the range
+             */
+            probability_max: number | null;
+            /**
+             * Quality
+             * @description 0-10 quality score (Q67)
+             */
+            quality: number | null;
+        };
+        /**
          * StockOverviewResponse
          * @description One row of the Stocks table.
          * @example {
@@ -1010,6 +1170,8 @@ export interface components {
             last_close: components["schemas"]["CandleResponse"] | null;
             /** Predictions */
             predictions: components["schemas"]["PredictionResponse"][];
+            /** @description Best median per unit of downside (Q68) */
+            best_category?: components["schemas"]["HoldingCategory"] | null;
         };
         /**
          * StockResponse
@@ -1352,6 +1514,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StockPredictionsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_analogs_api_stocks__symbol__analogs_get: {
+        parameters: {
+            query?: {
+                category?: components["schemas"]["HoldingCategory"];
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalogSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    screen_stocks_api_screener_get: {
+        parameters: {
+            query: {
+                category: components["schemas"]["HoldingCategory"];
+                /** @description Wanted return, % */
+                target_pct: number;
+                target_max_pct?: number | null;
+                min_probability?: number | string;
+                /** @description Worst likely return (p10) at least this */
+                min_worst_pct?: number | string | null;
+                min_quality?: number;
+                sector?: string[] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScreenRowResponse"][];
                 };
             };
             /** @description Validation Error */

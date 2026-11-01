@@ -3,6 +3,7 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
 ## [Unreleased]
+- **Phase 4 – Screener:** `GET /api/screener` with holding period, target, chance, worst-likely (p10), quality (0–10) and sector filters; Screener page (table / phone cards, empty state); best risk-adjusted holding period on the stock page; similar past setups via pgvector (`GET /api/stocks/{symbol}/analogs`, migration 0006 with an HNSW index); decisions Q66–Q68.
 - **Phase 3b – Real market data:** EODHD plugin (NSE daily prices, quarterly fundamentals, quota check) with retries and token-safe errors/logs; encrypted write-only credentials (`PUT`/`DELETE /api/admin/providers/{plugin}/credentials`), primary provider (`PUT …/primary`); Providers page with key entry, test and "Use as primary"; `make real-data` replaces synthetic data (confirmation; journal kept). Decision Q65.
 - **Phase 3 – Long-term engine:** data-point calculators (doc 21 coverage table), point-in-time feature store `fs-v1` + triple-barrier labels (migration 0005), LightGBM quantile + calibrated target-probability models per category, split-conformal ranges, purged walk-forward evaluation vs universe and momentum baselines, Q51 quality gates, model registry with one-ACTIVE rule and rollback; `make features`, `make train`, `make model-rollback`, `make ml-data`. Decisions Q50, Q51, Q64.
 - **Phase 2 – Trade journal (signed off 2026-11-01):**
@@ -38,6 +39,8 @@ All notable changes to this project are documented here. Format: [Keep a Changel
   visual regression baselines (`make e2e`, `make e2e-update`).
 
 ### Fixed
+- Migration 0006: an HNSW index build asked for ~1 GB of shared memory under the timescaledb-ha defaults; `maintenance_work_mem` is capped for the build.
+- Evaluation report ended with an extra blank line.
 - Dev API container kept the image from before the ML dependencies; recreated (see CLAUDE.md: recreate after image changes).
 - Visual regression used a 1% pixel ratio, too loose to notice a changed number; now a 50-pixel budget.
 - Dev Vite reloaded every open page while tests wrote results into the mounted source.

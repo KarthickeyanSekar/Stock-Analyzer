@@ -18,13 +18,14 @@ services:
       SA_ENV: test
       SA_OTEL_ENABLED: "false"
       SA_DATABASE_URL: postgresql+asyncpg://sa_e2e:sa_e2e@db:5432/sa_e2e
-    # Same POC data as `make poc-data`: migrations, synthetic NIFTY 50, baseline predictions.
+    # Same POC data as `make poc-data` plus features: migrations, synthetic NIFTY 50, features, predictions.
     command:
       - sh
       - -c
       - >-
         alembic upgrade head &&
         python -m stock_analyzer.presentation.jobs.seed &&
+        python -m stock_analyzer.presentation.jobs.features &&
         python -m stock_analyzer.presentation.jobs.predict &&
         exec uvicorn stock_analyzer.main:app --host 0.0.0.0 --port 8000 --app-dir src
     healthcheck:

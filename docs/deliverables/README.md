@@ -25,7 +25,7 @@ flowchart LR
 | 2 – Trade Journal | [phase-02-trade-journal.md](phase-02-trade-journal.md) | Plans can be tracked manually with honest outcomes | ✅ Signed off 2026-11-01 |
 | 3 – Long-Term Engine | [phase-03-long-term-engine.md](phase-03-long-term-engine.md) | ML predictions with calibrated ranges beat the baselines | 🟡 Engine built; outcome needs real data |
 | 3b – Real Market Data | [phase-03b-real-data.md](phase-03b-real-data.md) | Real NSE data from EODHD replaces the synthetic data | 🟡 Built; needs your API key |
-| 4 – Screener | [phase-04-screener.md](phase-04-screener.md) | "N days, X% → which stocks?" answered in seconds | ⚪ Not started |
+| 4 – Screener | [phase-04-screener.md](phase-04-screener.md) | "N days, X% → which stocks?" answered in seconds | ✅ Signed off 2026-11-01 |
 | 5 – Validation | [phase-05-validation.md](phase-05-validation.md) | Usefulness proven (or disproven) with out-of-sample evidence | ⚪ Not started |
 | 5b – Users | [phase-05b-users.md](phase-05b-users.md) | Others sign up with OAuth + invite code; data separated | ⚪ Not started |
 | 5c – WhatsApp | [phase-05c-whatsapp.md](phase-05c-whatsapp.md) | Daily report and alerts arrive on WhatsApp | ⚪ Not started |

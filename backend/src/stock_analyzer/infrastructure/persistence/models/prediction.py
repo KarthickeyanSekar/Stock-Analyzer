@@ -71,6 +71,8 @@ class PredictionModel(Base):
         CheckConstraint(f"category IN {HOLDING_CATEGORIES_SQL}", name="category"),
         CheckConstraint("p10_pct <= p50_pct AND p50_pct <= p90_pct", name="ordered_quantiles"),
         Index(None, "stock_id", "as_of"),
+        # Screener: latest prediction per stock within one category.
+        Index("ix_predictions_category_stock_as_of", "category", "stock_id", "as_of"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)

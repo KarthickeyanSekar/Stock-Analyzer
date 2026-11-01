@@ -80,6 +80,9 @@ update its row **and** every doc it affects.
 | 63 | Where do journal settings (paper capital, risk %, tolerance) live before user accounts? | One app-wide record, per browser | ✅ **One app-wide settings record** in the database (Settings page); becomes per-user with OAuth in Phase 5b (2026-11-01) |
 | 64 | Number type inside ML features and training? | Decimal everywhere, float inside ML | ✅ **float inside feature vectors and model training** (numpy/LightGBM need it); everything shown or stored for users (prices, returns, ranges, probabilities) stays `Decimal`, rounded at the boundary, as the baseline already does (2026-11-01) |
 | 65 | When switching to real data: which stocks and how much history? | NIFTY 50 / all NSE; 5 / 10 / 20 years | ✅ **NIFTY 50, 10 years** (2026-11-01): same universe as the POC; ~550 EODHD API calls per full load (50 price requests + 50 fundamentals requests × 10 calls); `make real-data` deletes the synthetic data after a confirmation, journal plans stay |
+| 66 | Screener "max stop-loss" filter, when every prediction uses a −7% stop? | Recompute per stop, filter on the downside | ✅ **Filter on the downside**: "worst likely" = p10 of the predicted range must be ≥ the limit (e.g., −8%); per-stop recomputation later (2026-11-01) |
+| 67 | Quality score for the screener? | Piotroski (needs full statements), own 0–10 score | ✅ **Own 0–10 score** from what we compute today: ROE, debt/equity, revenue growth, earnings yield, volatility (2 points each, universe-relative); Piotroski when a provider supplies full statements (2026-11-01) |
+| 68 | "Best risk-adjusted" holding period for one stock? | Highest median, median ÷ downside, Sharpe-like | ✅ **Median ÷ downside**: p50 ÷ (p50 − p10), only for positive medians; ties → shorter period (2026-11-01) |
 
 ## Related
 - [00 – How to Plan This Project](../00-how-to-plan.md)

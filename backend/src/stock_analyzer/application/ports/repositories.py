@@ -10,6 +10,7 @@ from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyF
 from stock_analyzer.domain.journal.progress import PlanProgress
 from stock_analyzer.domain.journal.settings import JournalSettings
 from stock_analyzer.domain.journal.trade_plan import TradePlan
+from stock_analyzer.domain.market.holding_category import HoldingCategory
 from stock_analyzer.domain.prediction.prediction import Prediction
 from stock_analyzer.domain.pricing.candle import Candle
 from stock_analyzer.domain.stock.stock import Stock
@@ -88,6 +89,10 @@ class PredictionRepository(Protocol):
 
     async def latest_for_stock(self, stock_id: int) -> list[Prediction]:
         """Return the newest prediction per holding category."""
+        ...
+
+    async def latest_for_category(self, category: HoldingCategory) -> list[Prediction]:
+        """Return each stock's newest prediction for one holding category."""
         ...
 
 

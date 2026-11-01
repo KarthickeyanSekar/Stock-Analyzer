@@ -13,6 +13,7 @@ from stock_analyzer.application.ports.security import SecretCipher
 from stock_analyzer.application.use_cases.journal.settings import JournalSettingsService
 from stock_analyzer.application.use_cases.journal.trade_plans import TradePlanService
 from stock_analyzer.application.use_cases.providers.providers import ProviderAdmin
+from stock_analyzer.application.use_cases.screener.queries import ScreenerQueries
 from stock_analyzer.application.use_cases.stocks.queries import StockQueries
 from stock_analyzer.domain.market.trading_calendar import TradingCalendar
 from stock_analyzer.infrastructure.config.settings import Settings, get_settings
@@ -49,6 +50,11 @@ class Container:
     def stock_queries(self) -> StockQueries:
         """Stock search, prices and predictions."""
         return StockQueries(self.uow_factory)
+
+    @property
+    def screener(self) -> ScreenerQueries:
+        """Holding-period screener and similar past setups."""
+        return ScreenerQueries(self.uow_factory)
 
     @property
     def trade_plans(self) -> TradePlanService:

@@ -3,10 +3,12 @@
 from datetime import date
 from typing import Any
 
-from sqlalchemy import Boolean, CheckConstraint, Date, Double, ForeignKey, String
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import Boolean, CheckConstraint, Date, Double, ForeignKey, Index, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
+from stock_analyzer.domain.analysis.features import EMBEDDING_FEATURES
 from stock_analyzer.infrastructure.persistence.models.base import Base
 from stock_analyzer.infrastructure.persistence.models.prediction import HOLDING_CATEGORIES_SQL
 
@@ -15,12 +17,22 @@ class FeatureDailyModel(Base):
     """One point-in-time feature vector per stock, date and feature-set version."""
 
     __tablename__ = "features_daily"
+    __table_args__ = (
+        # Approximate nearest-neighbour search for similar past setups (cosine distance).
+        Index(
+            "ix_features_daily_embedding",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+    )
 
     stock_id: Mapped[int] = mapped_column(ForeignKey("stocks.id"), primary_key=True)
     as_of: Mapped[date] = mapped_column(Date, primary_key=True)
     feature_set: Mapped[str] = mapped_column(String(16), primary_key=True)
     # {feature name: value or null}; floats by design (Q64).
     values: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(len(EMBEDDING_FEATURES)))
 
 
 class LabelDailyModel(Base):

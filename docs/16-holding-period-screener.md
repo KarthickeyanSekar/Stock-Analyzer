@@ -5,6 +5,13 @@
 **Purpose:** answer *"If I hold for N days and want X%, which stocks fit?"* and *"For this stock, which holding period is best?"*
 Long-term only for now.
 
+
+> **Status (2026-11-01, Phase 4):** built. `GET /api/screener` (category, target %, chance, worst likely
+> return p10 (Q66), quality 0–10 (Q67), sector) ranks by the chance of the target; the Screener page is in
+> the sidebar. Each stock's best risk-adjusted holding period is marked (Q68), and "Similar past setups"
+> (pgvector, cosine distance over universe-ranked features) shows what happened after the closest
+> finished setups. Benchmark: 2,000 stocks × 7 periods answered in < 2 s.
+
 ## Holding categories
 | Category | Calendar days | ≈ Trading days | Tax treatment (India) |
 |---|---|---|---|

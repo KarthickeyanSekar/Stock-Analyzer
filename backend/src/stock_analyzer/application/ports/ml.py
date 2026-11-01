@@ -14,6 +14,16 @@ FeatureRow = list[float | None]
 
 
 @dataclass(frozen=True, slots=True)
+class Analog:
+    """A similar past setup and what happened next."""
+
+    stock_id: int
+    as_of: date
+    distance: float  # cosine distance of the embeddings (0 = identical)
+    label: Label
+
+
+@dataclass(frozen=True, slots=True)
 class TrainingData:
     """Feature rows with their outcomes: forward return and target hits before the stop."""
 
@@ -51,6 +61,17 @@ class FeatureRepository(Protocol):
 
     async def delete_all(self) -> int:
         """Delete every feature vector and label (rebuilt by ``make features``)."""
+        ...
+
+    async def nearest(
+        self,
+        feature_set: str,
+        vector: Sequence[float],
+        category: HoldingCategory,
+        before: date,
+        limit: int,
+    ) -> list[Analog]:
+        """The ``limit`` closest labelled setups dated before ``before``."""
         ...
 
 
