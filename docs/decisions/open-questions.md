@@ -88,6 +88,7 @@ update its row **and** every doc it affects.
 | 71 | Where do sessions live? | Signed JWT cookie, Redis, database table | ✅ **Database table** (2026-11-01): random 32-byte token in an HttpOnly, SameSite=Lax cookie (Secure in prod); only its SHA-256 hash is stored; 7-day sliding expiry; sign-out and account deletion delete it. Works with the existing unit of work and test fakes, no extra service |
 | 72 | How is sign-in implemented and tested without real OAuth apps? | Authlib client, own OIDC code | ✅ **OIDC Authorization Code + PKCE (S256)** with state and nonce, ID token verified against the provider's JWKS (Authlib JOSE); Google and Microsoft via discovery. Tests use a fake identity provider; a **dev-only sign-in** (`SA_DEV_LOGIN=true`, refused when `SA_ENV=prod`) lets you work locally until you register OAuth apps (2026-11-01) |
 | 73 | Who owns the journal plans created before user accounts? | Delete, first admin | ✅ **The first admin** (an email in `SA_ADMIN_EMAILS`) claims plans and settings without an owner on first sign-in (2026-11-01) |
+| 74 | Purpose of the app when others use it, and who checks the legal side (data licence, SEBI)? | — | ✅ **Educational purpose only** (2026-11-01): free, invite-only, no advice and no trading; the owner does the legal check (data-provider licence, SEBI Research Analyst rules) before inviting anyone |
 
 ## Related
 - [00 – How to Plan This Project](../00-how-to-plan.md)
