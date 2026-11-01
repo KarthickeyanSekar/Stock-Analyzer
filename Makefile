@@ -17,7 +17,7 @@ REDIS_CONTAINER ?= RedisDev
 LOAD_ENV := set -a; . ./.env; set +a
 
 .PHONY: help bootstrap setup dev-db dev-db-stop dev-network dev dev-file dev-data infra down prod \
-        test lint format api-client logs e2e ui-shots \
+        test lint format api-client logs e2e e2e-update ui-shots \
         seed predict poc-data db-upgrade db-downgrade db-revision db-current db-history db-shell db-reset \
         redis-shell redis-info redis-keys redis-flush
 
@@ -83,6 +83,9 @@ format:        ## Auto-format backend and frontend (in containers, writes to the
 
 e2e:           ## Browser tests (Playwright) on a throwaway stack: db + seeded api + web; removed afterwards
 	$(E2E) up --build --abort-on-container-exit --exit-code-from e2e; status=$$?; $(E2E) down -v --remove-orphans; exit $$status
+
+e2e-update:    ## Re-record the visual baselines (e2e/snapshots) after an intended UI change; review before committing
+	E2E_ARGS=--update-snapshots $(MAKE) e2e
 
 ui-shots:      ## Screenshots of every screen (light, dark, phone) into frontend/screenshots; app must be running
 	docker run --rm --network container:stock-analyzer-web-1 -v "$(CURDIR)/frontend:/work" -w /work \

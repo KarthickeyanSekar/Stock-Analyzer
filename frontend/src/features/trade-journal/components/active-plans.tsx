@@ -5,6 +5,7 @@ import { type TradePlan } from '../api/use-trade-plans';
 import { progressToTarget } from '../model/outcome';
 import { EmptyState } from '@/shared/components/data-states';
 import { cn } from '@/shared/lib/cn';
+import { formatDate } from '@/shared/lib/format-date';
 import { formatInr, formatPct } from '@/shared/lib/format-number';
 import { Button } from '@/shared/ui/button';
 
@@ -47,7 +48,7 @@ export function ActivePlans({ plans, prices, onClose }: ActivePlansProps) {
                   {plan.symbol}
                 </Link>
                 <p className="text-xs text-muted-foreground">
-                  {plan.category} · until {plan.planned_end_date}
+                  {plan.category} · until {formatDate(plan.planned_end_date)}
                 </p>
               </div>
               <span

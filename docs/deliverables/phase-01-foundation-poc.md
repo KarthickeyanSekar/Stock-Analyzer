@@ -6,19 +6,19 @@
 holding category, start a journal plan, close it and see the outcome calculated. Everything runs on **synthetic data** behind the
 real provider ports, so switching to a real API later needs no code changes outside a new plugin.
 
-**Status:** 🟡 In progress · **Branch:** `feature/phase1-foundation` · **Plan:** [27 – Phase 1 POC Plan (Synthetic Data) 🧪](../27-phase1-poc-plan.md)
+**Status:** 🟢 Built and verified, awaiting your sign-off · **Branch:** `feature/phase1-foundation` … `feature/phase1-finish` · **Plan:** [27 – Phase 1 POC Plan (Synthetic Data) 🧪](../27-phase1-poc-plan.md)
 
 ## Deliverables
 | ID | Deliverable | Outcome (what is true when done) | Status |
 |---|---|---|---|
-| D1.0 | Tooling | Quality checks run automatically and pass before any feature code is added | 🟡 |
-| D1.1 | Database schema | The POC tables exist in `dev_stock_analyzer` and can be created and rolled back by migrations | 🟡 |
-| D1.2 | Domain core | Money, percentages, holding categories, the trading calendar and the journal rules behave correctly and are proven by tests | 🟡 |
+| D1.0 | Tooling | Quality checks run automatically and pass before any feature code is added | ✅ |
+| D1.1 | Database schema | The POC tables exist in `dev_stock_analyzer` and can be created and rolled back by migrations | 🟡 Clean-machine run / sign-off |
+| D1.2 | Domain core | Money, percentages, holding categories, the trading calendar and the journal rules behave correctly and are proven by tests | ✅ |
 | D1.3 | Synthetic data + mock provider | 5 years of realistic, repeatable NIFTY 50 data is loaded through the real provider ports | ✅ |
 | D1.4 | Baseline predictions | Every stock has a prediction (range + target probabilities) for every holding category, with no future data used | ✅ |
 | D1.5 | API | All POC features are available through documented, tested REST endpoints | ✅ |
 | D1.6 | Frontend | The full POC flow works in the browser, clearly labelled as synthetic data | ✅ |
-| D1.7 | Wrap-up | The POC is demonstrable, documented and merged into `develop` | 🟡 |
+| D1.7 | Wrap-up | The POC is demonstrable, documented and merged into `develop` | 🟡 Clean-machine run / sign-off |
 
 ---
 
@@ -30,7 +30,7 @@ real provider ports, so switching to a real API later needs no code changes outs
 | 1 | pre-commit hooks installed and run on commit | `pre-commit run --all-files` passes | ✅ 2026-11-01: hooks installed in `backend/.venv`; `pre-commit run --all-files` passes (ruff, mypy, import-linter, ESLint/Prettier, gitleaks) |
 | 2 | Lint, format, mypy (strict), import-linter, ESLint pass | `make lint` exits 0 | ✅ 2026-10-31 (after Dockerfile cache fix) |
 | 3 | Backend and frontend tests pass | `make test` exits 0 | ✅ 2026-10-31 |
-| 4 | shadcn/ui initialised with Tailwind 4 | `frontend/components.json` exists; a Button renders in a test | 🟡 2026-10-31: initialised (Base UI), 9 components in `shared/ui`; no render test yet |
+| 4 | shadcn/ui initialised with Tailwind 4 | `frontend/components.json` exists; a Button renders in a test | ✅ 2026-11-01: 22 components in `shared/ui`; `button.test.tsx` renders, clicks, disabled |
 | 5 | Frontend file naming decided (Q55) and doc 24 updated | Q55 ✅ in Open Questions | ✅ 2026-10-31 |
 
 ---
@@ -48,7 +48,7 @@ real provider ports, so switching to a real API later needs no code changes outs
 | 6 | Alembic configured; `make db-*` commands work | `make db-upgrade` / `db-current` → `0002 (head)` | ✅ 2026-10-31: 0001 extensions, 0002 markets/stocks/prices_daily |
 | 7 | Models and migrations match | `alembic check` → "No new upgrade operations detected" | ✅ 2026-10-31 |
 | 8 | Redis key registry with TTL rule | `tests/unit/infrastructure/test_redis_keys.py` | ✅ 2026-10-31 (6 tests) |
-| 9 | Fresh clone reproducible from the repo | `git clone` → `make bootstrap` → `make dev` on a clean machine | ⬜ Needs a run on a clean machine |
+| 9 | Fresh clone reproducible from the repo | `git clone` → `make bootstrap` → `make dev` on a clean machine | 🟡 2026-11-01: fresh `git clone` + `.env` from `.env.example` → `make test` (83 + 76) and `make e2e` (22) pass. Still to do by you: `make bootstrap` → `make dev` on a machine with an empty Docker cache |
 
 ---
 
@@ -57,7 +57,7 @@ real provider ports, so switching to a real API later needs no code changes outs
 
 | # | Acceptance criterion | How to verify (evidence) | Result |
 |---|---|---|---|
-| 1 | `Money` and `Percentage` are immutable `Decimal` value objects (no floats) | Unit tests | 🟡 2026-10-31: all money/% use `Decimal` (percent helpers, frozen value objects); no dedicated `Money` class yet |
+| 1 | `Money` and `Percentage` are immutable `Decimal` value objects (no floats) | Unit tests | ✅ 2026-11-01: `domain/shared/money.py` (`Money`, `Percentage`; rejects floats, NaN, mixed currencies); `test_money.py` (9 tests) |
 | 2 | `HoldingCategory` covers 50D, 100D, 200D, 300D, 1Y, 2Y, 3Y and converts calendar days to trading days | Unit tests with the trading calendar | ✅ 2026-10-31: `test_calendar_and_categories.py` |
 | 3 | `TradingCalendar` skips weekends and NSE holidays | Unit tests | ✅ 2026-10-31: `test_calendar_and_categories.py` |
 | 4 | `TradePlan`: prediction locked at start; can't close twice; exit date not before start | Unit tests for each rule | ✅ 2026-10-31: `test_trade_plan.py` |
@@ -137,9 +137,9 @@ real provider ports, so switching to a real API later needs no code changes outs
 
 ## Phase exit criteria
 - [ ] D1.0 – D1.7 all ✅
-- [ ] `make lint` and `make test` pass in containers
+- [x] `make lint` and `make test` pass in containers (2026-11-01; plus `make e2e` 22/22)
 - [ ] Demo walked through end to end on a fresh `make dev`
-- [ ] Docs and Open Questions updated
+- [x] Docs and Open Questions updated
 - [ ] Merged into `develop` by PR
 
 ## Sign-off
@@ -152,5 +152,6 @@ real provider ports, so switching to a real API later needs no code changes outs
 |---|---|---|
 | 2026-10-31 | Phase 1 defined as a POC on synthetic data | Prove the flow before paying for APIs (Q56) |
 | 2026-10-31 | POC built end to end on synthetic data (backend + frontend); open items: pre-commit, DB integration tests, FundamentalsProvider + fundamentals, Playwright, screenshots | Shown to the user for review |
+| 2026-11-01 | Phase 1 finish: `Money`/`Percentage`, Button render test, fresh-clone run, visual regression | Close remaining criteria |
 | 2026-11-01 | POC completion: fundamentals, DB integration tests, pre-commit, Playwright e2e (found + fixed ⌘K crash and a missing focus ring), API examples | Close open items |
 | 2026-10-31 | D1.1 extended: Alembic commands, drift check, Redis key registry, reproducible bootstrap | Database control + clone-and-run setup |

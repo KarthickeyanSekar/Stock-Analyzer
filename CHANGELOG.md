@@ -25,10 +25,13 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 - **POC completion:** `FundamentalsProvider` port + synthetic quarterly fundamentals (point-in-time), `GET /api/stocks/{symbol}/fundamentals`;
   DB integration tests on a throwaway TimescaleDB inside `make test`; `make e2e` (Playwright on a throwaway seeded stack);
   response examples on every API model; pre-commit hooks installed.
+- `Money` / `Percentage` value objects; Button render test; WCAG AA contrast audit of the tokens;
+  visual regression baselines (`make e2e`, `make e2e-update`).
 
 ### Fixed
 - ⌘K palette crashed the app on open (cmdk input rendered without a `<Command>` root).
 - Journal tab panel had no visible keyboard focus ring.
+- Plan dates shown as raw ISO (`2027-11-01`) in journal cards, the closed list and the start toast.
 - Price chart blank when the browser locale is missing (explicit `en-IN` locale).
 - Percentage-point differences shown as "% pp".
 - Dev API replaced by test runs: tests now use their own compose project (`stock-analyzer-test`) and `--no-deps`.

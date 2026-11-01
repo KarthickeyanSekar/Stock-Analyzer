@@ -102,7 +102,7 @@ function StartPlanForm({
       {
         onSuccess: (plan) => {
           toast.success(`Plan #${String(plan.id)} started for ${symbol}`, {
-            description: `${plan.category} · target ${formatPct(plan.target_pct, 2)} · ends ${plan.planned_end_date}`,
+            description: `${plan.category} · target ${formatPct(plan.target_pct, 2)} · ends ${formatDate(plan.planned_end_date)}`,
             action: { label: 'Journal', onClick: () => void navigate('/journal') },
           });
           onOpenChange(false);
