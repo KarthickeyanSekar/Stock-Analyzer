@@ -81,7 +81,7 @@
 ## Related
 - [Phase 3 – Long-Term Engine](phase-03-long-term-engine.md)
 - [22 – Provider Configuration UI](../22-provider-configuration-ui.md)
-- [04 – Data Sources](../04-data-sources.md)
+- [04 – Data Sources](../04-data-sources.md) (EODHD India coverage, plans and API calls per day)
 
 ---
 [🏠 Docs index](../README.md) · [🎯 Deliverables](README.md) · [← Previous phase](phase-03-long-term-engine.md) · [Next phase →](phase-04-screener.md)
