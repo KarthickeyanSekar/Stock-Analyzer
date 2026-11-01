@@ -23,6 +23,8 @@ dependencies = [
     "httpx>=0.27",
     # pgvector column type for similar-setup search (screener analogs).
     "pgvector>=0.3",
+    # OIDC sign-in: verify Google / Microsoft ID tokens (JWS + JWKS).
+    "joserfc>=1.0",
     "numpy>=2.1",
     "lightgbm>=4.5",
     "scikit-learn>=1.5",

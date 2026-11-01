@@ -27,7 +27,7 @@ flowchart LR
 | 3b – Real Market Data | [phase-03b-real-data.md](phase-03b-real-data.md) | Real NSE data from EODHD replaces the synthetic data | 🟡 Built; needs your API key |
 | 4 – Screener | [phase-04-screener.md](phase-04-screener.md) | "N days, X% → which stocks?" answered in seconds | ✅ Signed off 2026-11-01 |
 | 5 – Validation | [phase-05-validation.md](phase-05-validation.md) | Usefulness proven (or disproven) with out-of-sample evidence | 🟡 Tools built; verdict needs real data |
-| 5b – Users | [phase-05b-users.md](phase-05b-users.md) | Others sign up with OAuth + invite code; data separated | ⚪ Not started |
+| 5b – Users | [phase-05b-users.md](phase-05b-users.md) | Others sign up with OAuth + invite code; data separated | 🟡 Built; needs your OAuth apps |
 | 5c – WhatsApp | [phase-05c-whatsapp.md](phase-05c-whatsapp.md) | Daily report and alerts arrive on WhatsApp | ⚪ Not started |
 | 6 – Daily Ops | [phase-06-daily-ops.md](phase-06-daily-ops.md) | Runs unattended 24/7 with a daily returns report | ⚪ Not started |
 | 7 – Short-Term | [phase-07-short-term.md](phase-07-short-term.md) | 1 day – 2 weeks engine available | ⚪ Not started |

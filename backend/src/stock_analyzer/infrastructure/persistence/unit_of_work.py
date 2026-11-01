@@ -5,6 +5,14 @@ from typing import Self
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from stock_analyzer.infrastructure.persistence.repositories.auth import (
+    SqlAlchemyAuditLog,
+    SqlAlchemyInviteRepository,
+    SqlAlchemyLoginRequestRepository,
+    SqlAlchemySessionRepository,
+    SqlAlchemyUserRepository,
+    SqlAlchemyWatchlistRepository,
+)
 from stock_analyzer.infrastructure.persistence.repositories.fundamentals import (
     SqlAlchemyFundamentalsRepository,
 )
@@ -42,6 +50,12 @@ class _Repositories:
         self.plan_statuses = SqlAlchemyPlanStatusRepository(session)
         self.features = SqlAlchemyFeatureRepository(session)
         self.models = SqlAlchemyModelRegistry(session)
+        self.users = SqlAlchemyUserRepository(session)
+        self.sessions = SqlAlchemySessionRepository(session)
+        self.login_requests = SqlAlchemyLoginRequestRepository(session)
+        self.invites = SqlAlchemyInviteRepository(session)
+        self.audit = SqlAlchemyAuditLog(session)
+        self.watchlists = SqlAlchemyWatchlistRepository(session)
         self.settings = SqlAlchemySettingsRepository(session)
 
 
@@ -108,6 +122,36 @@ class SqlAlchemyUnitOfWork:
     def settings(self) -> SqlAlchemySettingsRepository:
         """Journal settings bound to this transaction."""
         return self._bound().settings
+
+    @property
+    def users(self) -> SqlAlchemyUserRepository:
+        """User accounts bound to this transaction."""
+        return self._bound().users
+
+    @property
+    def sessions(self) -> SqlAlchemySessionRepository:
+        """Signed-in browsers bound to this transaction."""
+        return self._bound().sessions
+
+    @property
+    def login_requests(self) -> SqlAlchemyLoginRequestRepository:
+        """Sign-ins in progress bound to this transaction."""
+        return self._bound().login_requests
+
+    @property
+    def invites(self) -> SqlAlchemyInviteRepository:
+        """Invite codes bound to this transaction."""
+        return self._bound().invites
+
+    @property
+    def audit(self) -> SqlAlchemyAuditLog:
+        """Audit log bound to this transaction."""
+        return self._bound().audit
+
+    @property
+    def watchlists(self) -> SqlAlchemyWatchlistRepository:
+        """Per-user watchlists bound to this transaction."""
+        return self._bound().watchlists
 
     async def __aenter__(self) -> Self:
         """Open the session and bind the repositories to it."""

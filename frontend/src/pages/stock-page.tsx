@@ -15,6 +15,7 @@ import {
 } from '@/features/stock-analysis';
 import { OutcomeBadge, StartPlanSheet, useTradePlans } from '@/features/trade-journal';
 import { ErrorState, SkeletonRows } from '@/shared/components/data-states';
+import { WatchButton } from '@/features/watchlist';
 import { cn } from '@/shared/lib/cn';
 import { formatDate } from '@/shared/lib/format-date';
 import { formatInr, formatPct } from '@/shared/lib/format-number';
@@ -118,15 +119,18 @@ export function StockPage() {
             </p>
           )}
         </div>
-        <Button
-          size="lg"
-          disabled={!data || !last}
-          onClick={() => {
-            setSheetOpen(true);
-          }}
-        >
-          <Plus /> Start plan
-        </Button>
+        <div className="flex items-center gap-2">
+          <WatchButton symbol={symbol} />
+          <Button
+            size="lg"
+            disabled={!data || !last}
+            onClick={() => {
+              setSheetOpen(true);
+            }}
+          >
+            <Plus /> Start plan
+          </Button>
+        </div>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">

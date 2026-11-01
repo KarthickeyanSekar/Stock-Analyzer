@@ -9,6 +9,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
+from uuid import UUID
 
 from stock_analyzer.application.errors import NotFoundError
 from stock_analyzer.application.ports.repositories import UnitOfWork, UnitOfWorkFactory
@@ -116,6 +117,11 @@ def _success_rate(plans: list[TradePlan]) -> Decimal | None:
     return _rate(sum(p.outcome is PlanOutcome.SUCCESS for p in judged), len(judged))
 
 
+def _visible(plan: TradePlan, owner_id: UUID | None) -> bool:
+    """Users only see their own plans (``None`` = a job that sees all)."""
+    return owner_id is None or plan.owner_id == owner_id
+
+
 class TradePlanService:
     """Start, preview, close, track and read journal plans."""
 
@@ -124,12 +130,14 @@ class TradePlanService:
         self._uow_factory = uow_factory
         self._calendar = calendar
 
-    async def _draft(self, uow: UnitOfWork, request: CreateTradePlanRequest) -> TradePlan:
+    async def _draft(
+        self, uow: UnitOfWork, request: CreateTradePlanRequest, owner_id: UUID | None
+    ) -> TradePlan:
         """Build (but don't save) the plan the request describes."""
         stock = await uow.stocks.get_by_symbol(request.symbol)
         if stock is None or stock.id is None:
             raise NotFoundError(f"stock {request.symbol} not found")
-        settings = await uow.settings.get()
+        settings = await uow.settings.get(owner_id)
         prediction: Prediction | None = next(
             (
                 p
@@ -168,13 +176,16 @@ class TradePlanService:
             predicted_pct=predicted_pct,
             reference_close=reference_close,
             notes=request.notes,
+            owner_id=owner_id,
         )
 
-    async def preview(self, request: CreateTradePlanRequest) -> PlanPreview:
+    async def preview(
+        self, request: CreateTradePlanRequest, owner_id: UUID | None = None
+    ) -> PlanPreview:
         """Return the plan and the suggested position size without saving anything."""
         async with self._uow_factory() as uow:
-            plan = await self._draft(uow, request)
-            settings = await uow.settings.get()
+            plan = await self._draft(uow, request, owner_id)
+            settings = await uow.settings.get(owner_id)
         return PlanPreview(
             plan=plan,
             position=suggest_position(
@@ -184,18 +195,22 @@ class TradePlanService:
             risk_pct=settings.risk_pct,
         )
 
-    async def create(self, request: CreateTradePlanRequest) -> TradePlan:
+    async def create(
+        self, request: CreateTradePlanRequest, owner_id: UUID | None = None
+    ) -> TradePlan:
         """Start a plan, locking the latest prediction and the current settings."""
         async with self._uow_factory() as uow:
-            plan = await uow.trade_plans.add(await self._draft(uow, request))
+            plan = await uow.trade_plans.add(await self._draft(uow, request, owner_id))
             await uow.commit()
             return plan
 
-    async def close(self, request: CloseTradePlanRequest) -> TradePlan:
+    async def close(
+        self, request: CloseTradePlanRequest, owner_id: UUID | None = None
+    ) -> TradePlan:
         """Record the exit; the domain calculates the outcome."""
         async with self._uow_factory() as uow:
             plan = await uow.trade_plans.get(request.plan_id)
-            if plan is None:
+            if plan is None or not _visible(plan, owner_id):
                 raise NotFoundError(f"trade plan {request.plan_id} not found")
             plan.close(
                 request.exit_date,
@@ -207,11 +222,11 @@ class TradePlanService:
             await uow.commit()
             return plan
 
-    async def get(self, plan_id: int) -> TradePlan:
+    async def get(self, plan_id: int, owner_id: UUID | None = None) -> TradePlan:
         """Return one plan or raise :class:`NotFoundError`."""
         async with self._uow_factory() as uow:
             plan = await uow.trade_plans.get(plan_id)
-        if plan is None:
+        if plan is None or not _visible(plan, owner_id):
             raise NotFoundError(f"trade plan {plan_id} not found")
         return plan
 
@@ -229,9 +244,9 @@ class TradePlanService:
                     found[plan.id] = result
         return found
 
-    async def summary(self) -> JournalSummary:
+    async def summary(self, owner_id: UUID | None = None) -> JournalSummary:
         """Return counts, success rates and model bias overall and per holding category."""
-        plans = await self.list_all()
+        plans = await self.list_all(owner_id)
         closed = [p for p in plans if p.status is PlanStatus.CLOSED]
         judged = _judged(closed)
         return JournalSummary(
@@ -254,7 +269,7 @@ class TradePlanService:
             ],
         )
 
-    async def list_all(self) -> list[TradePlan]:
-        """Return every plan, newest first."""
+    async def list_all(self, owner_id: UUID | None = None) -> list[TradePlan]:
+        """Return the owner's plans (every plan for jobs: ``None``), newest first."""
         async with self._uow_factory() as uow:
-            return await uow.trade_plans.list_all()
+            return await uow.trade_plans.list_all(owner_id)

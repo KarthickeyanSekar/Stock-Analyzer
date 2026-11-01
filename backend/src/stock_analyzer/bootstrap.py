@@ -1,8 +1,10 @@
 """Composition root: builds and wires every dependency in one place."""
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from functools import partial
 
+from stock_analyzer.application.ports.auth import IdentityProvider
 from stock_analyzer.application.ports.clock import Clock
 from stock_analyzer.application.ports.fundamentals import FundamentalsProvider
 from stock_analyzer.application.ports.market_data import MarketDataProvider
@@ -10,12 +12,20 @@ from stock_analyzer.application.ports.ml import ModelTrainer
 from stock_analyzer.application.ports.providers import PluginCatalog
 from stock_analyzer.application.ports.repositories import UnitOfWorkFactory
 from stock_analyzer.application.ports.security import SecretCipher
+from stock_analyzer.application.use_cases.auth.admin import UserAdmin
+from stock_analyzer.application.use_cases.auth.auth import AuthService
+from stock_analyzer.application.use_cases.auth.watchlist import WatchlistService
 from stock_analyzer.application.use_cases.journal.settings import JournalSettingsService
 from stock_analyzer.application.use_cases.journal.trade_plans import TradePlanService
 from stock_analyzer.application.use_cases.providers.providers import ProviderAdmin
 from stock_analyzer.application.use_cases.screener.queries import ScreenerQueries
 from stock_analyzer.application.use_cases.stocks.queries import StockQueries
 from stock_analyzer.domain.market.trading_calendar import TradingCalendar
+from stock_analyzer.infrastructure.auth.oidc import (
+    GOOGLE_DISCOVERY,
+    MICROSOFT_DISCOVERY,
+    OidcIdentityProvider,
+)
 from stock_analyzer.infrastructure.config.settings import Settings, get_settings
 from stock_analyzer.infrastructure.logging.setup import configure_logging
 from stock_analyzer.infrastructure.ml.lightgbm_trainer import LightGbmTrainer
@@ -45,11 +55,33 @@ class Container:
     catalog: PluginCatalog
     cipher: SecretCipher
     trainer: ModelTrainer
+    identity_providers: Mapping[str, IdentityProvider] = field(default_factory=dict)
 
     @property
     def stock_queries(self) -> StockQueries:
         """Stock search, prices and predictions."""
         return StockQueries(self.uow_factory)
+
+    @property
+    def auth(self) -> AuthService:
+        """Sign-in, sessions, account deletion."""
+        return AuthService(
+            self.uow_factory,
+            self.identity_providers,
+            self.clock,
+            self.settings.admin_email_set,
+            dev_login_enabled=self.settings.is_dev_login_enabled,
+        )
+
+    @property
+    def user_admin(self) -> UserAdmin:
+        """Admin > Users and invite codes."""
+        return UserAdmin(self.uow_factory, self.clock)
+
+    @property
+    def watchlist(self) -> WatchlistService:
+        """The signed-in user's watchlist."""
+        return WatchlistService(self.uow_factory)
 
     @property
     def screener(self) -> ScreenerQueries:
@@ -90,4 +122,36 @@ def build_container(settings: Settings | None = None) -> Container:
         catalog=StaticPluginCatalog(market_data),
         cipher=FernetCipher(settings.master_key.get_secret_value()),
         trainer=LightGbmTrainer(),
+        identity_providers=_identity_providers(settings),
     )
+
+
+def _identity_providers(settings: Settings) -> dict[str, IdentityProvider]:
+    """Google / Microsoft, each only when its OAuth client is configured."""
+    providers: dict[str, IdentityProvider] = {}
+    configured = [
+        (
+            "google",
+            "Google",
+            GOOGLE_DISCOVERY,
+            settings.google_client_id,
+            settings.google_client_secret,
+        ),
+        (
+            "microsoft",
+            "Microsoft",
+            MICROSOFT_DISCOVERY,
+            settings.microsoft_client_id,
+            settings.microsoft_client_secret,
+        ),
+    ]
+    for name, label, discovery, client_id, secret in configured:
+        if client_id and secret.get_secret_value():
+            providers[name] = OidcIdentityProvider(
+                name=name,
+                display_name=label,
+                discovery_url=discovery,
+                client_id=client_id,
+                client_secret=secret.get_secret_value(),
+            )
+    return providers

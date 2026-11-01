@@ -1,6 +1,7 @@
 """Schema, migrations and SQLAlchemy repositories against a real PostgreSQL + TimescaleDB."""
 
 import time
+import uuid
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from functools import partial
@@ -10,6 +11,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from stock_analyzer.application.ports.auth import AuditEntry, LoginRequest, SessionRecord
 from stock_analyzer.application.use_cases.data.backfill_prices import BackfillPrices
 from stock_analyzer.application.use_cases.journal.track_active_plans import TrackActivePlans
 from stock_analyzer.application.use_cases.journal.trade_plans import (
@@ -28,6 +30,7 @@ from stock_analyzer.domain.market.trading_calendar import TradingCalendar
 from stock_analyzer.domain.prediction.model_version import ModelVersion
 from stock_analyzer.domain.prediction.prediction import TARGET_PCTS
 from stock_analyzer.domain.prediction.screening import ScreenCriteria
+from stock_analyzer.domain.users.user import Role, User
 from stock_analyzer.infrastructure.persistence.unit_of_work import SqlAlchemyUnitOfWork
 from stock_analyzer.infrastructure.providers.mock.provider import MockMarketDataProvider
 from stock_analyzer.infrastructure.providers.mock.universe import SAMPLE_HOLIDAYS
@@ -310,3 +313,60 @@ async def test_screener_answers_2000_stocks_in_under_two_seconds(
     assert elapsed < 2.0, f"screener took {elapsed:.2f} s"
     assert rows and all(r.prediction.as_of == date(2026, 10, 30) for r in rows)
     assert all((r.probability or 0) >= Decimal("0.42") for r in rows)
+
+
+async def test_accounts_sessions_and_deletion_cascade(
+    seeded: UowFactory, engine: AsyncEngine
+) -> None:
+    now = datetime(2026, 11, 1, tzinfo=UTC)
+    user = User(uuid.uuid4(), "a@x.io", "A", "dev", "a@x.io", Role.USER)
+    async with seeded() as uow:
+        await uow.users.add(user)
+        await uow.sessions.add(SessionRecord("h" * 64, user.id, now + timedelta(days=7)))
+        await uow.login_requests.add(
+            LoginRequest("st", "google", "verifier", "nonce", None, now + timedelta(minutes=10))
+        )
+        stock = await uow.stocks.get_by_symbol("INFY")
+        assert stock is not None and stock.id is not None
+        await uow.watchlists.add(user.id, stock.id)
+        await uow.settings.save(JournalSettings(paper_capital=Decimal(5000)), user.id)
+        await uow.audit.add(AuditEntry(now, user.id, "sign_in", {"provider": "dev"}))
+        await uow.commit()
+
+    plan = await TradePlanService(seeded, TradingCalendar(SAMPLE_HOLIDAYS)).create(
+        CreateTradePlanRequest(
+            symbol="INFY",
+            category=HoldingCategory.D50,
+            start_date=date(2026, 6, 1),
+            target_pct=Decimal(10),
+        ),
+        owner_id=user.id,
+    )
+    await TrackActivePlans(seeded, TradingCalendar(SAMPLE_HOLIDAYS)).execute()
+
+    async with seeded() as uow:
+        assert (await uow.users.by_subject("dev", "a@x.io")) is not None
+        assert (await uow.login_requests.pop("st")) is not None
+        assert (await uow.login_requests.pop("st")) is None  # state works once
+        assert [p.id for p in await uow.trade_plans.list_all(user.id)] == [plan.id]
+        assert (await uow.settings.get(user.id)).paper_capital == Decimal(5000)
+        await uow.users.delete(user.id)
+        await uow.commit()
+
+    async with engine.connect() as connection:
+        for table in ("trade_plans", "journal_settings", "watchlists", "sessions"):
+            count = await connection.scalar(
+                text(f"SELECT count(*) FROM {table} WHERE user_id = :u"),  # noqa: S608 - fixed names
+                {"u": user.id},
+            )
+            assert count == 0, table
+        assert (
+            await connection.scalar(
+                text("SELECT count(*) FROM plan_daily_status WHERE plan_id = :p"), {"p": plan.id}
+            )
+            == 0
+        )
+        audit = await connection.scalar(
+            text("SELECT count(*) FROM audit_log WHERE user_id IS NULL")
+        )
+        assert audit == 1  # kept, detached from the deleted user

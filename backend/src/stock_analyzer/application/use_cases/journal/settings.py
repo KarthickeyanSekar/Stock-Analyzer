@@ -1,4 +1,6 @@
-"""Journal settings use cases (D2.4, Q63)."""
+"""Journal settings use cases (D2.4; per user since Phase 5b)."""
+
+from uuid import UUID
 
 from stock_analyzer.application.ports.repositories import UnitOfWorkFactory
 from stock_analyzer.domain.journal.settings import JournalSettings
@@ -11,14 +13,16 @@ class JournalSettingsService:
         """Use fresh units of work per call."""
         self._uow_factory = uow_factory
 
-    async def get(self) -> JournalSettings:
-        """Return the saved settings, or the defaults."""
+    async def get(self, user_id: UUID | None = None) -> JournalSettings:
+        """Return the user's saved settings, or the defaults."""
         async with self._uow_factory() as uow:
-            return await uow.settings.get()
+            return await uow.settings.get(user_id)
 
-    async def update(self, settings: JournalSettings) -> JournalSettings:
+    async def update(
+        self, settings: JournalSettings, user_id: UUID | None = None
+    ) -> JournalSettings:
         """Save new settings; plans already started keep the values they were started with."""
         async with self._uow_factory() as uow:
-            await uow.settings.save(settings)
+            await uow.settings.save(settings, user_id)
             await uow.commit()
         return settings
