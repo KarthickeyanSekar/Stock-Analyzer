@@ -83,6 +83,8 @@ update its row **and** every doc it affects.
 | 66 | Screener "max stop-loss" filter, when every prediction uses a −7% stop? | Recompute per stop, filter on the downside | ✅ **Filter on the downside**: "worst likely" = p10 of the predicted range must be ≥ the limit (e.g., −8%); per-stop recomputation later (2026-11-01) |
 | 67 | Quality score for the screener? | Piotroski (needs full statements), own 0–10 score | ✅ **Own 0–10 score** from what we compute today: ROE, debt/equity, revenue growth, earnings yield, volatility (2 points each, universe-relative); Piotroski when a provider supplies full statements (2026-11-01) |
 | 68 | "Best risk-adjusted" holding period for one stock? | Highest median, median ÷ downside, Sharpe-like | ✅ **Median ÷ downside**: p50 ÷ (p50 − p10), only for positive medians; ties → shorter period (2026-11-01) |
+| 69 | Costs and taxes in backtests? | Gross only, simple round-trip cost, full schedule | ✅ **0.25% round trip; STCG 20% (< 1 year), LTCG 12.5% (≥ 1 year)**, conservative: no ₹1.25 lakh exemption, no loss set-off; all configurable; rates per Budget 2024, re-check each budget (2026-11-01) |
+| 70 | When are predictions good enough to rely on (go / no-go)? | — | ✅ **Go per holding period only if all hold:** net expectancy beats the benchmark in walk-forward backtests, ECE ≤ 5 pp, 80% coverage 75–85% (real data), and ≥ 30 closed journal plans with SUCCESS + PARTIAL ≥ FAILURE; otherwise no-go. On synthetic data the verdict is "not decidable" (2026-11-01) |
 
 ## Related
 - [00 – How to Plan This Project](../00-how-to-plan.md)
