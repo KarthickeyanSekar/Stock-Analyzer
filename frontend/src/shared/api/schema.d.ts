@@ -1515,7 +1515,10 @@ export interface components {
          * SignInOptionsResponse
          * @description Which sign-in methods are available.
          * @example {
-         *       "dev_login": false,
+         *       "dev_accounts": [
+         *         "admin@stockanalyzer.com"
+         *       ],
+         *       "dev_login": true,
          *       "providers": [
          *         {
          *           "display_name": "Google",
@@ -1529,6 +1532,11 @@ export interface components {
             providers: components["schemas"]["ProviderOption"][];
             /** Dev Login */
             dev_login: boolean;
+            /**
+             * Dev Accounts
+             * @description One-click dev sign-ins (admin emails); dev only
+             */
+            dev_accounts?: string[];
         };
         /**
          * StockOverviewResponse

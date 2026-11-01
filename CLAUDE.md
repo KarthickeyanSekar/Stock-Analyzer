@@ -125,8 +125,12 @@ Use `make redis-keys`, `make redis-info`; `make redis-flush` deletes only `sa:<e
 
 ## Sign-in (Phase 5b)
 - Every API except `/api/health` and `/api/auth/*` needs a session; admin APIs need the admin role.
-- Locally: `SA_DEV_LOGIN=true` + your email in `SA_ADMIN_EMAILS` (dev-only sign-in, refused in prod). Real Google /
+- Locally: `SA_DEV_LOGIN=true`; `SA_ADMIN_EMAILS` (default dev account `admin@stockanalyzer.com`, plus the owner's
+  email) are admins and appear as one-click "Sign in as …" buttons (dev only, refused in prod). Real Google /
   Microsoft sign-in appears once their OAuth client id/secret are in `.env`.
+- Roles: a **user** gets the whole app except Admin › Providers and Admin › Users (hidden, redirected, API 403);
+  an **admin** gets everything. Each user sees only their own journal, settings and watchlist.
+- Profile: Account menu › Profile (`/profile`): name, email, provider, role, dates, sign out, delete account.
 - Tests: API test clients sign in with `tests.conftest.sign_in`; Playwright fixtures sign in as `admin@e2e.local`.
 
 ## Working with the user
