@@ -11,6 +11,8 @@ export default defineConfig({
   timeout: 30_000,
   outputDir: process.env.E2E_OUTPUT_DIR ?? 'results',
   reporter: [['list']],
+  // Baselines are rendered in the Playwright Linux image (make e2e), so they match on every OS.
+  snapshotPathTemplate: `${process.env.E2E_SNAPSHOT_DIR ?? 'snapshots'}/{arg}{ext}`,
   use: {
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:5173',
     reducedMotion: 'reduce',

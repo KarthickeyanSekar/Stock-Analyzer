@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { type TradePlan } from '../api/use-trade-plans';
 import { OutcomeBadge } from './outcome-badge';
 import { EmptyState } from '@/shared/components/data-states';
+import { formatDate } from '@/shared/lib/format-date';
 import { formatPct, formatPp } from '@/shared/lib/format-number';
 
 /** Closed plans: actual vs predicted and the calculated outcome (rows on desktop, cards on phones). */
@@ -32,7 +33,8 @@ export function ClosedPlans({ plans }: { plans: TradePlan[] }) {
               {plan.symbol}
             </Link>
             <p className="text-xs text-muted-foreground">
-              #{plan.id} · {plan.category} · {plan.start_date} → {plan.exit_date}
+              #{plan.id} · {plan.category} · {formatDate(plan.start_date)} →{' '}
+              {plan.exit_date ? formatDate(plan.exit_date) : ''}
             </p>
           </div>
           <div className="text-right sm:text-left">
