@@ -9,7 +9,9 @@ from stock_analyzer.bootstrap import Container
 from stock_analyzer.presentation.api.dependencies import get_container
 from stock_analyzer.presentation.api.schemas.stocks import (
     CandleResponse,
+    FundamentalsResponse,
     PredictionResponse,
+    StockOverviewResponse,
     StockPredictionsResponse,
     StockResponse,
 )
@@ -29,6 +31,15 @@ async def search_stocks(
     return [StockResponse.from_domain(stock) for stock in stocks]
 
 
+@router.get(
+    "/overview", response_model=list[StockOverviewResponse], summary="Stocks table overview"
+)
+async def stocks_overview(container: ContainerDep) -> list[StockOverviewResponse]:
+    """Return every stock with last close, day change, 1Y return and the 1Y prediction."""
+    rows = await container.stock_queries.overview()
+    return [StockOverviewResponse.from_domain(row) for row in rows]
+
+
 @router.get("/{symbol}", response_model=StockResponse, summary="Get one stock")
 async def get_stock(symbol: str, container: ContainerDep) -> StockResponse:
     """Return one stock by NSE symbol."""
@@ -45,6 +56,17 @@ async def get_prices(
     """Return daily candles between ``from`` and ``to`` (inclusive)."""
     candles = await container.stock_queries.prices(symbol, start, end)
     return [CandleResponse.from_domain(candle) for candle in candles]
+
+
+@router.get(
+    "/{symbol}/fundamentals",
+    response_model=list[FundamentalsResponse],
+    summary="Quarterly fundamentals",
+)
+async def get_fundamentals(symbol: str, container: ContainerDep) -> list[FundamentalsResponse]:
+    """Return the stock's quarterly results, oldest first."""
+    quarters = await container.stock_queries.fundamentals(symbol)
+    return [FundamentalsResponse.from_domain(quarter) for quarter in quarters]
 
 
 @router.get(

@@ -81,3 +81,26 @@ def test_list_returns_plans_newest_first(seeded_client: TestClient) -> None:
 
     ids = [p["id"] for p in seeded_client.get("/api/trade-plans").json()]
     assert ids.index(second["id"]) < ids.index(first["id"])
+
+
+def test_summary_counts_outcomes_and_model_bias(client: TestClient) -> None:
+    # An empty journal first
+    empty = client.get("/api/trade-plans/summary").json()
+    assert empty["active"] == 0 and empty["closed"] == 0 and empty["success_rate"] is None
+
+
+def test_summary_reflects_closed_plans(seeded_client: TestClient) -> None:
+    before = seeded_client.get("/api/trade-plans/summary").json()
+    plan = start_plan(seeded_client, entry_price=1000, target_pct=10)
+    seeded_client.post(
+        f"/api/trade-plans/{plan['id']}/close",
+        json={"exit_date": "2026-12-21", "exit_price": 1150},  # +15% vs +10% → PARTIAL, bias +5
+    )
+
+    after = seeded_client.get("/api/trade-plans/summary").json()
+
+    assert after["closed"] == before["closed"] + 1
+    assert after["outcomes"]["PARTIAL"] == before["outcomes"]["PARTIAL"] + 1
+    assert set(after["outcomes"]) == {"SUCCESS", "PARTIAL", "FAILURE", "EXITED_EARLY"}
+    fifty = next(r for r in after["by_category"] if r["category"] == "50D")
+    assert fifty["closed"] >= 1

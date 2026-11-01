@@ -50,6 +50,7 @@ Full decision log: [Open Questions & Decision Log 🗳️](decisions/open-questi
 | 25 | [Infrastructure, Services & Requirements](25-infrastructure-services-inventory.md) | Everything needed: infra, Docker services, accounts, tools, ports, config, costs, setup checklist |
 | 26 | [ML Pipeline & Model Operations](26-ml-pipeline.md) | Features, labels, training, quality gates, registry, nightly predictions, monitoring |
 | 27 | [Phase 1 POC Plan](27-phase1-poc-plan.md) | Synthetic-data POC: scope, data generator, baseline predictions, milestones M0–M7 |
+| 28 | [UI/UX Redesign Plan](28-ui-ux-redesign-plan.md) | End-to-end redesign: diagnosis, journeys, screens, design system, mockups-first process, milestones UI-0–UI-6 |
 
 ## Decision log
 Every question and decision: [🗳️ decisions/open-questions.md](decisions/open-questions.md) (stable path, not numbered).

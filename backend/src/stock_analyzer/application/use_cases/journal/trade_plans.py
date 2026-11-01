@@ -1,6 +1,7 @@
 """Trade journal use cases: start, close, list and read plans (docs/15-trade-journal.md)."""
 
-from dataclasses import dataclass
+from collections import Counter
+from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 
@@ -10,6 +11,8 @@ from stock_analyzer.domain.journal.trade_plan import (
     DEFAULT_STOP_PCT,
     DEFAULT_SUCCESS_TOLERANCE_PP,
     InvalidPlanError,
+    PlanOutcome,
+    PlanStatus,
     TradePlan,
 )
 from stock_analyzer.domain.market.holding_category import HoldingCategory
@@ -39,6 +42,44 @@ class CloseTradePlanRequest:
     exit_price: Decimal
     exited_early: bool = False
     notes: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class CategoryRecord:
+    """Track record of closed plans for one holding category."""
+
+    category: HoldingCategory
+    closed: int
+    outcomes: dict[PlanOutcome, int]
+    avg_bias_pp: Decimal | None
+
+
+@dataclass(frozen=True, slots=True)
+class JournalSummary:
+    """Headline numbers for Home and the journal's track record.
+
+    ``avg_bias_pp`` = average (actual - predicted) in percent points over closed plans that ran
+    to an outcome (exited-early plans excluded): positive means the model was too cautious.
+    """
+
+    active: int
+    closed: int
+    outcomes: dict[PlanOutcome, int]
+    success_rate: Decimal | None
+    avg_bias_pp: Decimal | None
+    by_category: list[CategoryRecord] = field(default_factory=list)
+
+
+def _bias(plans: list[TradePlan]) -> Decimal | None:
+    judged = [
+        p
+        for p in plans
+        if p.actual_return_pct is not None and p.outcome is not PlanOutcome.EXITED_EARLY
+    ]
+    if not judged:
+        return None
+    total = sum(((p.actual_return_pct or Decimal(0)) - p.target_pct for p in judged), Decimal(0))
+    return (total / len(judged)).quantize(Decimal("0.01"))
 
 
 class TradePlanService:
@@ -119,6 +160,35 @@ class TradePlanService:
         if plan is None:
             raise NotFoundError(f"trade plan {plan_id} not found")
         return plan
+
+    async def summary(self) -> JournalSummary:
+        """Return counts, success rate and model bias overall and per holding category."""
+        plans = await self.list_all()
+        closed = [p for p in plans if p.status is PlanStatus.CLOSED]
+        outcomes = Counter(p.outcome for p in closed if p.outcome)
+        judged = sum(n for o, n in outcomes.items() if o is not PlanOutcome.EXITED_EARLY)
+        by_category = [
+            CategoryRecord(
+                category=category,
+                closed=len(group),
+                outcomes=dict(Counter(p.outcome for p in group if p.outcome)),
+                avg_bias_pp=_bias(group),
+            )
+            for category in HoldingCategory
+            if (group := [p for p in closed if p.category is category])
+        ]
+        return JournalSummary(
+            active=len(plans) - len(closed),
+            closed=len(closed),
+            outcomes=dict(outcomes),
+            success_rate=(
+                (Decimal(outcomes[PlanOutcome.SUCCESS]) / judged).quantize(Decimal("0.0001"))
+                if judged
+                else None
+            ),
+            avg_bias_pp=_bias(closed),
+            by_category=by_category,
+        )
 
     async def list_all(self) -> list[TradePlan]:
         """Return every plan, newest first."""

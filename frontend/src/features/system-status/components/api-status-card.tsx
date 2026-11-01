@@ -1,25 +1,28 @@
 import { useHealth } from '../api/use-health';
 import { cn } from '@/shared/lib/cn';
 import { formatDateTimeIst } from '@/shared/lib/format-date';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 
 export function ApiStatusCard() {
   const { data, isPending, isError } = useHealth();
   const status = isPending ? 'checking…' : isError ? 'unreachable' : data.status;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="mb-3 font-medium">Backend status</h2>
-      <p>
-        API:{' '}
-        <span className={cn('font-mono', isError ? 'text-red-600' : 'text-emerald-600')}>
-          {status}
-        </span>
-      </p>
-      {data && (
-        <p className="mt-1 text-sm text-slate-500">
-          {data.env} · v{data.version} · {formatDateTimeIst(data.server_time)} IST
+    <Card>
+      <CardHeader>
+        <CardTitle>Backend</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-1 text-sm">
+        <p>
+          API:{' '}
+          <span className={cn('font-mono', isError ? 'text-loss' : 'text-gain')}>{status}</span>
         </p>
-      )}
-    </section>
+        {data && (
+          <p className="text-muted-foreground">
+            {data.env} · v{data.version} · {formatDateTimeIst(data.server_time)} IST
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }

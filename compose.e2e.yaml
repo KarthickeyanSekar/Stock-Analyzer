@@ -1,0 +1,66 @@
+# Browser end-to-end tests (`make e2e`): throwaway db + seeded api + web + Playwright.
+# Own project name and no ports, so it never touches the dev stack or the dev journal.
+name: stock-analyzer-e2e
+
+services:
+  db:
+    profiles: !reset []
+    volumes: !reset []
+    environment:
+      POSTGRES_USER: sa_e2e
+      POSTGRES_PASSWORD: sa_e2e
+      POSTGRES_DB: sa_e2e
+  api:
+    build: { target: dev }
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      SA_ENV: test
+      SA_OTEL_ENABLED: "false"
+      SA_DATABASE_URL: postgresql+asyncpg://sa_e2e:sa_e2e@db:5432/sa_e2e
+    # Same POC data as `make poc-data`: migrations, synthetic NIFTY 50, baseline predictions.
+    command:
+      - sh
+      - -c
+      - >-
+        alembic upgrade head &&
+        python -m stock_analyzer.presentation.jobs.seed &&
+        python -m stock_analyzer.presentation.jobs.predict &&
+        exec uvicorn stock_analyzer.main:app --host 0.0.0.0 --port 8000 --app-dir src
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 5s
+      retries: 60
+      start_period: 120s
+    restart: "no"
+  web:
+    build: { target: dev }
+    depends_on:
+      api: { condition: service_healthy }
+    environment:
+      VITE_API_PROXY_TARGET: http://api:8000
+      # Vite's dev server only answers localhost by default; Playwright calls it as "web".
+      __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS: web
+    restart: "no"
+  e2e:
+    image: mcr.microsoft.com/playwright:v1.49.1-noble
+    depends_on: [web]
+    environment:
+      E2E_ARGS: ${E2E_ARGS:-}
+      E2E_BASE_URL: http://web:5173
+      E2E_OUTPUT_DIR: /results
+      E2E_SNAPSHOT_DIR: /snapshots
+    # Tests are copied next to a private node_modules, so the host's frontend/node_modules is untouched.
+    volumes:
+      - ./frontend/e2e:/e2e:ro
+      - ./frontend/e2e-results:/results
+      - ./frontend/e2e/snapshots:/snapshots
+    working_dir: /tmp/run
+    command:
+      - sh
+      - -c
+      - >-
+        npm init -y >/dev/null && npm i --silent @playwright/test@1.49.1 &&
+        cp -r /e2e ./e2e &&
+        for i in $(seq 60); do wget -qO- http://web:5173/api/health >/dev/null 2>&1 && break; sleep 1; done &&
+        npx playwright test -c e2e/playwright.config.mjs $${E2E_ARGS:-}

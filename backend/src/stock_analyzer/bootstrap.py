@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from functools import partial
 
 from stock_analyzer.application.ports.clock import Clock
+from stock_analyzer.application.ports.fundamentals import FundamentalsProvider
 from stock_analyzer.application.ports.market_data import MarketDataProvider
 from stock_analyzer.application.ports.repositories import UnitOfWorkFactory
 from stock_analyzer.application.use_cases.journal.trade_plans import TradePlanService
@@ -33,6 +34,7 @@ class Container:
     uow_factory: UnitOfWorkFactory
     calendar: TradingCalendar
     market_data: MarketDataProvider
+    fundamentals: FundamentalsProvider
     plugins: Mapping[str, MarketDataProvider]
 
     @property
@@ -57,7 +59,7 @@ def build_container(settings: Settings | None = None) -> Container:
     configure_logging(settings.log_level)
     configure_telemetry(settings)
     session_factory = create_session_factory(create_engine(settings.database_url))
-    # POC: the mock provider is the only market data source; real plugins join the registry later.
+    # POC: the mock provider supplies prices and fundamentals; real plugins join the registry later.
     market_data = MockMarketDataProvider()
     return Container(
         settings=settings,
@@ -65,5 +67,6 @@ def build_container(settings: Settings | None = None) -> Container:
         uow_factory=partial(SqlAlchemyUnitOfWork, session_factory),
         calendar=TradingCalendar(SAMPLE_HOLIDAYS),
         market_data=market_data,
+        fundamentals=market_data,
         plugins={market_data.name: market_data},
     )

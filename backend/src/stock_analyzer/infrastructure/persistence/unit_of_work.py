@@ -5,6 +5,9 @@ from typing import Self
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from stock_analyzer.infrastructure.persistence.repositories.fundamentals import (
+    SqlAlchemyFundamentalsRepository,
+)
 from stock_analyzer.infrastructure.persistence.repositories.predictions import (
     SqlAlchemyPredictionRepository,
 )
@@ -24,6 +27,7 @@ class _Repositories:
     def __init__(self, session: AsyncSession) -> None:
         self.stocks = SqlAlchemyStockRepository(session)
         self.prices = SqlAlchemyPriceRepository(session)
+        self.fundamentals = SqlAlchemyFundamentalsRepository(session)
         self.predictions = SqlAlchemyPredictionRepository(session)
         self.trade_plans = SqlAlchemyTradePlanRepository(session)
         self.providers = SqlAlchemyProviderRepository(session)
@@ -52,6 +56,11 @@ class SqlAlchemyUnitOfWork:
     def prices(self) -> SqlAlchemyPriceRepository:
         """Price repository bound to this transaction."""
         return self._bound().prices
+
+    @property
+    def fundamentals(self) -> SqlAlchemyFundamentalsRepository:
+        """Fundamentals repository bound to this transaction."""
+        return self._bound().fundamentals
 
     @property
     def predictions(self) -> SqlAlchemyPredictionRepository:

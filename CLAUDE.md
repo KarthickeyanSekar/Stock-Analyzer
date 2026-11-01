@@ -31,6 +31,23 @@ UI uses **shadcn/ui + Tailwind 4** (components in `shared/ui/`). Server data onl
 
 Full rules, naming tables and examples: [docs/24-coding-standards.md](docs/24-coding-standards.md). Follow them exactly.
 
+## Frontend UI rules (enforced by `npm run lint` where possible)
+Direction (Q58–Q61): **Kite-like** (clean, minimal, fast, data-dense; the feel only, never Zerodha's brand or assets), modern,
+smooth motion, responsive (phone, tablet, desktop). Full spec: [docs/28-ui-ux-redesign-plan.md](docs/28-ui-ux-redesign-plan.md).
+- **Tokens only:** colours come from CSS variables in `src/index.css` (`background`, `foreground`, `card`, `muted`, `primary`,
+  `border`, plus `gain`, `loss`, `warning`, `synthetic`). No raw palette classes (`slate-500`), no hex in `app/`, `pages/`, `features/`.
+- **Icons:** Lucide only. **No emoji** in UI text. Icon-only buttons need `aria-label`.
+- **Numbers:** `tabular-nums` everywhere; money via `formatInr`, % via `formatPct` (sign + true minus); gain/loss always has a sign
+  or arrow as well as colour (never colour alone).
+- **Components:** shadcn/ui in `shared/ui` (Sheet, Dialog, Tooltip, Skeleton, Sonner toast, Progress, Command …). No native
+  `<select>` or hand-rolled modals. Plans start in a **Sheet**; closing a plan uses a **Dialog** with an outcome preview.
+- **States:** every data view has skeleton, empty (icon + sentence + action) and error (message + retry) states.
+- **Motion:** 150–250 ms, ease-out in / ease-in out; animate to explain change (sheet slide, dialog fade-scale, bars grow, stagger);
+  always respect `prefers-reduced-motion` (use the `motion-safe:` variant).
+- **Responsive:** phone < 640 px (bottom nav, stacked cards, tables as cards), tablet, desktop (sidebar). Touch targets ≥ 40 px.
+- **Theme:** light + dark via the `dark` class (follows the system, user toggle remembered).
+- **Verify visually:** after UI changes run `make e2e` (visual baselines) and `make ui-shots`; look at the screenshots. Intended changes: `make e2e-update`, review, commit the PNGs.
+
 ## Naming (short version)
 Python: `snake_case` modules/functions, `PascalCase` classes, ports named by role (`MarketDataProvider`),
 implementations prefixed by technology/vendor (`SqlAlchemyTradePlanRepository`, `EodhdMarketDataProvider`),
@@ -41,13 +58,16 @@ DB: plural `snake_case` tables, `<singular>_id` FKs. API: `/api/<plural-kebab>`.
 | Command | Use |
 |---|---|
 | `make dev` | api + web + Grafana with hot reload (runs `make dev-network` first) |
-| `make test` | pytest + Vitest in containers |
+| `make test` | pytest (incl. DB integration tests on a throwaway TimescaleDB) + Vitest in containers |
+| `make e2e` | Playwright browser + visual regression tests on a throwaway seeded stack (never touches dev data) |
+| `make e2e-update` | Re-record visual baselines after an intended UI change; review the PNGs before committing |
 | `make lint` | ruff, ruff format, mypy (strict), import-linter, ESLint/Prettier in containers |
 | `make api-client` | Regenerate the TS client after any API change |
 | `make bootstrap` | Fresh clone: `.env` + secrets, db + Redis, migrations |
 | `make dev-db` | Start the dev database + Redis (`compose.devdata.yaml`) |
 | `make db-upgrade` / `db-revision m="…"` / `db-downgrade` / `db-current` / `db-shell` | Database migrations and access |
 | `make redis-shell` / `redis-keys` / `redis-info` | Redis access |
+| `make ui-shots` | Screenshots of every screen (light, dark, phone) into `frontend/screenshots/`; review them after UI changes |
 | `make seed` / `make predict` / `make poc-data` | POC data: synthetic NIFTY 50 (mock provider) + baseline predictions |
 URLs: web http://localhost:5173 · api http://localhost:8000/docs · Grafana http://localhost:3000.
 The Makefile must stay compatible with **GNU Make 3.81** (macOS default): no `.ONESHELL` or newer functions.

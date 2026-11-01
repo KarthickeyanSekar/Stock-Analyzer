@@ -3,6 +3,8 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
 ## [Unreleased]
+- **Phase 1 (POC on synthetic data) and Phase 1b (UI redesign) signed off 2026-11-01.**
+
 ### Added
 - Project skeleton: FastAPI backend (Clean Architecture), React + TypeScript frontend, Docker Compose for dev/test/prod.
 - `GET /api/health` endpoint and a backend status card in the UI.
@@ -17,7 +19,23 @@ All notable changes to this project are documented here. Format: [Keep a Changel
   - Web: stock search, candlestick chart with plan lines, predictions in the headline format, trade journal, providers page, SYNTHETIC DATA badge; shadcn/ui + Lightweight Charts.
   - Reproducible setup: `compose.devdata.yaml` and `make bootstrap` (fresh clone → running POC).
 
+- **UI redesign (Phase 1b):** Kite-like design system (tokens, light/dark, Geist, tabular numbers, Lucide icons), app shell
+  (sidebar, phone bottom nav, ⌘K search, live NSE status), Home dashboard, sortable Stocks table, Stock detail (themed
+  chart with ranges, range-bar predictions, target odds), guided Start-plan sheet, Close dialog with outcome preview,
+  Journal tabs with track record, Providers cards; skeleton/empty/error states; `npm run lint:ui` rule check; `make ui-shots`.
+- API: `GET /api/stocks/overview`, `GET /api/trade-plans/summary`.
+- **POC completion:** `FundamentalsProvider` port + synthetic quarterly fundamentals (point-in-time), `GET /api/stocks/{symbol}/fundamentals`;
+  DB integration tests on a throwaway TimescaleDB inside `make test`; `make e2e` (Playwright on a throwaway seeded stack);
+  response examples on every API model; pre-commit hooks installed.
+- `Money` / `Percentage` value objects; Button render test; WCAG AA contrast audit of the tokens;
+  visual regression baselines (`make e2e`, `make e2e-update`).
+
 ### Fixed
+- ⌘K palette crashed the app on open (cmdk input rendered without a `<Command>` root).
+- Journal tab panel had no visible keyboard focus ring.
+- Plan dates shown as raw ISO (`2027-11-01`) in journal cards, the closed list and the start toast.
+- Price chart blank when the browser locale is missing (explicit `en-IN` locale).
+- Percentage-point differences shown as "% pp".
 - Dev API replaced by test runs: tests now use their own compose project (`stock-analyzer-test`) and `--no-deps`.
 - `make lint` failed on tool caches (`/app` owned by root in the dev image).
 - Duplicate model versions when the category is NULL.

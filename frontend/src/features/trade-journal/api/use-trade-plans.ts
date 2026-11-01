@@ -30,6 +30,17 @@ export function useTradePlans() {
   });
 }
 
+export function useJournalSummary() {
+  return useQuery({
+    queryKey: [...PLANS_KEY, 'summary'],
+    queryFn: async () => {
+      const { data, response } = await apiClient.GET('/api/trade-plans/summary');
+      if (!response.ok || !data) throw new Error(`Summary failed: ${String(response.status)}`);
+      return data;
+    },
+  });
+}
+
 export function useCreateTradePlan() {
   const queryClient = useQueryClient();
   return useMutation({

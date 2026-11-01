@@ -1,80 +1,114 @@
 import {
-  CandlestickSeries,
+  AreaSeries,
   createChart,
+  CrosshairMode,
+  HistogramSeries,
+  type IChartApi,
   type IPriceLine,
   type ISeriesApi,
+  LineStyle,
 } from 'lightweight-charts';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import type { components } from '@/shared/api/schema';
+import { useCssVars } from '@/shared/lib/use-css-var';
 
 type Candle = components['schemas']['CandleResponse'];
 
 export interface PriceLine {
   price: number;
   title: string;
-  color: string;
+  tone: 'gain' | 'loss' | 'muted-foreground';
 }
 
-interface PriceChartProps {
-  candles: Candle[];
-  lines?: PriceLine[];
-}
+const TOKENS = ['primary', 'muted-foreground', 'border', 'gain', 'loss', 'band'] as const;
 
-/** Daily candlestick chart (TradingView Lightweight Charts) with optional target/stop lines. */
-export function PriceChart({ candles, lines = [] }: PriceChartProps) {
+/** Themed price chart (Lightweight Charts): area line + volume, optional plan lines, token colours. */
+export function PriceChart({ candles, lines = [] }: { candles: Candle[]; lines?: PriceLine[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const areaRef = useRef<ISeriesApi<'Area'> | null>(null);
+  const volumeRef = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const colors = useCssVars(TOKENS);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const chart = createChart(containerRef.current, {
-      height: 360,
       autoSize: true,
-      layout: { background: { color: 'transparent' }, textColor: '#64748b' },
-      grid: { vertLines: { color: '#f1f5f9' }, horzLines: { color: '#f1f5f9' } },
-      timeScale: { borderColor: '#e2e8f0' },
-      rightPriceScale: { borderColor: '#e2e8f0' },
+      layout: { background: { color: 'transparent' }, attributionLogo: false },
+      // Explicit locale: the browser default can be missing (headless, some kiosks) and breaks rendering.
+      localization: {
+        locale: 'en-IN',
+        priceFormatter: (price: number) =>
+          price.toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 }),
+      },
+      rightPriceScale: { scaleMargins: { top: 0.1, bottom: 0.25 } },
+      timeScale: { fixLeftEdge: true, fixRightEdge: true },
+      crosshair: { mode: CrosshairMode.Normal },
     });
-    seriesRef.current = chart.addSeries(CandlestickSeries, {
-      upColor: '#16a34a',
-      downColor: '#dc2626',
-      wickUpColor: '#16a34a',
-      wickDownColor: '#dc2626',
-      borderVisible: false,
+    areaRef.current = chart.addSeries(AreaSeries, { lineWidth: 2, priceLineVisible: false });
+    volumeRef.current = chart.addSeries(HistogramSeries, {
+      priceScaleId: 'volume',
+      priceFormat: { type: 'volume' },
+      lastValueVisible: false,
+      priceLineVisible: false,
     });
+    chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+    chartRef.current = chart;
     return () => {
-      seriesRef.current = null;
       chart.remove();
+      chartRef.current = null;
     };
   }, []);
 
   useEffect(() => {
-    const series = seriesRef.current;
-    if (!series) return;
-    series.setData(
-      candles.map((c) => ({
+    chartRef.current?.applyOptions({
+      layout: { textColor: colors['muted-foreground'] },
+      grid: { vertLines: { color: colors.border }, horzLines: { color: colors.border } },
+      rightPriceScale: { borderColor: colors.border },
+      timeScale: { borderColor: colors.border },
+    });
+    areaRef.current?.applyOptions({
+      lineColor: colors.primary,
+      topColor: `${colors.primary}40`,
+      bottomColor: `${colors.primary}05`,
+    });
+  }, [colors]);
+
+  const volume = useMemo(
+    () =>
+      candles.map((c, index) => ({
         time: c.date,
-        open: c.open,
-        high: c.high,
-        low: c.low,
-        close: c.close,
+        value: c.volume,
+        color:
+          index > 0 && c.close < (candles[index - 1]?.close ?? c.close) ? colors.loss : colors.gain,
       })),
-    );
+    [candles, colors],
+  );
+
+  useEffect(() => {
+    const area = areaRef.current;
+    if (!area) return;
+    area.setData(candles.map((c) => ({ time: c.date, value: c.close })));
+    volumeRef.current?.setData(volume.map((v) => ({ ...v, color: `${v.color}55` })));
+    chartRef.current?.timeScale().fitContent();
     const created: IPriceLine[] = lines.map((line) =>
-      series.createPriceLine({
+      area.createPriceLine({
         price: line.price,
         title: line.title,
-        color: line.color,
+        color: colors[line.tone],
         lineWidth: 1,
+        lineStyle: LineStyle.Dashed,
       }),
     );
     return () => {
       created.forEach((line) => {
-        series.removePriceLine(line);
+        area.removePriceLine(line);
       });
     };
-  }, [candles, lines]);
+  }, [candles, volume, lines, colors]);
 
-  return <div ref={containerRef} className="w-full" aria-label="Price chart" />;
+  return (
+    <div ref={containerRef} className="h-72 w-full sm:h-80" role="img" aria-label="Price chart" />
+  );
 }

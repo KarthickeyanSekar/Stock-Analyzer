@@ -5,6 +5,7 @@ from datetime import UTC, date, datetime
 import pytest
 from fastapi.testclient import TestClient
 
+from stock_analyzer.application.use_cases.data.backfill_fundamentals import BackfillFundamentals
 from stock_analyzer.application.use_cases.data.backfill_prices import BackfillPrices
 from stock_analyzer.application.use_cases.prediction.run_baseline_predictions import (
     RunBaselinePredictions,
@@ -35,6 +36,7 @@ def make_container(store: InMemoryStore) -> Container:
         uow_factory=lambda: FakeUnitOfWork(store),
         calendar=TradingCalendar(SAMPLE_HOLIDAYS),
         market_data=provider,
+        fundamentals=provider,
         plugins={provider.name: provider},
     )
 
@@ -47,6 +49,9 @@ def seeded_store() -> InMemoryStore:
 
     async def seed() -> None:
         await BackfillPrices(container.uow_factory, container.market_data).execute(
+            SEED_START, SEED_END
+        )
+        await BackfillFundamentals(container.uow_factory, container.fundamentals).execute(
             SEED_START, SEED_END
         )
         await RunBaselinePredictions(container.uow_factory).execute()
