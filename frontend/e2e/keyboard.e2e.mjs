@@ -1,6 +1,14 @@
 import { expect, test } from './fixtures.mjs';
 
-const PAGES = ['/', '/stocks', '/stocks/RELIANCE', '/journal', '/settings', '/admin/providers'];
+const PAGES = [
+  '/',
+  '/stocks',
+  '/screener',
+  '/stocks/RELIANCE',
+  '/journal',
+  '/settings',
+  '/admin/providers',
+];
 const TAB_STOPS = 12;
 
 for (const path of PAGES) {

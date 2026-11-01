@@ -52,3 +52,19 @@ export function useStockPrices(symbol: string, from?: string) {
     },
   });
 }
+
+export function useStockAnalogs(symbol: string, category: string) {
+  return useQuery({
+    queryKey: ['stocks', symbol, 'analogs', category],
+    queryFn: async () => {
+      const { data, response } = await apiClient.GET('/api/stocks/{symbol}/analogs', {
+        params: {
+          path: { symbol },
+          query: { category: category as '50D', limit: 10 },
+        },
+      });
+      if (!response.ok || !data) throw new Error(`Analogs failed: ${String(response.status)}`);
+      return data;
+    },
+  });
+}

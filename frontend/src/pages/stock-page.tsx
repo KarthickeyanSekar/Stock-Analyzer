@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 
 import {
   DEFAULT_TARGET_PCT,
+  AnalogsCard,
   PredictionRanges,
   PriceChart,
   TARGETS,
@@ -189,6 +190,7 @@ export function StockPage() {
               {data ? (
                 <PredictionRanges
                   predictions={data.predictions}
+                  best={data.best_category}
                   selected={category}
                   target={target}
                   onSelect={setCategory}
@@ -275,6 +277,7 @@ export function StockPage() {
               </CardContent>
             </Card>
           )}
+          <AnalogsCard symbol={symbol} category={category} target={target} />
         </aside>
       </div>
 

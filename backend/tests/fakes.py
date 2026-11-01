@@ -1,12 +1,14 @@
 """In-memory implementations of the repository ports, for fast tests without a database."""
 
+import math
 from collections.abc import Sequence
 from dataclasses import replace
 from datetime import date, datetime
 from types import TracebackType
 from typing import Self
 
-from stock_analyzer.domain.analysis.features import Features
+from stock_analyzer.application.ports.ml import Analog
+from stock_analyzer.domain.analysis.features import Features, embedding
 from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
 from stock_analyzer.domain.journal.progress import PlanProgress
 from stock_analyzer.domain.journal.settings import JournalSettings
@@ -134,6 +136,15 @@ class FakePredictions:
             self._s.predictions[key] = replace(p, id=len(self._s.predictions) + 1)
         return len(predictions)
 
+    async def latest_for_category(self, category: HoldingCategory) -> list[Prediction]:
+        latest: dict[int, Prediction] = {}
+        for p in self._s.predictions.values():
+            if p.category is category and (
+                p.stock_id not in latest or p.as_of > latest[p.stock_id].as_of
+            ):
+                latest[p.stock_id] = p
+        return list(latest.values())
+
     async def latest_for_stock(self, stock_id: int) -> list[Prediction]:
         latest: dict[str, Prediction] = {}
         for p in self._s.predictions.values():
@@ -250,6 +261,26 @@ class FakeFeatures:
 
     async def load_labels(self, category: HoldingCategory) -> dict[tuple[int, date], Label]:
         return {(s, d): v for (c, s, d), v in self._s.labels.items() if c == category.value}
+
+    async def nearest(
+        self,
+        feature_set: str,
+        vector: Sequence[float],
+        category: HoldingCategory,
+        before: date,
+        limit: int,
+    ) -> list[Analog]:
+        def distance(other: Sequence[float]) -> float:
+            dot = sum(a * b for a, b in zip(vector, other, strict=True))
+            norm = math.sqrt(sum(a * a for a in vector)) * math.sqrt(sum(b * b for b in other))
+            return 1 - dot / norm if norm else 1.0
+
+        found = [
+            Analog(s, d, distance(embedding(f)), self._s.labels[(category.value, s, d)])
+            for (fs, s, d), f in self._s.features.items()
+            if fs == feature_set and d < before and (category.value, s, d) in self._s.labels
+        ]
+        return sorted(found, key=lambda a: a.distance)[:limit]
 
     async def delete_all(self) -> int:
         count = len(self._s.features) + len(self._s.labels)

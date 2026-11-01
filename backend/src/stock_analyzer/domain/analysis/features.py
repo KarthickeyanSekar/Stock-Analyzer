@@ -191,3 +191,12 @@ def add_ranks(by_stock: Mapping[int, Features]) -> dict[int, Features]:
         for stock_id, rank in ranks.items():
             result[stock_id][f"{name}_rank"] = rank
     return result
+
+
+EMBEDDING_FEATURES = RANKED_FEATURES  # universe ranks: comparable across dates and stocks
+
+
+def embedding(features: Features) -> list[float]:
+    """Vector for similar-setup search: the ranked features, missing values at the middle."""
+    values = (features.get(f"{name}_rank") for name in EMBEDDING_FEATURES)
+    return [0.5 if value is None else float(value) for value in values]
