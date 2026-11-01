@@ -214,3 +214,25 @@ async def test_registry_keeps_one_active_model_and_rolls_back(
             await connection.execute(
                 text("UPDATE model_versions SET status = 'ACTIVE' WHERE category = '1Y'")
             )
+
+
+async def test_credentials_are_stored_encrypted_and_primary_is_kept(
+    uow_factory: UowFactory, engine: AsyncEngine
+) -> None:
+    async with uow_factory() as uow:
+        await uow.stocks.ensure_market("IN", "India", "INR", "Asia/Kolkata")
+        await uow.providers.ensure("eodhd", "MARKET_DATA", "EODHD")
+        await uow.providers.set_credential("eodhd", "api_token", b"ciphertext", "1a2b")
+        await uow.providers.set_credential("eodhd", "api_token", b"ciphertext-2", "9z9z")
+        await uow.providers.set_primary("IN", "MARKET_DATA", "eodhd")
+        await uow.commit()
+
+    async with uow_factory() as uow:
+        assert await uow.providers.credentials("eodhd") == {"api_token": b"ciphertext-2"}
+        assert await uow.providers.credential_hints("eodhd") == {"api_token": "9z9z"}
+        assert await uow.providers.primary("IN", "MARKET_DATA") == "eodhd"
+        await uow.providers.delete_credentials("eodhd")
+        await uow.commit()
+
+    async with engine.connect() as connection:
+        assert await connection.scalar(text("SELECT count(*) FROM provider_credentials")) == 0

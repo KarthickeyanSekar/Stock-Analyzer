@@ -1,0 +1,16 @@
+{
+  "Financials::Income_Statement::quarterly": {
+    "2026-06-30": {"date": "2026-06-30", "totalRevenue": "2400000000000.00", "netIncome": "190000000000.00"},
+    "2026-03-31": {"date": "2026-03-31", "totalRevenue": "2350000000000.00", "netIncome": "185000000000.00"},
+    "2025-12-31": {"date": "2025-12-31", "totalRevenue": "2300000000000.00", "netIncome": null}
+  },
+  "Financials::Balance_Sheet::quarterly": {
+    "2026-06-30": {"date": "2026-06-30", "totalStockholderEquity": "8500000000000.00", "commonStockSharesOutstanding": "13530000000", "shortLongTermDebtTotal": "3100000000000.00"},
+    "2026-03-31": {"date": "2026-03-31", "totalStockholderEquity": "8300000000000.00", "commonStockSharesOutstanding": "13530000000", "shortTermDebt": "1000000000000.00", "longTermDebt": "2000000000000.00"},
+    "2025-12-31": {"date": "2025-12-31", "totalStockholderEquity": "8100000000000.00", "commonStockSharesOutstanding": "13530000000"}
+  },
+  "Earnings::History": {
+    "2026-06-30": {"reportDate": "2026-07-18", "date": "2026-06-30", "epsActual": 14.05},
+    "2026-03-31": {"reportDate": "2026-04-25", "date": "2026-03-31", "epsActual": null}
+  }
+}

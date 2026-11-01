@@ -54,6 +54,10 @@ class PriceRepository(Protocol):
         """Return candles in date order."""
         ...
 
+    async def delete_by_source(self, source_provider: str) -> int:
+        """Delete every candle from one provider; return how many."""
+        ...
+
 
 class FundamentalsRepository(Protocol):
     """Quarterly fundamentals."""
@@ -68,6 +72,10 @@ class FundamentalsRepository(Protocol):
         self, stock_id: int, known_on: date | None = None
     ) -> list[QuarterlyFundamentals]:
         """Return quarters in period order; with ``known_on``, only those announced by then."""
+        ...
+
+    async def delete_by_source(self, source_provider: str) -> int:
+        """Delete every quarter from one provider; return how many."""
         ...
 
 
@@ -114,6 +122,10 @@ class PlanStatusRepository(Protocol):
         """Return the plan's snapshots in date order."""
         ...
 
+    async def delete_all(self) -> int:
+        """Delete every snapshot (they are rebuilt by ``make track``)."""
+        ...
+
 
 class SettingsRepository(Protocol):
     """The app-wide journal settings record (Q63)."""
@@ -136,6 +148,32 @@ class ProviderRepository(Protocol):
 
     async def list_all(self) -> list[tuple[str, str, str, bool]]:
         """Return ``(plugin_name, kind, display_name, is_enabled)`` for every provider."""
+        ...
+
+    async def set_credential(
+        self, plugin_name: str, field: str, encrypted: bytes, last4: str
+    ) -> None:
+        """Store (or replace) one encrypted credential field."""
+        ...
+
+    async def delete_credentials(self, plugin_name: str) -> None:
+        """Remove every credential of the provider."""
+        ...
+
+    async def credentials(self, plugin_name: str) -> dict[str, bytes]:
+        """Return ``{field: encrypted value}``."""
+        ...
+
+    async def credential_hints(self, plugin_name: str) -> dict[str, str]:
+        """Return ``{field: last 4 characters}`` (for masked display only)."""
+        ...
+
+    async def set_primary(self, market_code: str, data_type: str, plugin_name: str) -> None:
+        """Make the provider priority 1 for a data type in a market."""
+        ...
+
+    async def primary(self, market_code: str, data_type: str) -> str | None:
+        """Return the priority-1 provider's plugin name, or ``None``."""
         ...
 
 

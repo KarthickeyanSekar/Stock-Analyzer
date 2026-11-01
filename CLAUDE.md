@@ -70,6 +70,7 @@ DB: plural `snake_case` tables, `<singular>_id` FKs. API: `/api/<plural-kebab>`.
 | `make ui-shots` | Screenshots of every screen (light, dark, phone) into `frontend/screenshots/`; review them after UI changes |
 | `make seed` / `make predict` / `make poc-data` | POC data: synthetic NIFTY 50 (mock provider) + baseline predictions |
 | `make track` | Daily progress snapshots of active journal plans (`plan_daily_status`) |
+| `make real-data` | After an EODHD key is saved and set primary in Admin › Providers: replace synthetic data with real NSE data (asks first), then rebuild ML |
 | `make features` / `make train` / `make ml-data` / `make model-rollback c=1Y` | ML engine: point-in-time features + labels, train/evaluate/gate (report in `docs/reports/`), whole pipeline, rollback |
 URLs: web http://localhost:5173 · api http://localhost:8000/docs · Grafana http://localhost:3000.
 The Makefile must stay compatible with **GNU Make 3.81** (macOS default): no `.ONESHELL` or newer functions.

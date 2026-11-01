@@ -281,12 +281,36 @@ export interface paths {
         };
         /**
          * List providers
-         * @description Return every configured provider.
+         * @description Return every provider plugin with masked credentials and which one is primary.
          */
         get: operations["list_providers_api_admin_providers_get"];
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/providers/{plugin_name}/credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save credentials
+         * @description Encrypt and store credentials. They are never returned, only their last 4 characters.
+         */
+        put: operations["save_credentials_api_admin_providers__plugin_name__credentials_put"];
+        post?: never;
+        /**
+         * Remove credentials
+         * @description Remove the stored credentials (not while the provider is primary).
+         */
+        delete: operations["delete_credentials_api_admin_providers__plugin_name__credentials_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -303,9 +327,29 @@ export interface paths {
         put?: never;
         /**
          * Test a connection
-         * @description Check that the provider can reach its data source.
+         * @description Check that the provider can reach its data source with the stored credentials.
          */
         post: operations["test_provider_api_admin_providers__plugin_name__test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/providers/{plugin_name}/primary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set primary
+         * @description Use this provider for prices and fundamentals (its credentials must be set).
+         */
+        put: operations["set_primary_api_admin_providers__plugin_name__primary_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -437,6 +481,21 @@ export interface components {
             success_tolerance_pp?: number | string | null;
             /** Notes */
             notes?: string | null;
+        };
+        /**
+         * CredentialsBody
+         * @description Credential fields to store encrypted, e.g. ``{"api_token": "..."}``.
+         */
+        CredentialsBody: {
+            /**
+             * Values
+             * @example {
+             *       "api_token": "your-eodhd-token"
+             *     }
+             */
+            values: {
+                [key: string]: string;
+            };
         };
         /**
          * EntrySource
@@ -809,12 +868,21 @@ export interface components {
         };
         /**
          * ProviderResponse
-         * @description A configured provider.
+         * @description A provider plugin with masked credentials.
          * @example {
-         *       "display_name": "Mock (synthetic data)",
+         *       "credential_fields": [
+         *         "api_token"
+         *       ],
+         *       "credential_hints": {
+         *         "api_token": "1a2b"
+         *       },
+         *       "display_name": "EODHD",
+         *       "has_credentials": true,
          *       "is_enabled": true,
+         *       "is_primary": false,
+         *       "is_synthetic": false,
          *       "kind": "MARKET_DATA",
-         *       "plugin_name": "mock"
+         *       "plugin_name": "eodhd"
          *     }
          */
         ProviderResponse: {
@@ -826,13 +894,29 @@ export interface components {
             display_name: string;
             /** Is Enabled */
             is_enabled: boolean;
+            /** Is Synthetic */
+            is_synthetic: boolean;
+            /** Is Primary */
+            is_primary: boolean;
+            /** Credential Fields */
+            credential_fields: string[];
+            /**
+             * Credential Hints
+             * @description Last 4 characters only
+             */
+            credential_hints: {
+                [key: string]: string;
+            };
+            /** Has Credentials */
+            has_credentials: boolean;
         };
         /**
          * ProviderTestResponse
-         * @description Result of a connection test.
+         * @description Result of a connection test (the message never contains secrets).
          * @example {
          *       "is_ok": true,
-         *       "plugin_name": "mock"
+         *       "message": "Connected (monthly): 120 of 100000 API calls used today",
+         *       "plugin_name": "eodhd"
          *     }
          */
         ProviderTestResponse: {
@@ -840,6 +924,8 @@ export interface components {
             plugin_name: string;
             /** Is Ok */
             is_ok: boolean;
+            /** Message */
+            message: string;
         };
         /**
          * StockOverviewResponse
@@ -1524,6 +1610,68 @@ export interface operations {
             };
         };
     };
+    save_credentials_api_admin_providers__plugin_name__credentials_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plugin_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialsBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_credentials_api_admin_providers__plugin_name__credentials_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plugin_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     test_provider_api_admin_providers__plugin_name__test_post: {
         parameters: {
             query?: never;
@@ -1543,6 +1691,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ProviderTestResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_primary_api_admin_providers__plugin_name__primary_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plugin_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
