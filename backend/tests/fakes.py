@@ -2,14 +2,18 @@
 
 from collections.abc import Sequence
 from dataclasses import replace
-from datetime import date
+from datetime import date, datetime
 from types import TracebackType
 from typing import Self
 
+from stock_analyzer.domain.analysis.features import Features
 from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
 from stock_analyzer.domain.journal.progress import PlanProgress
 from stock_analyzer.domain.journal.settings import JournalSettings
 from stock_analyzer.domain.journal.trade_plan import TradePlan
+from stock_analyzer.domain.market.holding_category import HoldingCategory
+from stock_analyzer.domain.prediction.labels import Label
+from stock_analyzer.domain.prediction.model_version import ModelStatus, ModelVersion
 from stock_analyzer.domain.prediction.prediction import Prediction
 from stock_analyzer.domain.pricing.candle import Candle
 from stock_analyzer.domain.stock.stock import Stock
@@ -27,6 +31,9 @@ class InMemoryStore:
         self.plans: dict[int, TradePlan] = {}
         self.snapshots: dict[int, dict[date, PlanProgress]] = {}
         self.settings: JournalSettings | None = None
+        self.features: dict[tuple[str, int, date], Features] = {}
+        self.labels: dict[tuple[str, int, date], Label] = {}
+        self.models: list[ModelVersion] = []
         self.providers: dict[str, tuple[str, str, str, bool]] = {}
 
 
@@ -179,6 +186,80 @@ class FakeSettings:
         self._s.settings = settings
 
 
+class FakeFeatures:
+    def __init__(self, store: InMemoryStore) -> None:
+        self._s = store
+
+    async def upsert_features(
+        self, feature_set: str, rows: Sequence[tuple[int, date, Features]]
+    ) -> int:
+        self._s.features.update({(feature_set, s, d): f for s, d, f in rows})
+        return len(rows)
+
+    async def load_features(self, feature_set: str) -> dict[tuple[int, date], Features]:
+        return {(s, d): f for (fs, s, d), f in self._s.features.items() if fs == feature_set}
+
+    async def latest_features(self, feature_set: str) -> dict[int, tuple[date, Features]]:
+        latest: dict[int, tuple[date, Features]] = {}
+        for (s, d), f in sorted((await self.load_features(feature_set)).items()):
+            latest[s] = (d, f)
+        return latest
+
+    async def upsert_labels(
+        self, category: HoldingCategory, rows: Sequence[tuple[int, date, Label]]
+    ) -> int:
+        self._s.labels.update({(category.value, s, d): label for s, d, label in rows})
+        return len(rows)
+
+    async def load_labels(self, category: HoldingCategory) -> dict[tuple[int, date], Label]:
+        return {(s, d): v for (c, s, d), v in self._s.labels.items() if c == category.value}
+
+
+class FakeModels:
+    def __init__(self, store: InMemoryStore) -> None:
+        self._s = store
+
+    async def add(self, version: ModelVersion) -> ModelVersion:
+        version.id = len(self._s.models) + 1
+        self._s.models.append(version)
+        return version
+
+    async def active(self, category: HoldingCategory) -> ModelVersion | None:
+        return next(
+            (
+                m
+                for m in self._s.models
+                if m.category is category and m.status is ModelStatus.ACTIVE
+            ),
+            None,
+        )
+
+    async def activate(self, version_id: int, now: datetime) -> None:
+        target = next(m for m in self._s.models if m.id == version_id)
+        for m in self._s.models:
+            if m.category is target.category and m.status is ModelStatus.ACTIVE:
+                m.status = ModelStatus.RETIRED
+        target.status, target.activated_at = ModelStatus.ACTIVE, now
+
+    async def rollback(self, category: HoldingCategory, now: datetime) -> ModelVersion | None:
+        retired = [
+            m
+            for m in self._s.models
+            if m.category is category and m.status is ModelStatus.RETIRED and m.activated_at
+        ]
+        if not retired:
+            return None
+        previous = max(retired, key=lambda m: m.activated_at or now)
+        current = await self.active(category)
+        if current:
+            current.status = ModelStatus.RETIRED
+        previous.status, previous.activated_at = ModelStatus.ACTIVE, now
+        return previous
+
+    async def list_for(self, category: HoldingCategory) -> list[ModelVersion]:
+        return [m for m in reversed(self._s.models) if m.category is category]
+
+
 class FakeUnitOfWork:
     """Writes go straight to the shared store (good enough for use-case and API tests)."""
 
@@ -191,6 +272,8 @@ class FakeUnitOfWork:
         self.providers = FakeProviders(store)
         self.plan_statuses = FakePlanStatuses(store)
         self.settings = FakeSettings(store)
+        self.features = FakeFeatures(store)
+        self.models = FakeModels(store)
 
     async def __aenter__(self) -> Self:
         return self

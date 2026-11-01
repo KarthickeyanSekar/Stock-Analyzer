@@ -18,6 +18,10 @@ dependencies = [
     "opentelemetry-sdk>=1.28",
     "opentelemetry-exporter-otlp-proto-http>=1.28",
     "opentelemetry-instrumentation-fastapi>=0.49b0",
+    # ML engine (Phase 3, docs/26-ml-pipeline.md): numpy arrays, LightGBM models, isotonic calibration.
+    "numpy>=2.1",
+    "lightgbm>=4.5",
+    "scikit-learn>=1.5",
 ]
 
 [project.optional-dependencies]
@@ -60,6 +64,11 @@ strict = true
 plugins = ["pydantic.mypy"]
 mypy_path = "src"
 
+[[tool.mypy.overrides]]
+# No type stubs are published for these.
+module = ["lightgbm.*", "sklearn.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
@@ -87,4 +96,6 @@ type = "forbidden"
 source_modules = ["stock_analyzer.domain"]
 forbidden_modules = [
     "fastapi", "sqlalchemy", "pydantic", "redis", "apscheduler", "opentelemetry",
+    # ML libraries live in infrastructure/ml; domain maths stays pure Python.
+    "numpy", "lightgbm", "sklearn",
 ]

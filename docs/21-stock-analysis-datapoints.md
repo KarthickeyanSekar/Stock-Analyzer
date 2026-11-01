@@ -43,6 +43,21 @@ flowchart LR
     T & M --> ML
 ```
 
+## Implementation coverage (Phase 3, feature set `fs-v1`)
+Calculators live in `backend/src/stock_analyzer/domain/analysis/datapoints.py`; the feature vector in `features.py`.
+✅ = computed for every stock and sample date (point-in-time) · ⏳ = needs data the current (mock) provider does not supply.
+
+| Group | ✅ Computed now | ⏳ Needs a real provider |
+|---|---|---|
+| 1. Price & trend | Price vs 50/200-DMA, golden cross, distance from 52w high/low, momentum 3M/6M/12-1M, relative strength vs the universe (6M), volatility, ATR %, max drawdown (1Y), beta vs the universe, volume trend | Delivery %, relative strength vs NIFTY / sector index |
+| 2. Valuation | P/E (TTM), P/B, earnings yield (EPS/price), PEG, price ÷ Graham number | EV/EBITDA, price/sales (needs market cap), FCF yield, dividend yield, P/E vs 5y median (needs 5y of quarters), DCF |
+| 3. Profitability | ROE, net profit margin (TTM) | ROCE, ROA, operating margin |
+| 4. Growth | Revenue YoY (quarter), EPS TTM YoY, revenue CAGR 3Y | 5Y/10Y CAGRs, growth consistency (needs 10 years) |
+| 5. Financial health | Debt / equity | Interest coverage, net debt/EBITDA, current & quick ratio |
+| 6–9. Cash flow, efficiency, ownership, dividends | — | All (cash-flow statement, balance-sheet detail, shareholding pattern, pledges) |
+| 10. Composite scores | — | Piotroski, Altman, Beneish (need full statements) |
+| Cross-sectional | Percentile rank within the universe per date for momentum 6M/12-1M, relative strength, volatility, earnings yield, P/B, ROE, revenue YoY | Sector-relative versions (needs ≥ 3 stocks per sector per date with real data) |
+
 ## 1. Price & trend (technical)
 | Data point | Formula / definition | Good | Red flag | Src |
 |---|---|---|---|---|

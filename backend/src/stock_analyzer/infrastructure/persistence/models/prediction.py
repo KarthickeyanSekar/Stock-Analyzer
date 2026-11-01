@@ -19,6 +19,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -36,6 +37,13 @@ class ModelVersionModel(Base):
     __table_args__ = (
         UniqueConstraint("name", "category"),
         CheckConstraint("status IN ('CANDIDATE', 'ACTIVE', 'RETIRED')", name="status"),
+        # At most one ACTIVE model per category (NULL = the all-category baseline).
+        Index(
+            "uq_model_versions_one_active",
+            text("coalesce(category, 'ALL')"),
+            unique=True,
+            postgresql_where=text("status = 'ACTIVE'"),
+        ),
     )
 
     id: Mapped[int] = mapped_column(Identity(), primary_key=True)
@@ -45,8 +53,13 @@ class ModelVersionModel(Base):
     algorithm: Mapped[str] = mapped_column(String(64))
     status: Mapped[str] = mapped_column(String(16))
     params: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default="{}")
+    # Walk-forward scores and the quality-gate report (Q51).
     metrics: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default="{}")
+    feature_set: Mapped[str | None] = mapped_column(String(16))
+    # Model file in the models volume, relative to SA_MODELS_DIR.
+    artifact_path: Mapped[str | None] = mapped_column(String(255))
     trained_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class PredictionModel(Base):

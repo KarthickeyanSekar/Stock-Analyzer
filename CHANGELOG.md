@@ -3,6 +3,7 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
 ## [Unreleased]
+- **Phase 3 – Long-term engine:** data-point calculators (doc 21 coverage table), point-in-time feature store `fs-v1` + triple-barrier labels (migration 0005), LightGBM quantile + calibrated target-probability models per category, split-conformal ranges, purged walk-forward evaluation vs universe and momentum baselines, Q51 quality gates, model registry with one-ACTIVE rule and rollback; `make features`, `make train`, `make model-rollback`, `make ml-data`. Decisions Q50, Q51, Q64.
 - **Phase 2 – Trade journal (signed off 2026-11-01):**
   - Decisions Q28 (calendar days), Q29 (close, editable; `reference_close` + `entry_source`), Q31 (own target; outcome judged on the locked `predicted_pct`), Q63 (app-wide settings).
   - Plan progress from EOD candles (day N of M, return, stop → target bar) with target / stop / end-date flags; `make track` daily snapshots (migration 0004).

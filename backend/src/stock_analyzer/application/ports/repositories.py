@@ -5,6 +5,7 @@ from datetime import date
 from types import TracebackType
 from typing import Protocol, Self
 
+from stock_analyzer.application.ports.ml import FeatureRepository, ModelRegistry
 from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
 from stock_analyzer.domain.journal.progress import PlanProgress
 from stock_analyzer.domain.journal.settings import JournalSettings
@@ -169,6 +170,16 @@ class UnitOfWork(Protocol):
     @property
     def providers(self) -> ProviderRepository:
         """Provider repository bound to this transaction."""
+        ...
+
+    @property
+    def features(self) -> FeatureRepository:
+        """Feature store and labels bound to this transaction."""
+        ...
+
+    @property
+    def models(self) -> ModelRegistry:
+        """Model registry bound to this transaction."""
         ...
 
     @property

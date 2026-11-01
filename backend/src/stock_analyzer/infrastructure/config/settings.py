@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     otel_exporter: TelemetryExporter = TelemetryExporter.OTLP
     otel_endpoint: str = "http://localhost:4318"
     otel_file_dir: str = "telemetry"
+    # Trained model files and evaluation reports (relative to the backend directory).
+    models_dir: str = "var/models"
+    reports_dir: str = "var/reports"
+    code_version: str = "unknown"
     otel_export_interval_ms: int = 15_000
     otel_service_name: str = "stock-analyzer-api"
 
