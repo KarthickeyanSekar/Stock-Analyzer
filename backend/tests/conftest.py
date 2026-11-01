@@ -13,6 +13,7 @@ from stock_analyzer.application.use_cases.prediction.run_baseline_predictions im
 from stock_analyzer.bootstrap import Container
 from stock_analyzer.domain.market.trading_calendar import TradingCalendar
 from stock_analyzer.infrastructure.config.settings import Environment, Settings
+from stock_analyzer.infrastructure.ml.lightgbm_trainer import LightGbmTrainer
 from stock_analyzer.infrastructure.providers.mock.provider import MockMarketDataProvider
 from stock_analyzer.infrastructure.providers.mock.universe import SAMPLE_HOLIDAYS
 from stock_analyzer.main import create_app
@@ -38,6 +39,7 @@ def make_container(store: InMemoryStore) -> Container:
         market_data=provider,
         fundamentals=provider,
         plugins={provider.name: provider},
+        trainer=LightGbmTrainer(rounds=30),
     )
 
 

@@ -12,6 +12,10 @@ from stock_analyzer.infrastructure.persistence.repositories.journal import (
     SqlAlchemyPlanStatusRepository,
     SqlAlchemySettingsRepository,
 )
+from stock_analyzer.infrastructure.persistence.repositories.ml import (
+    SqlAlchemyFeatureRepository,
+    SqlAlchemyModelRegistry,
+)
 from stock_analyzer.infrastructure.persistence.repositories.predictions import (
     SqlAlchemyPredictionRepository,
 )
@@ -36,6 +40,8 @@ class _Repositories:
         self.trade_plans = SqlAlchemyTradePlanRepository(session)
         self.providers = SqlAlchemyProviderRepository(session)
         self.plan_statuses = SqlAlchemyPlanStatusRepository(session)
+        self.features = SqlAlchemyFeatureRepository(session)
+        self.models = SqlAlchemyModelRegistry(session)
         self.settings = SqlAlchemySettingsRepository(session)
 
 
@@ -82,6 +88,16 @@ class SqlAlchemyUnitOfWork:
     def providers(self) -> SqlAlchemyProviderRepository:
         """Provider repository bound to this transaction."""
         return self._bound().providers
+
+    @property
+    def features(self) -> SqlAlchemyFeatureRepository:
+        """Feature store and labels bound to this transaction."""
+        return self._bound().features
+
+    @property
+    def models(self) -> SqlAlchemyModelRegistry:
+        """Model registry bound to this transaction."""
+        return self._bound().models
 
     @property
     def plan_statuses(self) -> SqlAlchemyPlanStatusRepository:

@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+# Trained model files (ML engine): rebuilt by `make train`, never committed
+/backend/var/
 # Telemetry output only (leading / so the infrastructure/telemetry source package is NOT ignored)
 /telemetry/
 /backend/telemetry/

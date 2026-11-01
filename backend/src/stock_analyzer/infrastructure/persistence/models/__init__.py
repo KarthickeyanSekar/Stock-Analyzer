@@ -12,6 +12,7 @@ from stock_analyzer.infrastructure.persistence.models.journal import (
     TradePlanModel,
 )
 from stock_analyzer.infrastructure.persistence.models.market import MarketModel, StockModel
+from stock_analyzer.infrastructure.persistence.models.ml import FeatureDailyModel, LabelDailyModel
 from stock_analyzer.infrastructure.persistence.models.prediction import (
     ModelVersionModel,
     PredictionModel,
@@ -26,9 +27,11 @@ from stock_analyzer.infrastructure.persistence.models.provider import (
 __all__ = [
     "Base",
     "CorporateActionModel",
+    "FeatureDailyModel",
     "FundamentalsModel",
     "JobRunModel",
     "JournalSettingsModel",
+    "LabelDailyModel",
     "MarketModel",
     "ModelVersionModel",
     "PlanDailyStatusModel",

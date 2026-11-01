@@ -104,9 +104,9 @@ handles missing values, and is explainable with feature importance / SHAP. Deep 
 
 ## 6. Model registry & versioning
 - Every trained model is stored with its metrics in `model_versions` (doc 17) and as a file in the `models` volume
-- **MLflow** (recommended, runs locally as a container) tracks experiments, parameters, metrics and artifacts
+- ✅ **Q50:** params, walk-forward scores and the gate report are stored as JSONB on `model_versions`; model files in `backend/var/models` (the models volume). **MLflow is deferred** until experiments outgrow this
 - Status per version: `CANDIDATE` → `ACTIVE` → `RETIRED`; exactly one `ACTIVE` model per holding category
-- **Rollback:** set the previous version back to `ACTIVE`
+- **Rollback:** `make model-rollback c=1Y` sets the previous version back to `ACTIVE`; a unique index allows only one `ACTIVE` row per category
 - Every prediction stores its `model_version_id`, so every number can be traced and explained
 
 ## 7. Nightly batch predictions
@@ -136,6 +136,18 @@ handles missing values, and is explainable with feature importance / SHAP. Deep 
 | Weekly training (7 categories) | CPU, 4–8 cores | Minutes → under an hour |
 | Backtests | CPU | Minutes → hours (run on weekends) |
 | GPU | **Not needed** for these models (only for the optional LLM) | — |
+
+## Implementation status (Phase 3)
+| Piece | Built | Notes |
+|---|---|---|
+| Features (`make features`) | ✅ `fs-v1`: 25 data points + 8 cross-sectional ranks, weekly sample dates | Leakage test: rewriting prices after a date never changes earlier features |
+| Labels | ✅ forward return, stop flag, target hits 5…50% before −7% (triple barrier) | No label when the holding period passes the data end |
+| Models (`make train`) | ✅ LightGBM quantile p10/p50/p90 + binary per target and "ends up", isotonic calibration | Floats inside the ML (Q64); predictions rounded to `Decimal` |
+| Calibrated ranges | ✅ split conformal (CQR) margin on a purged calibration slice | Own implementation instead of MAPIE (one less dependency) |
+| Evaluation | ✅ purged walk-forward (embargo = holding period), baselines: universe + momentum terciles | Report: `docs/reports/model-evaluation.md` |
+| Gates + registry | ✅ Q51 gates, CANDIDATE/ACTIVE/RETIRED, rollback | A failing candidate never replaces the current model |
+| Predictions (`make predict`) | ✅ ACTIVE ML model per category, else the empirical baseline | Each prediction stores its model version |
+| Survival (days to target), similar setups (pgvector), SHAP | ⏳ later | Not needed for the Phase 3 outcome |
 
 ## 11. Where the ML code lives (Clean Architecture)
 | Piece | Layer / location ([24](24-coding-standards.md)) |

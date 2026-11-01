@@ -7,6 +7,7 @@ from functools import partial
 from stock_analyzer.application.ports.clock import Clock
 from stock_analyzer.application.ports.fundamentals import FundamentalsProvider
 from stock_analyzer.application.ports.market_data import MarketDataProvider
+from stock_analyzer.application.ports.ml import ModelTrainer
 from stock_analyzer.application.ports.repositories import UnitOfWorkFactory
 from stock_analyzer.application.use_cases.journal.settings import JournalSettingsService
 from stock_analyzer.application.use_cases.journal.trade_plans import TradePlanService
@@ -15,6 +16,7 @@ from stock_analyzer.application.use_cases.stocks.queries import StockQueries
 from stock_analyzer.domain.market.trading_calendar import TradingCalendar
 from stock_analyzer.infrastructure.config.settings import Settings, get_settings
 from stock_analyzer.infrastructure.logging.setup import configure_logging
+from stock_analyzer.infrastructure.ml.lightgbm_trainer import LightGbmTrainer
 from stock_analyzer.infrastructure.persistence.database import (
     create_engine,
     create_session_factory,
@@ -37,6 +39,7 @@ class Container:
     market_data: MarketDataProvider
     fundamentals: FundamentalsProvider
     plugins: Mapping[str, MarketDataProvider]
+    trainer: ModelTrainer
 
     @property
     def stock_queries(self) -> StockQueries:
@@ -75,4 +78,5 @@ def build_container(settings: Settings | None = None) -> Container:
         market_data=market_data,
         fundamentals=market_data,
         plugins={market_data.name: market_data},
+        trainer=LightGbmTrainer(),
     )
