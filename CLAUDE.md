@@ -46,7 +46,7 @@ smooth motion, responsive (phone, tablet, desktop). Full spec: [docs/28-ui-ux-re
   always respect `prefers-reduced-motion` (use the `motion-safe:` variant).
 - **Responsive:** phone < 640 px (bottom nav, stacked cards, tables as cards), tablet, desktop (sidebar). Touch targets ≥ 40 px.
 - **Theme:** light + dark via the `dark` class (follows the system, user toggle remembered).
-- **Verify visually:** after UI changes run `make ui-shots` and look at the screenshots (it fails on page errors).
+- **Verify visually:** after UI changes run `make e2e` (visual baselines) and `make ui-shots`; look at the screenshots. Intended changes: `make e2e-update`, review, commit the PNGs.
 
 ## Naming (short version)
 Python: `snake_case` modules/functions, `PascalCase` classes, ports named by role (`MarketDataProvider`),
@@ -59,7 +59,8 @@ DB: plural `snake_case` tables, `<singular>_id` FKs. API: `/api/<plural-kebab>`.
 |---|---|
 | `make dev` | api + web + Grafana with hot reload (runs `make dev-network` first) |
 | `make test` | pytest (incl. DB integration tests on a throwaway TimescaleDB) + Vitest in containers |
-| `make e2e` | Playwright browser tests on a throwaway seeded stack (never touches dev data) |
+| `make e2e` | Playwright browser + visual regression tests on a throwaway seeded stack (never touches dev data) |
+| `make e2e-update` | Re-record visual baselines after an intended UI change; review the PNGs before committing |
 | `make lint` | ruff, ruff format, mypy (strict), import-linter, ESLint/Prettier in containers |
 | `make api-client` | Regenerate the TS client after any API change |
 | `make bootstrap` | Fresh clone: `.env` + secrets, db + Redis, migrations |
