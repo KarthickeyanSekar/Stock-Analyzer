@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
 ## [Unreleased]
-- **Phase 2 – Trade journal (in progress):**
+- **Phase 2 – Trade journal (signed off 2026-11-01):**
   - Decisions Q28 (calendar days), Q29 (close, editable; `reference_close` + `entry_source`), Q31 (own target; outcome judged on the locked `predicted_pct`), Q63 (app-wide settings).
   - Plan progress from EOD candles (day N of M, return, stop → target bar) with target / stop / end-date flags; `make track` daily snapshots (migration 0004).
   - Settings page + `GET`/`PUT /api/settings/journal`; `POST /api/trade-plans/preview` (server-side position sizing).

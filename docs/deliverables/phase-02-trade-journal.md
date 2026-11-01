@@ -3,7 +3,7 @@
 # Phase 2 – Trade Journal
 
 **Phase outcome:** Users can track holding plans manually, end to end, with honest calculated outcomes on real or synthetic prices.
-**Status:** 🟢 Built and verified, awaiting your sign-off · **Branch:** `feature/phase2-journal` · **Plan:** [09 – Roadmap](../09-roadmap.md)
+**Status:** ✅ Complete, signed off 2026-11-01 · **Branch:** `feature/phase2-journal` · **Plan:** [09 – Roadmap](../09-roadmap.md)
 
 ## Deliverables
 | ID | Deliverable | Outcome (what is true when done) | Status |
@@ -78,16 +78,17 @@
 - [x] All deliverables ✅
 - [x] `make lint` and `make test` pass in containers (2026-11-01: 108 backend incl. 9 DB + 76 frontend; `make e2e` 29/29)
 - [x] Docs and Open Questions updated (Q28, Q29, Q31, Q63; doc 15)
-- [ ] Merged into `develop` by PR
+- [x] Merged into `develop` by PR (#9)
 
 ## Sign-off
 | Date | Who | Notes |
 |---|---|---|
-| | | |
+| 2026-11-01 | Karthikeyan Sekar (owner) | Signed off in chat. Known limit: tracking uses end-of-day prices; hourly updates come with a real intraday provider and the scheduler (Phase 6). |
 
 ## Change log
 | Date | Change | Reason |
 |---|---|---|
+| 2026-11-01 | Signed off by the owner | Phase 2 complete |
 | 2026-11-01 | Built: progress + flags, `make track`, settings, preview, track record. Found + fixed: progress after the end date, visual tolerance too loose to catch changed numbers, Vite reloading on test output, phone nav wrapping | Phase 2 delivered |
 | 2026-11-01 | Phase planned: detailed criteria; Q28/Q29/Q31/Q63 decided | Phase 2 started |
 | 2026-10-31 | Outcomes drafted | Deliverables folder created |
