@@ -8,6 +8,7 @@ from stock_analyzer.application.ports.clock import Clock
 from stock_analyzer.application.ports.fundamentals import FundamentalsProvider
 from stock_analyzer.application.ports.market_data import MarketDataProvider
 from stock_analyzer.application.ports.repositories import UnitOfWorkFactory
+from stock_analyzer.application.use_cases.journal.settings import JournalSettingsService
 from stock_analyzer.application.use_cases.journal.trade_plans import TradePlanService
 from stock_analyzer.application.use_cases.providers.providers import ProviderAdmin
 from stock_analyzer.application.use_cases.stocks.queries import StockQueries
@@ -46,6 +47,11 @@ class Container:
     def trade_plans(self) -> TradePlanService:
         """Trade journal use cases."""
         return TradePlanService(self.uow_factory, self.calendar)
+
+    @property
+    def journal_settings(self) -> JournalSettingsService:
+        """Journal defaults (Settings page)."""
+        return JournalSettingsService(self.uow_factory)
 
     @property
     def provider_admin(self) -> ProviderAdmin:

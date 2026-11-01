@@ -25,6 +25,13 @@ class PlanStatus(StrEnum):
     CLOSED = "CLOSED"
 
 
+class EntrySource(StrEnum):
+    """Where the entry price came from (Q29)."""
+
+    CLOSE = "CLOSE"  # the close on the start date, from the data provider
+    MANUAL = "MANUAL"  # the user's actual buy price
+
+
 class PlanOutcome(StrEnum):
     """Calculated result of a closed plan."""
 
@@ -74,6 +81,11 @@ class TradePlan:
     stop_pct: Decimal
     success_tolerance_pp: Decimal
     prediction_id: int | None = None
+    # Q31: the locked predicted median; the outcome is judged against it, not the own target.
+    predicted_pct: Decimal | None = None
+    # Q29: the provider close on the start date, kept even when the entry price is typed in.
+    reference_close: Decimal | None = None
+    entry_source: EntrySource = EntrySource.CLOSE
     parent_plan_id: int | None = None
     is_trailing_stop_enabled: bool = False
     status: PlanStatus = PlanStatus.ACTIVE
@@ -97,6 +109,8 @@ class TradePlan:
         stop_pct: Decimal = DEFAULT_STOP_PCT,
         success_tolerance_pp: Decimal = DEFAULT_SUCCESS_TOLERANCE_PP,
         prediction_id: int | None = None,
+        predicted_pct: Decimal | None = None,
+        reference_close: Decimal | None = None,
         parent_plan_id: int | None = None,
         notes: str | None = None,
     ) -> "TradePlan":
@@ -121,14 +135,44 @@ class TradePlan:
             stop_pct=stop_pct,
             success_tolerance_pp=success_tolerance_pp,
             prediction_id=prediction_id,
+            predicted_pct=predicted_pct,
+            reference_close=reference_close,
+            entry_source=(
+                EntrySource.CLOSE
+                if reference_close is not None and entry_price == reference_close
+                else EntrySource.MANUAL
+            ),
             parent_plan_id=parent_plan_id,
             notes=notes,
         )
 
     @property
+    def benchmark_pct(self) -> Decimal:
+        """The value the outcome is judged against: the locked prediction, else the target."""
+        return self.predicted_pct if self.predicted_pct is not None else self.target_pct
+
+    @property
+    def own_target_gap_pp(self) -> Decimal | None:
+        """Actual minus your own target in percent points (``None`` while active)."""
+        if self.actual_return_pct is None:
+            return None
+        return self.actual_return_pct - self.target_pct
+
+    @property
+    def is_own_target_met(self) -> bool | None:
+        """Whether the actual return reached your own target within the tolerance."""
+        gap = self.own_target_gap_pp
+        return None if gap is None else gap >= -self.success_tolerance_pp
+
+    @property
     def target_price(self) -> Decimal:
         """Return the price at which the target is reached."""
         return self.entry_price * (1 + self.target_pct / 100)
+
+    @property
+    def benchmark_price(self) -> Decimal:
+        """Return the price at which the return equals the benchmark (prediction)."""
+        return self.entry_price * (1 + self.benchmark_pct / 100)
 
     @property
     def stop_price(self) -> Decimal:
@@ -155,7 +199,7 @@ class TradePlan:
             PlanOutcome.EXITED_EARLY
             if exited_early
             else evaluate_outcome(
-                self.actual_return_pct, self.target_pct, self.success_tolerance_pp
+                self.actual_return_pct, self.benchmark_pct, self.success_tolerance_pp
             )
         )
         self.exit_date, self.exit_price, self.status = exit_date, exit_price, PlanStatus.CLOSED

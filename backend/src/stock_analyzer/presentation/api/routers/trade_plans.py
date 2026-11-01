@@ -1,4 +1,4 @@
-"""Trade journal: start, list, read and close plans."""
+"""Trade journal: preview, start, list, read and close plans."""
 
 from typing import Annotated
 
@@ -15,6 +15,7 @@ from stock_analyzer.presentation.api.schemas.trade_plans import (
     CloseTradePlanBody,
     CreateTradePlanBody,
     JournalSummaryResponse,
+    PlanPreviewResponse,
     TradePlanResponse,
 )
 
@@ -24,7 +25,20 @@ ContainerDep = Annotated[Container, Depends(get_container)]
 
 async def _respond(container: Container, plans: list[TradePlan]) -> list[TradePlanResponse]:
     symbols = await container.stock_queries.symbols({plan.stock_id for plan in plans})
-    return [TradePlanResponse.from_domain(p, symbols.get(p.stock_id, "?")) for p in plans]
+    progress = await container.trade_plans.progress(plans)
+    return [
+        TradePlanResponse.from_domain(p, symbols.get(p.stock_id, "?"), progress.get(p.id or 0))
+        for p in plans
+    ]
+
+
+@router.post("/preview", response_model=PlanPreviewResponse, summary="Preview a plan")
+async def preview_trade_plan(
+    body: CreateTradePlanBody, container: ContainerDep
+) -> PlanPreviewResponse:
+    """Return target/stop prices, end date and suggested position size; nothing is saved."""
+    preview = await container.trade_plans.preview(CreateTradePlanRequest(**body.model_dump()))
+    return PlanPreviewResponse.from_domain(preview, body.symbol)
 
 
 @router.post(

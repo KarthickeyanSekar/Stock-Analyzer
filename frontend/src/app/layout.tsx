@@ -85,7 +85,7 @@ export function AppLayout() {
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t bg-background md:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 grid auto-cols-fr grid-flow-col border-t bg-background md:hidden"
         aria-label="Main"
       >
         {NAV_ITEMS.map((item) => (
