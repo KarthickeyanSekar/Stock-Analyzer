@@ -7,6 +7,8 @@ from types import TracebackType
 from typing import Self
 
 from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
+from stock_analyzer.domain.journal.progress import PlanProgress
+from stock_analyzer.domain.journal.settings import JournalSettings
 from stock_analyzer.domain.journal.trade_plan import TradePlan
 from stock_analyzer.domain.prediction.prediction import Prediction
 from stock_analyzer.domain.pricing.candle import Candle
@@ -23,6 +25,8 @@ class InMemoryStore:
         self.quarters: dict[int, dict[date, QuarterlyFundamentals]] = {}
         self.predictions: dict[tuple[int, date, str, str], Prediction] = {}
         self.plans: dict[int, TradePlan] = {}
+        self.snapshots: dict[int, dict[date, PlanProgress]] = {}
+        self.settings: JournalSettings | None = None
         self.providers: dict[str, tuple[str, str, str, bool]] = {}
 
 
@@ -152,6 +156,29 @@ class FakeProviders:
         return list(self._s.providers.values())
 
 
+class FakePlanStatuses:
+    def __init__(self, store: InMemoryStore) -> None:
+        self._s = store
+
+    async def upsert_many(self, plan_id: int, snapshots: Sequence[PlanProgress]) -> int:
+        self._s.snapshots.setdefault(plan_id, {}).update({s.as_of: s for s in snapshots})
+        return len(snapshots)
+
+    async def list_for_plan(self, plan_id: int) -> list[PlanProgress]:
+        return [s for _, s in sorted(self._s.snapshots.get(plan_id, {}).items())]
+
+
+class FakeSettings:
+    def __init__(self, store: InMemoryStore) -> None:
+        self._s = store
+
+    async def get(self) -> JournalSettings:
+        return self._s.settings or JournalSettings()
+
+    async def save(self, settings: JournalSettings) -> None:
+        self._s.settings = settings
+
+
 class FakeUnitOfWork:
     """Writes go straight to the shared store (good enough for use-case and API tests)."""
 
@@ -162,6 +189,8 @@ class FakeUnitOfWork:
         self.predictions = FakePredictions(store)
         self.trade_plans = FakeTradePlans(store)
         self.providers = FakeProviders(store)
+        self.plan_statuses = FakePlanStatuses(store)
+        self.settings = FakeSettings(store)
 
     async def __aenter__(self) -> Self:
         return self

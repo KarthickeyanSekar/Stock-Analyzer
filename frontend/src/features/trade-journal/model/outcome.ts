@@ -55,9 +55,3 @@ export function previewOutcome(
         : 'FAILURE';
   return { actualPct, outcome };
 }
-
-/** Where the current price sits between stop (0%) and target (100%), clamped. */
-export function progressToTarget(plan: TradePlan, price: number): number {
-  const span = plan.target_price - plan.stop_price;
-  return span <= 0 ? 0 : Math.min(100, Math.max(0, ((price - plan.stop_price) / span) * 100));
-}

@@ -7,6 +7,7 @@ const SCREENS = [
   ['stocks', '/stocks'],
   ['stock', '/stocks/RELIANCE'],
   ['journal', '/journal'],
+  ['settings', '/settings'],
   ['providers', '/admin/providers'],
 ];
 // After NSE close on the last synthetic trading day, so the market status never changes.
@@ -24,7 +25,8 @@ for (const colorScheme of ['light', 'dark']) {
         await expect(page).toHaveScreenshot(`${name}-${colorScheme}.png`, {
           fullPage: true,
           animations: 'disabled',
-          maxDiffPixelRatio: 0.01,
+          // An absolute pixel budget: a ratio would let a changed number (a few hundred px) slip by.
+          maxDiffPixels: 50,
         });
       });
     }

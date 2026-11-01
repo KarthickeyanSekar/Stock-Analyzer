@@ -41,9 +41,6 @@ export function HomePage() {
   const summary = useJournalSummary();
   const plans = useTradePlans();
   const overview = useStockOverview();
-  const prices = Object.fromEntries(
-    (overview.data ?? []).map((r) => [r.stock.symbol, r.last_close ?? 0]),
-  );
   const active = (plans.data ?? []).filter((p) => p.status === 'ACTIVE');
   const recent = (plans.data ?? []).filter((p) => p.status === 'CLOSED').slice(0, 4);
   const byMove = [...(overview.data ?? [])].sort(
@@ -114,7 +111,7 @@ export function HomePage() {
             {plans.isPending ? (
               <SkeletonRows rows={2} className="h-28" />
             ) : (
-              <ActivePlans plans={active} prices={prices} />
+              <ActivePlans plans={active} />
             )}
           </CardContent>
         </Card>

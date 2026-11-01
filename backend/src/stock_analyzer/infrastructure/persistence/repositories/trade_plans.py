@@ -5,7 +5,12 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from stock_analyzer.domain.journal.trade_plan import PlanOutcome, PlanStatus, TradePlan
+from stock_analyzer.domain.journal.trade_plan import (
+    EntrySource,
+    PlanOutcome,
+    PlanStatus,
+    TradePlan,
+)
 from stock_analyzer.domain.market.holding_category import HoldingCategory
 from stock_analyzer.infrastructure.persistence.models import TradePlanModel
 
@@ -22,6 +27,9 @@ def _to_domain(row: TradePlanModel) -> TradePlan:
         stop_pct=row.stop_pct,
         success_tolerance_pp=row.success_tolerance_pp,
         prediction_id=row.prediction_id,
+        predicted_pct=row.predicted_pct,
+        reference_close=row.reference_close,
+        entry_source=EntrySource(row.entry_source),
         parent_plan_id=row.parent_plan_id,
         is_trailing_stop_enabled=row.trailing_stop_enabled,
         status=PlanStatus(row.status),
@@ -63,6 +71,9 @@ class SqlAlchemyTradePlanRepository:
             stop_pct=plan.stop_pct,
             success_tolerance_pp=plan.success_tolerance_pp,
             prediction_id=plan.prediction_id,
+            predicted_pct=plan.predicted_pct,
+            reference_close=plan.reference_close,
+            entry_source=plan.entry_source.value,
             parent_plan_id=plan.parent_plan_id,
             trailing_stop_enabled=plan.is_trailing_stop_enabled,
         )

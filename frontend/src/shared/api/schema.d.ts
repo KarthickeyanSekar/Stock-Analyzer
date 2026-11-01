@@ -144,6 +144,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/trade-plans/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview a plan
+         * @description Return target/stop prices, end date and suggested position size; nothing is saved.
+         */
+        post: operations["preview_trade_plan_api_trade_plans_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/trade-plans": {
         parameters: {
             query?: never;
@@ -222,6 +242,30 @@ export interface paths {
          * @description Record the exit. The outcome (SUCCESS / PARTIAL / FAILURE) is calculated, never sent.
          */
         post: operations["close_trade_plan_api_trade_plans__plan_id__close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings/journal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Journal settings
+         * @description Return the journal defaults (built-in defaults until saved).
+         */
+        get: operations["get_journal_settings_api_settings_journal_get"];
+        /**
+         * Save journal settings
+         * @description Replace the journal defaults; plans already started keep their own values.
+         */
+        put: operations["save_journal_settings_api_settings_journal_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -308,15 +352,16 @@ export interface components {
          * CategoryRecordResponse
          * @description Track record for one holding category.
          * @example {
-         *       "avg_bias_pp": 0.21,
+         *       "avg_bias_pp": 2.61,
          *       "category": "1Y",
-         *       "closed": 1,
+         *       "closed": 2,
          *       "outcomes": {
          *         "EXITED_EARLY": 0,
          *         "FAILURE": 0,
          *         "PARTIAL": 1,
          *         "SUCCESS": 1
-         *       }
+         *       },
+         *       "success_rate": 0.5
          *     }
          */
         CategoryRecordResponse: {
@@ -327,6 +372,8 @@ export interface components {
             outcomes: {
                 [key: string]: number;
             };
+            /** Success Rate */
+            success_rate: number | null;
             /** Avg Bias Pp */
             avg_bias_pp: number | null;
         };
@@ -352,7 +399,7 @@ export interface components {
         };
         /**
          * CreateTradePlanBody
-         * @description Start a plan. Omit ``entry_price`` / ``target_pct`` to use the close and the prediction.
+         * @description Start a plan. Omitted values come from the close, the prediction and the settings.
          */
         CreateTradePlanBody: {
             /**
@@ -367,26 +414,36 @@ export interface components {
              * Format: date
              */
             start_date: string;
-            /** Entry Price */
+            /**
+             * Entry Price
+             * @description Your actual buy price; default: the close (Q29)
+             */
             entry_price?: number | string | null;
             /**
              * Target Pct
+             * @description Your own target; default: prediction
              * @example 10
              */
             target_pct?: number | string | null;
             /**
              * Stop Pct
-             * @default -7
+             * @description Default: settings
              */
-            stop_pct: number | string;
+            stop_pct?: number | string | null;
             /**
              * Success Tolerance Pp
-             * @default 0.5
+             * @description Default: settings
              */
-            success_tolerance_pp: number | string;
+            success_tolerance_pp?: number | string | null;
             /** Notes */
             notes?: string | null;
         };
+        /**
+         * EntrySource
+         * @description Where the entry price came from (Q29).
+         * @enum {string}
+         */
+        EntrySource: "CLOSE" | "MANUAL";
         /**
          * FundamentalsResponse
          * @description Key figures for one quarter (money in crore of the stock's currency).
@@ -463,6 +520,52 @@ export interface components {
          */
         HoldingCategory: "50D" | "100D" | "200D" | "300D" | "1Y" | "2Y" | "3Y";
         /**
+         * JournalSettingsBody
+         * @description Defaults for new plans (plans already started keep their own values).
+         */
+        JournalSettingsBody: {
+            /**
+             * Paper Capital
+             * @example 1000000
+             */
+            paper_capital: number | string;
+            /**
+             * Risk Pct
+             * @example 1
+             */
+            risk_pct: number | string;
+            /**
+             * Success Tolerance Pp
+             * @example 0.5
+             */
+            success_tolerance_pp: number | string;
+            /**
+             * Default Stop Pct
+             * @example -7
+             */
+            default_stop_pct: number | string;
+        };
+        /**
+         * JournalSettingsResponse
+         * @description The app-wide journal settings (Q63).
+         * @example {
+         *       "default_stop_pct": -7,
+         *       "paper_capital": 1000000,
+         *       "risk_pct": 1,
+         *       "success_tolerance_pp": 0.5
+         *     }
+         */
+        JournalSettingsResponse: {
+            /** Paper Capital */
+            paper_capital: number;
+            /** Risk Pct */
+            risk_pct: number;
+            /** Success Tolerance Pp */
+            success_tolerance_pp: number;
+            /** Default Stop Pct */
+            default_stop_pct: number;
+        };
+        /**
          * JournalSummaryResponse
          * @description Journal headline numbers; ``avg_bias_pp`` > 0 means the model was too cautious.
          * @example {
@@ -470,15 +573,16 @@ export interface components {
          *       "avg_bias_pp": 2.61,
          *       "by_category": [
          *         {
-         *           "avg_bias_pp": 0.21,
+         *           "avg_bias_pp": 2.61,
          *           "category": "1Y",
-         *           "closed": 1,
+         *           "closed": 2,
          *           "outcomes": {
          *             "EXITED_EARLY": 0,
          *             "FAILURE": 0,
-         *             "PARTIAL": 0,
+         *             "PARTIAL": 1,
          *             "SUCCESS": 1
-         *           }
+         *           },
+         *           "success_rate": 0.5
          *         }
          *       ],
          *       "closed": 2,
@@ -488,6 +592,7 @@ export interface components {
          *         "PARTIAL": 1,
          *         "SUCCESS": 1
          *       },
+         *       "own_target_hit_rate": 0.5,
          *       "success_rate": 0.5
          *     }
          */
@@ -504,6 +609,11 @@ export interface components {
             success_rate: number | null;
             /** Avg Bias Pp */
             avg_bias_pp: number | null;
+            /**
+             * Own Target Hit Rate
+             * @description Share that reached your own target
+             */
+            own_target_hit_rate: number | null;
             /** By Category */
             by_category: components["schemas"]["CategoryRecordResponse"][];
         };
@@ -513,6 +623,129 @@ export interface components {
          * @enum {string}
          */
         PlanOutcome: "SUCCESS" | "PARTIAL" | "FAILURE" | "EXITED_EARLY";
+        /**
+         * PlanPreviewResponse
+         * @description A plan as it would start now, plus the suggested position size (nothing is saved).
+         * @example {
+         *       "category": "1Y",
+         *       "entry_price": 2950,
+         *       "entry_source": "CLOSE",
+         *       "paper_capital": 1000000,
+         *       "planned_end_date": "2027-11-01",
+         *       "predicted_pct": 10.49,
+         *       "reference_close": 2950,
+         *       "risk_amount": 10000,
+         *       "risk_pct": 1,
+         *       "start_date": "2026-10-30",
+         *       "stop_pct": -7,
+         *       "stop_price": 2743.5,
+         *       "success_tolerance_pp": 0.5,
+         *       "suggested_amount": 141600,
+         *       "suggested_quantity": 48,
+         *       "symbol": "RELIANCE",
+         *       "target_pct": 10.49,
+         *       "target_price": 3259.46
+         *     }
+         */
+        PlanPreviewResponse: {
+            /** Symbol */
+            symbol: string;
+            category: components["schemas"]["HoldingCategory"];
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * Planned End Date
+             * Format: date
+             */
+            planned_end_date: string;
+            /** Entry Price */
+            entry_price: number;
+            /** Reference Close */
+            reference_close: number | null;
+            entry_source: components["schemas"]["EntrySource"];
+            /** Target Pct */
+            target_pct: number;
+            /** Predicted Pct */
+            predicted_pct: number | null;
+            /** Target Price */
+            target_price: number;
+            /** Stop Pct */
+            stop_pct: number;
+            /** Stop Price */
+            stop_price: number;
+            /** Success Tolerance Pp */
+            success_tolerance_pp: number;
+            /** Paper Capital */
+            paper_capital: number;
+            /** Risk Pct */
+            risk_pct: number;
+            /**
+             * Risk Amount
+             * @description Loss if the stop is hit: capital x risk %
+             */
+            risk_amount: number;
+            /**
+             * Suggested Amount
+             * @description Whole shares x entry price
+             */
+            suggested_amount: number;
+            /** Suggested Quantity */
+            suggested_quantity: number;
+        };
+        /**
+         * PlanProgressResponse
+         * @description Where an active plan stands on the last trading day with a price.
+         * @example {
+         *       "as_of": "2026-10-30",
+         *       "day_number": 12,
+         *       "is_end_date_reached": false,
+         *       "is_stop_hit": false,
+         *       "is_target_reached": false,
+         *       "last_close": 3012.4,
+         *       "progress_pct": 51.6,
+         *       "return_pct": 2.11,
+         *       "total_days": 251
+         *     }
+         */
+        PlanProgressResponse: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /**
+             * Day Number
+             * @description Trading days since the start (start day = 0)
+             */
+            day_number: number;
+            /**
+             * Total Days
+             * @description Trading days from the start to the planned end
+             */
+            total_days: number;
+            /** Last Close */
+            last_close: number;
+            /** Return Pct */
+            return_pct: number;
+            /**
+             * Progress Pct
+             * @description 0 = stop price, 100 = target price (clamped)
+             */
+            progress_pct: number;
+            /** Target Reached On */
+            target_reached_on: string | null;
+            /** Stop Hit On */
+            stop_hit_on: string | null;
+            /** Is Target Reached */
+            is_target_reached: boolean;
+            /** Is Stop Hit */
+            is_stop_hit: boolean;
+            /** Is End Date Reached */
+            is_end_date_reached: boolean;
+        };
         /**
          * PlanStatus
          * @description Lifecycle state of a plan.
@@ -723,25 +956,32 @@ export interface components {
         };
         /**
          * TradePlanResponse
-         * @description A journal plan with its locked prediction values and outcome.
+         * @description A journal plan with its locked values, progress (active) and outcome (closed).
          * @example {
          *       "actual_return_pct": 10.7,
+         *       "benchmark_pct": 10.49,
+         *       "benchmark_price": 3259.46,
          *       "category": "1Y",
          *       "entry_price": 2950,
+         *       "entry_source": "CLOSE",
          *       "exit_date": "2027-11-01",
          *       "exit_price": 3265.65,
          *       "id": 1,
+         *       "is_own_target_met": false,
          *       "outcome": "SUCCESS",
+         *       "own_target_gap_pp": -1.3,
          *       "planned_end_date": "2027-11-01",
+         *       "predicted_pct": 10.49,
          *       "prediction_id": 42,
+         *       "reference_close": 2950,
          *       "start_date": "2026-10-30",
          *       "status": "CLOSED",
          *       "stop_pct": -7,
          *       "stop_price": 2743.5,
          *       "success_tolerance_pp": 0.5,
          *       "symbol": "RELIANCE",
-         *       "target_pct": 10.49,
-         *       "target_price": 3259.46
+         *       "target_pct": 12,
+         *       "target_price": 3304
          *     }
          */
         TradePlanResponse: {
@@ -762,8 +1002,32 @@ export interface components {
             planned_end_date: string;
             /** Entry Price */
             entry_price: number;
-            /** Target Pct */
+            /**
+             * Reference Close
+             * @description Provider close on the start date (Q29)
+             */
+            reference_close: number | null;
+            entry_source: components["schemas"]["EntrySource"];
+            /**
+             * Target Pct
+             * @description Your target; drives the target/stop prices (Q31)
+             */
             target_pct: number;
+            /**
+             * Predicted Pct
+             * @description Locked predicted median (Q31)
+             */
+            predicted_pct: number | null;
+            /**
+             * Benchmark Pct
+             * @description What the outcome is judged against
+             */
+            benchmark_pct: number;
+            /**
+             * Benchmark Price
+             * @description Price at which the return equals the benchmark
+             */
+            benchmark_price: number;
             /** Target Price */
             target_price: number;
             /** Stop Pct */
@@ -782,6 +1046,14 @@ export interface components {
             exit_price: number | null;
             /** Actual Return Pct */
             actual_return_pct: number | null;
+            /**
+             * Own Target Gap Pp
+             * @description Actual minus your own target
+             */
+            own_target_gap_pp: number | null;
+            /** Is Own Target Met */
+            is_own_target_met: boolean | null;
+            progress: components["schemas"]["PlanProgressResponse"] | null;
             /** Notes */
             notes: string | null;
         };
@@ -1007,6 +1279,39 @@ export interface operations {
             };
         };
     };
+    preview_trade_plan_api_trade_plans_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTradePlanBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanPreviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_trade_plans_api_trade_plans_get: {
         parameters: {
             query?: never;
@@ -1133,6 +1438,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TradePlanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_journal_settings_api_settings_journal_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalSettingsResponse"];
+                };
+            };
+        };
+    };
+    save_journal_settings_api_settings_journal_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JournalSettingsBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalSettingsResponse"];
                 };
             };
             /** @description Validation Error */

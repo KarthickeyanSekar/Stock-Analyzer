@@ -39,10 +39,10 @@ update its row **and** every doc it affects.
 | 25 | First capability? | Auto paper trading, manual trade journal | ✅ **Manual trade journal** + holding-period screener |
 | 26 | Database? | SQLite, PostgreSQL, separate vector DB | ✅ **PostgreSQL + TimescaleDB + pgvector** (no separate vector DB) |
 | 27 | Holding categories? | — | ✅ **50D · 100D · 200D · 300D · 1Y · 2Y · 3Y** (5Y optional) |
-| 28 | Days entered as calendar or trading days? | Calendar, trading | ⏭️ **Decide in Phase 2** (journal) · Suggested: calendar days in the UI, converted to trading days internally |
-| 29 | Entry price for a plan? | Close on the start date (API), my actual buy price | ⏭️ **Decide in Phase 2** (journal) · Suggested: API close by default, editable to the actual buy price |
+| 28 | Days entered as calendar or trading days? | Calendar, trading | ✅ **Calendar days** (2026-11-01): 50D = 50 calendar days; an end date on a weekend/holiday moves to the next trading day; trading days used internally |
+| 29 | Entry price for a plan? | Close on the start date (API), my actual buy price | ✅ **API close, editable** (2026-11-01): prefilled with the close on the start date; can be overwritten with the actual buy price; both are stored |
 | 30 | Definition of SUCCESS? | Target reached by end date, any profit at end, beat NIFTY | ✅ **Compared with the predicted %**: equal (within tolerance) = SUCCESS; above = PARTIAL SUCCESS + model tuning required; below = FAILURE ([15](../15-trade-journal.md#-definition-of-success-prediction-accuracy)) |
-| 31 | Can I set my own target %, different from the prediction? | Yes, no | ⏭️ **Decide in Phase 2** (journal) · Suggested: yes; the system prediction is stored either way |
+| 31 | Can I set my own target %, different from the prediction? | Yes, no | ✅ **Yes, prediction kept** (2026-11-01): own target drives the target/stop lines; the locked prediction is always stored and the outcome is judged against it (model accuracy), with the result vs your own target shown alongside |
 | 32 | OAuth approach? | Direct OIDC in FastAPI, managed (Auth0/Clerk/Supabase), self-hosted Keycloak | ✅ **OAuth 2.0 / OIDC** (Google + Microsoft), implemented directly in FastAPI (Authlib) |
 | 33 | How will other users get price data legally? | A data plan that allows display to other users, or a redistribution licence from an NSE vendor | _TBD_ |
 | 34 | User sign-up? | Invite-only, invite code, open sign-up | ✅ **OAuth + invite code** (default; code shared by an admin, single-use, 7-day expiry, both configurable). Admin can switch to open sign-up. First admin via `SA_ADMIN_EMAILS` ([19](../19-auth-multi-user.md#invite-codes)) |
@@ -77,6 +77,7 @@ update its row **and** every doc it affects.
 | 60 | Default theme? | Light, dark, follow the system | ✅ **Follow the system**, with a toggle that is remembered (proposal applied) |
 | 61 | Phone support priority? | Desktop first, phone now | ✅ **Responsive now:** phone, tablet and desktop are all first-class in the redesign |
 | 62 | Design process? | Clickable HTML mockups first, straight to code | ✅ **Build in code directly**; two mockups (Stock detail, Home) on the design canvas serve as the visual reference |
+| 63 | Where do journal settings (paper capital, risk %, tolerance) live before user accounts? | One app-wide record, per browser | ✅ **One app-wide settings record** in the database (Settings page); becomes per-user with OAuth in Phase 5b (2026-11-01) |
 
 ## Related
 - [00 – How to Plan This Project](../00-how-to-plan.md)

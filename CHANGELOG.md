@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
 ## [Unreleased]
+- **Phase 2 – Trade journal (signed off 2026-11-01):**
+  - Decisions Q28 (calendar days), Q29 (close, editable; `reference_close` + `entry_source`), Q31 (own target; outcome judged on the locked `predicted_pct`), Q63 (app-wide settings).
+  - Plan progress from EOD candles (day N of M, return, stop → target bar) with target / stop / end-date flags; `make track` daily snapshots (migration 0004).
+  - Settings page + `GET`/`PUT /api/settings/journal`; `POST /api/trade-plans/preview` (server-side position sizing).
+  - Track record: success rate per category, actual vs predicted per plan, hit rate of your own targets.
 - **Phase 1 (POC on synthetic data) and Phase 1b (UI redesign) signed off 2026-11-01.**
 
 ### Added
@@ -31,6 +36,9 @@ All notable changes to this project are documented here. Format: [Keep a Changel
   visual regression baselines (`make e2e`, `make e2e-update`).
 
 ### Fixed
+- Visual regression used a 1% pixel ratio, too loose to notice a changed number; now a 50-pixel budget.
+- Dev Vite reloaded every open page while tests wrote results into the mounted source.
+- Phone bottom navigation wrapped onto two rows with five items.
 - ⌘K palette crashed the app on open (cmdk input rendered without a `<Command>` root).
 - Journal tab panel had no visible keyboard focus ring.
 - Plan dates shown as raw ISO (`2027-11-01`) in journal cards, the closed list and the start toast.

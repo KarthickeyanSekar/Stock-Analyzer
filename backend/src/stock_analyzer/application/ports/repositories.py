@@ -6,6 +6,8 @@ from types import TracebackType
 from typing import Protocol, Self
 
 from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
+from stock_analyzer.domain.journal.progress import PlanProgress
+from stock_analyzer.domain.journal.settings import JournalSettings
 from stock_analyzer.domain.journal.trade_plan import TradePlan
 from stock_analyzer.domain.prediction.prediction import Prediction
 from stock_analyzer.domain.pricing.candle import Candle
@@ -100,6 +102,30 @@ class TradePlanRepository(Protocol):
         ...
 
 
+class PlanStatusRepository(Protocol):
+    """Daily tracking snapshots of plans (``plan_daily_status``)."""
+
+    async def upsert_many(self, plan_id: int, snapshots: Sequence[PlanProgress]) -> int:
+        """Insert or replace one snapshot per trading day; return how many were written."""
+        ...
+
+    async def list_for_plan(self, plan_id: int) -> list[PlanProgress]:
+        """Return the plan's snapshots in date order."""
+        ...
+
+
+class SettingsRepository(Protocol):
+    """The app-wide journal settings record (Q63)."""
+
+    async def get(self) -> JournalSettings:
+        """Return the settings, or the defaults when none are saved yet."""
+        ...
+
+    async def save(self, settings: JournalSettings) -> None:
+        """Create or replace the settings record."""
+        ...
+
+
 class ProviderRepository(Protocol):
     """Configured provider plugins."""
 
@@ -143,6 +169,16 @@ class UnitOfWork(Protocol):
     @property
     def providers(self) -> ProviderRepository:
         """Provider repository bound to this transaction."""
+        ...
+
+    @property
+    def plan_statuses(self) -> PlanStatusRepository:
+        """Plan tracking snapshots bound to this transaction."""
+        ...
+
+    @property
+    def settings(self) -> SettingsRepository:
+        """Journal settings bound to this transaction."""
         ...
 
     async def __aenter__(self) -> Self:

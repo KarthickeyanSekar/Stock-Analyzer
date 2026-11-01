@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from './layout';
 import { HomePage } from '@/pages/home-page';
 import { JournalPage } from '@/pages/journal-page';
+import { SettingsPage } from '@/pages/settings-page';
 import { ProvidersPage } from '@/pages/providers-page';
 import { StatusPage } from '@/pages/status-page';
 import { StockPage } from '@/pages/stock-page';
@@ -16,6 +17,7 @@ export const router = createBrowserRouter([
       { path: '/stocks', element: <StocksPage /> },
       { path: '/stocks/:symbol', element: <StockPage /> },
       { path: '/journal', element: <JournalPage /> },
+      { path: '/settings', element: <SettingsPage /> },
       { path: '/admin/providers', element: <ProvidersPage /> },
       { path: '/status', element: <StatusPage /> },
       { path: '*', element: <Navigate to="/" replace /> },

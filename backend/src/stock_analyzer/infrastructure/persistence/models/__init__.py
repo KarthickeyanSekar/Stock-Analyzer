@@ -7,6 +7,7 @@ from stock_analyzer.infrastructure.persistence.models.fundamentals import (
 )
 from stock_analyzer.infrastructure.persistence.models.job import JobRunModel
 from stock_analyzer.infrastructure.persistence.models.journal import (
+    JournalSettingsModel,
     PlanDailyStatusModel,
     TradePlanModel,
 )
@@ -27,6 +28,7 @@ __all__ = [
     "CorporateActionModel",
     "FundamentalsModel",
     "JobRunModel",
+    "JournalSettingsModel",
     "MarketModel",
     "ModelVersionModel",
     "PlanDailyStatusModel",

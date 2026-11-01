@@ -45,11 +45,11 @@ export function ClosePlanDialog({ plan, onOpenChange }: ClosePlanDialogProps) {
 function ClosePlanForm({ plan, onDone }: { plan: TradePlan; onDone: () => void }) {
   const closePlan = useCloseTradePlan();
   const [exitDate, setExitDate] = useState(plan.planned_end_date);
-  const [exitPrice, setExitPrice] = useState(plan.target_price.toFixed(2));
+  const [exitPrice, setExitPrice] = useState(plan.benchmark_price.toFixed(2));
   const price = Number(exitPrice);
   const preview =
     price > 0
-      ? previewOutcome(plan.entry_price, price, plan.target_pct, plan.success_tolerance_pp)
+      ? previewOutcome(plan.entry_price, price, plan.benchmark_pct, plan.success_tolerance_pp)
       : null;
 
   const confirm = () => {
@@ -58,7 +58,7 @@ function ClosePlanForm({ plan, onDone }: { plan: TradePlan; onDone: () => void }
       {
         onSuccess: (closed) => {
           toast.success(`Plan #${String(closed.id)} closed: ${closed.outcome ?? ''}`, {
-            description: `${plan.symbol} ${formatPct(closed.actual_return_pct ?? 0, 2)} vs ${formatPct(closed.target_pct, 2)} predicted`,
+            description: `${plan.symbol} ${formatPct(closed.actual_return_pct ?? 0, 2)} vs ${formatPct(closed.benchmark_pct, 2)} predicted`,
           });
           onDone();
         },
@@ -74,7 +74,7 @@ function ClosePlanForm({ plan, onDone }: { plan: TradePlan; onDone: () => void }
           Close plan #{plan.id} · {plan.symbol}
         </DialogTitle>
         <DialogDescription>
-          Entry {formatInr(plan.entry_price)} · target {formatPct(plan.target_pct, 2)} (±
+          Entry {formatInr(plan.entry_price)} · predicted {formatPct(plan.benchmark_pct, 2)} (±
           {plan.success_tolerance_pp} pp). The outcome is calculated, not chosen.
         </DialogDescription>
       </DialogHeader>
@@ -110,7 +110,7 @@ function ClosePlanForm({ plan, onDone }: { plan: TradePlan; onDone: () => void }
           <div className="flex flex-wrap items-center gap-2">
             <span>
               Actual <strong>{formatPct(preview.actualPct, 2)}</strong> vs predicted{' '}
-              {formatPct(plan.target_pct, 2)}
+              {formatPct(plan.benchmark_pct, 2)}
             </span>
             <ArrowRight className="size-4 text-muted-foreground" aria-hidden="true" />
             <OutcomeBadge outcome={preview.outcome} />

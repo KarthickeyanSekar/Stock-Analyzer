@@ -50,6 +50,7 @@ class TradePlanModel(Base):
         ),
         CheckConstraint("exit_date IS NULL OR exit_date >= start_date", name="exit_after_start"),
         CheckConstraint("success_tolerance_pp >= 0", name="tolerance_non_negative"),
+        CheckConstraint("entry_source IN ('CLOSE', 'MANUAL')", name="entry_source"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
@@ -60,8 +61,13 @@ class TradePlanModel(Base):
     start_date: Mapped[date] = mapped_column(Date)
     planned_end_date: Mapped[date] = mapped_column(Date)
     entry_price: Mapped[Decimal] = mapped_column(PRICE)
-    # The predicted value the outcome is judged against (locked at start).
+    # Q29: the provider close on the start date; entry_price may be the user's own fill.
+    reference_close: Mapped[Decimal | None] = mapped_column(PRICE)
+    entry_source: Mapped[str] = mapped_column(String(8), server_default="CLOSE")
+    # Q31: the user's target drives the price lines; the outcome is judged against
+    # predicted_pct (the locked prediction) when there was one.
     target_pct: Mapped[Decimal] = mapped_column(PCT)
+    predicted_pct: Mapped[Decimal | None] = mapped_column(PCT)
     stop_pct: Mapped[Decimal] = mapped_column(PCT)
     success_tolerance_pp: Mapped[Decimal] = mapped_column(Numeric(5, 2), server_default="0.5")
     trailing_stop_enabled: Mapped[bool] = mapped_column(Boolean, server_default="false")
@@ -76,7 +82,7 @@ class TradePlanModel(Base):
 
 
 class PlanDailyStatusModel(Base):
-    """Daily tracking snapshot of an active plan."""
+    """Daily tracking snapshot of an active plan (written by ``make track``)."""
 
     __tablename__ = "plan_daily_status"
 
@@ -84,6 +90,31 @@ class PlanDailyStatusModel(Base):
     trade_date: Mapped[date] = mapped_column(Date, primary_key=True)
     close: Mapped[Decimal] = mapped_column(PRICE)
     return_pct: Mapped[Decimal] = mapped_column(PCT)
+    progress_pct: Mapped[Decimal] = mapped_column(PCT)
     day_number: Mapped[int] = mapped_column(Integer)
-    is_target_reached: Mapped[bool] = mapped_column(Boolean)
-    is_stop_hit: Mapped[bool] = mapped_column(Boolean)
+    total_days: Mapped[int] = mapped_column(Integer)
+    target_reached_on: Mapped[date | None] = mapped_column(Date)
+    stop_hit_on: Mapped[date | None] = mapped_column(Date)
+    is_end_date_reached: Mapped[bool] = mapped_column(Boolean)
+
+
+class JournalSettingsModel(Base):
+    """The single app-wide journal settings row (Q63; per user from Phase 5b)."""
+
+    __tablename__ = "journal_settings"
+    __table_args__ = (
+        CheckConstraint("id = 1", name="single_row"),
+        CheckConstraint("paper_capital > 0", name="capital_positive"),
+        CheckConstraint("risk_pct > 0 AND risk_pct <= 10", name="risk_range"),
+        CheckConstraint("success_tolerance_pp >= 0", name="tolerance_non_negative"),
+        CheckConstraint("default_stop_pct < 0", name="stop_negative"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
+    paper_capital: Mapped[Decimal] = mapped_column(Numeric(18, 2))
+    risk_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2))
+    success_tolerance_pp: Mapped[Decimal] = mapped_column(Numeric(5, 2))
+    default_stop_pct: Mapped[Decimal] = mapped_column(PCT)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )

@@ -69,6 +69,7 @@ DB: plural `snake_case` tables, `<singular>_id` FKs. API: `/api/<plural-kebab>`.
 | `make redis-shell` / `redis-keys` / `redis-info` | Redis access |
 | `make ui-shots` | Screenshots of every screen (light, dark, phone) into `frontend/screenshots/`; review them after UI changes |
 | `make seed` / `make predict` / `make poc-data` | POC data: synthetic NIFTY 50 (mock provider) + baseline predictions |
+| `make track` | Daily progress snapshots of active journal plans (`plan_daily_status`) |
 URLs: web http://localhost:5173 · api http://localhost:8000/docs · Grafana http://localhost:3000.
 The Makefile must stay compatible with **GNU Make 3.81** (macOS default): no `.ONESHELL` or newer functions.
 

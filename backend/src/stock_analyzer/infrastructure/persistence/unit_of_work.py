@@ -8,6 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from stock_analyzer.infrastructure.persistence.repositories.fundamentals import (
     SqlAlchemyFundamentalsRepository,
 )
+from stock_analyzer.infrastructure.persistence.repositories.journal import (
+    SqlAlchemyPlanStatusRepository,
+    SqlAlchemySettingsRepository,
+)
 from stock_analyzer.infrastructure.persistence.repositories.predictions import (
     SqlAlchemyPredictionRepository,
 )
@@ -31,6 +35,8 @@ class _Repositories:
         self.predictions = SqlAlchemyPredictionRepository(session)
         self.trade_plans = SqlAlchemyTradePlanRepository(session)
         self.providers = SqlAlchemyProviderRepository(session)
+        self.plan_statuses = SqlAlchemyPlanStatusRepository(session)
+        self.settings = SqlAlchemySettingsRepository(session)
 
 
 class SqlAlchemyUnitOfWork:
@@ -76,6 +82,16 @@ class SqlAlchemyUnitOfWork:
     def providers(self) -> SqlAlchemyProviderRepository:
         """Provider repository bound to this transaction."""
         return self._bound().providers
+
+    @property
+    def plan_statuses(self) -> SqlAlchemyPlanStatusRepository:
+        """Plan tracking snapshots bound to this transaction."""
+        return self._bound().plan_statuses
+
+    @property
+    def settings(self) -> SqlAlchemySettingsRepository:
+        """Journal settings bound to this transaction."""
+        return self._bound().settings
 
     async def __aenter__(self) -> Self:
         """Open the session and bind the repositories to it."""
