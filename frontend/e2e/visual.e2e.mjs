@@ -5,6 +5,7 @@ import { expect, test } from './fixtures.mjs';
 const SCREENS = [
   ['home', '/'],
   ['stocks', '/stocks'],
+  ['screener', '/screener'],
   ['stock', '/stocks/RELIANCE'],
   ['journal', '/journal'],
   ['settings', '/settings'],

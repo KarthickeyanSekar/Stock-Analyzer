@@ -7,7 +7,8 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from stock_analyzer.domain.analysis.features import Features
+from stock_analyzer.application.ports.ml import Analog
+from stock_analyzer.domain.analysis.features import Features, embedding
 from stock_analyzer.domain.market.holding_category import HoldingCategory
 from stock_analyzer.domain.prediction.labels import Label
 from stock_analyzer.domain.prediction.model_version import ModelStatus, ModelVersion
@@ -33,14 +34,23 @@ class SqlAlchemyFeatureRepository:
         """Insert or replace feature vectors in batches."""
         for offset in range(0, len(rows), BATCH_SIZE):
             values = [
-                {"stock_id": s, "as_of": d, "feature_set": feature_set, "values": f}
+                {
+                    "stock_id": s,
+                    "as_of": d,
+                    "feature_set": feature_set,
+                    "values": f,
+                    "embedding": embedding(f),
+                }
                 for s, d, f in rows[offset : offset + BATCH_SIZE]
             ]
             statement = insert(FeatureDailyModel).values(values)
             await self._session.execute(
                 statement.on_conflict_do_update(
                     index_elements=["stock_id", "as_of", "feature_set"],
-                    set_={"values": statement.excluded["values"]},
+                    set_={
+                        "values": statement.excluded["values"],
+                        "embedding": statement.excluded.embedding,
+                    },
                 )
             )
         return len(rows)
@@ -103,6 +113,47 @@ class SqlAlchemyFeatureRepository:
             )
             for r in rows
         }
+
+    async def nearest(
+        self,
+        feature_set: str,
+        vector: Sequence[float],
+        category: HoldingCategory,
+        before: date,
+        limit: int,
+    ) -> list[Analog]:
+        """Closest labelled setups by cosine distance (HNSW index), dated before ``before``."""
+        distance = FeatureDailyModel.embedding.cosine_distance(list(vector)).label("distance")
+        statement = (
+            select(FeatureDailyModel.stock_id, FeatureDailyModel.as_of, distance, LabelDailyModel)
+            .join(
+                LabelDailyModel,
+                (LabelDailyModel.stock_id == FeatureDailyModel.stock_id)
+                & (LabelDailyModel.as_of == FeatureDailyModel.as_of)
+                & (LabelDailyModel.category == category.value),
+            )
+            .where(
+                FeatureDailyModel.feature_set == feature_set,
+                FeatureDailyModel.as_of < before,
+                FeatureDailyModel.embedding.is_not(None),
+            )
+            .order_by(distance)
+            .limit(limit)
+        )
+        rows = await self._session.execute(statement)
+        return [
+            Analog(
+                stock_id=stock_id,
+                as_of=as_of,
+                distance=float(dist),
+                label=Label(
+                    forward_return_pct=label.forward_return_pct,
+                    is_stopped=label.is_stopped,
+                    hits={int(t): bool(h) for t, h in label.hits.items()},
+                ),
+            )
+            for stock_id, as_of, dist, label in rows.tuples()
+        ]
 
     async def delete_all(self) -> int:
         """Delete every feature vector and label (rebuilt by ``make features``)."""

@@ -1,5 +1,6 @@
 """Schema, migrations and SQLAlchemy repositories against a real PostgreSQL + TimescaleDB."""
 
+import time
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from functools import partial
@@ -17,7 +18,8 @@ from stock_analyzer.application.use_cases.journal.trade_plans import (
     TradePlanService,
 )
 from stock_analyzer.application.use_cases.ml.build_features import BuildFeaturesAndLabels
-from stock_analyzer.domain.analysis.features import FEATURE_SET_VERSION
+from stock_analyzer.application.use_cases.screener.queries import ScreenerQueries
+from stock_analyzer.domain.analysis.features import FEATURE_SET_VERSION, embedding
 from stock_analyzer.domain.journal.progress import track
 from stock_analyzer.domain.journal.settings import JournalSettings
 from stock_analyzer.domain.journal.trade_plan import PlanOutcome, PlanStatus
@@ -25,6 +27,7 @@ from stock_analyzer.domain.market.holding_category import HoldingCategory
 from stock_analyzer.domain.market.trading_calendar import TradingCalendar
 from stock_analyzer.domain.prediction.model_version import ModelVersion
 from stock_analyzer.domain.prediction.prediction import TARGET_PCTS
+from stock_analyzer.domain.prediction.screening import ScreenCriteria
 from stock_analyzer.infrastructure.persistence.unit_of_work import SqlAlchemyUnitOfWork
 from stock_analyzer.infrastructure.providers.mock.provider import MockMarketDataProvider
 from stock_analyzer.infrastructure.providers.mock.universe import SAMPLE_HOLIDAYS
@@ -236,3 +239,74 @@ async def test_credentials_are_stored_encrypted_and_primary_is_kept(
 
     async with engine.connect() as connection:
         assert await connection.scalar(text("SELECT count(*) FROM provider_credentials")) == 0
+
+
+async def test_nearest_setups_use_pgvector_and_respect_the_cutoff(seeded: UowFactory) -> None:
+    await BuildFeaturesAndLabels(seeded).execute()
+    async with seeded() as uow:
+        latest = await uow.features.latest_features(FEATURE_SET_VERSION)
+        as_of, features = next(iter(latest.values()))
+        cutoff = as_of - timedelta(days=50)
+        found = await uow.features.nearest(
+            FEATURE_SET_VERSION, embedding(features), HoldingCategory.D50, cutoff, 10
+        )
+
+    assert len(found) == 10
+    assert all(a.as_of < cutoff for a in found)
+    distances = [a.distance for a in found]
+    assert distances == sorted(distances)
+    assert all(0 <= d <= 2 for d in distances)
+
+
+async def test_screener_answers_2000_stocks_in_under_two_seconds(
+    uow_factory: UowFactory, engine: AsyncEngine
+) -> None:
+    stocks, categories = 2000, [c.value for c in HoldingCategory]
+    async with engine.begin() as connection:
+        await connection.execute(
+            text(
+                "INSERT INTO markets (code, name, currency, timezone) "
+                "VALUES ('IN', 'India', 'INR', 'Asia/Kolkata')"
+            )
+        )
+        await connection.execute(
+            text(
+                "INSERT INTO stocks (market_code, exchange, symbol, name, sector, currency,"
+                " timezone, source_provider) SELECT 'IN', 'NSE', 'S' || g, 'Stock ' || g,"
+                " 'Sector ' || (g % 12), 'INR', 'Asia/Kolkata', 'mock'"
+                " FROM generate_series(1, :n) g"
+            ),
+            {"n": stocks},
+        )
+        await connection.execute(
+            text(
+                "INSERT INTO model_versions (name, algorithm, status)"
+                " VALUES ('bench', 'bench', 'CANDIDATE')"
+            )
+        )
+        for days_back in (7, 0):  # two prediction dates: the screener must pick the newest
+            await connection.execute(
+                text(
+                    "INSERT INTO predictions (stock_id, as_of, category, p10_pct, p50_pct,"
+                    " p90_pct, prob_up, prob_hit, model_version_id)"
+                    " SELECT s.id, DATE '2026-10-30' - CAST(:back AS integer), c,"
+                    " -5 - (s.id % 7), (s.id % 11),"
+                    " 12 + (s.id % 9), 0.55, jsonb_build_object('5', 0.6, '10', 0.4 + (s.id % 5)"
+                    " / 100.0, '15', 0.3, '20', 0.2, '25', 0.15, '30', 0.1, '40', 0.05,"
+                    " '50', 0.02),"
+                    " (SELECT id FROM model_versions WHERE name = 'bench')"
+                    " FROM stocks s CROSS JOIN unnest(CAST(:categories AS text[])) c"
+                ),
+                {"back": days_back, "categories": categories},
+            )
+        await connection.execute(text("ANALYZE predictions"))
+
+    started = time.perf_counter()
+    rows = await ScreenerQueries(uow_factory).screen(
+        ScreenCriteria(HoldingCategory.Y1, target_pct=10, min_probability=Decimal("0.42"))
+    )
+    elapsed = time.perf_counter() - started
+
+    assert elapsed < 2.0, f"screener took {elapsed:.2f} s"
+    assert rows and all(r.prediction.as_of == date(2026, 10, 30) for r in rows)
+    assert all((r.probability or 0) >= Decimal("0.42") for r in rows)

@@ -209,6 +209,9 @@ class StockPredictionsResponse(BaseModel):
     stock: StockResponse
     last_close: CandleResponse | None
     predictions: list[PredictionResponse]
+    best_category: HoldingCategory | None = Field(
+        default=None, description="Best median per unit of downside (Q68)"
+    )
 
 
 def _num(value: Decimal | None) -> float | None:

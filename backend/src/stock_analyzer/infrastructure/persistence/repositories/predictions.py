@@ -12,6 +12,19 @@ from stock_analyzer.domain.prediction.prediction import Prediction, ReturnRange
 from stock_analyzer.infrastructure.persistence.models import ModelVersionModel, PredictionModel
 
 
+def _to_domain(row: PredictionModel, name: str) -> Prediction:
+    return Prediction(
+        stock_id=row.stock_id,
+        as_of=row.as_of,
+        category=HoldingCategory(row.category),
+        range=ReturnRange(row.p10_pct, row.p50_pct, row.p90_pct),
+        prob_up=row.prob_up,
+        prob_hit={int(t): Decimal(p) for t, p in row.prob_hit.items()},
+        model_version=name,
+        id=row.id,
+    )
+
+
 class SqlAlchemyPredictionRepository:
     """Predictions and their model versions."""
 
@@ -66,6 +79,18 @@ class SqlAlchemyPredictionRepository:
         )
         return len(rows)
 
+    async def latest_for_category(self, category: HoldingCategory) -> list[Prediction]:
+        """Each stock's newest prediction for one category (DISTINCT ON, indexed)."""
+        statement = (
+            select(PredictionModel, ModelVersionModel.name)
+            .join(ModelVersionModel, PredictionModel.model_version_id == ModelVersionModel.id)
+            .where(PredictionModel.category == category.value)
+            .distinct(PredictionModel.stock_id)
+            .order_by(PredictionModel.stock_id, PredictionModel.as_of.desc())
+        )
+        result = await self._session.execute(statement)
+        return [_to_domain(row, name) for row, name in result.tuples()]
+
     async def latest_for_stock(self, stock_id: int) -> list[Prediction]:
         """Return the newest prediction per holding category."""
         statement = (
@@ -76,18 +101,6 @@ class SqlAlchemyPredictionRepository:
             .order_by(PredictionModel.category, PredictionModel.as_of.desc())
         )
         result = await self._session.execute(statement)
-        predictions = [
-            Prediction(
-                stock_id=row.stock_id,
-                as_of=row.as_of,
-                category=HoldingCategory(row.category),
-                range=ReturnRange(row.p10_pct, row.p50_pct, row.p90_pct),
-                prob_up=row.prob_up,
-                prob_hit={int(t): Decimal(p) for t, p in row.prob_hit.items()},
-                model_version=name,
-                id=row.id,
-            )
-            for row, name in result.tuples()
-        ]
+        predictions = [_to_domain(row, name) for row, name in result.tuples()]
         order = list(HoldingCategory)
         return sorted(predictions, key=lambda p: order.index(p.category))

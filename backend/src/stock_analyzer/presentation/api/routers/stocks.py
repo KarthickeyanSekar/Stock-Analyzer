@@ -6,7 +6,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from stock_analyzer.bootstrap import Container
+from stock_analyzer.domain.market.holding_category import HoldingCategory
+from stock_analyzer.domain.prediction.screening import best_category
 from stock_analyzer.presentation.api.dependencies import get_container
+from stock_analyzer.presentation.api.schemas.screener import AnalogSummaryResponse
 from stock_analyzer.presentation.api.schemas.stocks import (
     CandleResponse,
     FundamentalsResponse,
@@ -81,4 +84,21 @@ async def get_predictions(symbol: str, container: ContainerDep) -> StockPredicti
         stock=StockResponse.from_domain(result.stock),
         last_close=CandleResponse.from_domain(result.last_close) if result.last_close else None,
         predictions=[PredictionResponse.from_domain(p) for p in result.predictions],
+        best_category=best_category(result.predictions),
     )
+
+
+@router.get(
+    "/{symbol}/analogs",
+    response_model=AnalogSummaryResponse,
+    summary="Similar past setups",
+)
+async def get_analogs(
+    symbol: str,
+    container: ContainerDep,
+    category: Annotated[HoldingCategory, Query()] = HoldingCategory.Y1,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> AnalogSummaryResponse:
+    """What happened after the setups most similar to this stock's latest one."""
+    summary = await container.screener.analogs(symbol, category, limit)
+    return AnalogSummaryResponse.from_domain(summary)

@@ -1,4 +1,10 @@
-export { useStockOverview, useStockPredictions, useStockPrices } from './api/use-stocks';
+export {
+  useStockAnalogs,
+  useStockOverview,
+  useStockPredictions,
+  useStockPrices,
+} from './api/use-stocks';
+export { AnalogsCard } from './components/analogs-card';
 export { PredictionRanges } from './components/prediction-ranges';
 export { PriceChart, type PriceLine } from './components/price-chart';
 export { TargetOdds } from './components/target-odds';

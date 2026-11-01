@@ -68,7 +68,7 @@ def render_report(results: list[CategoryResult], data_note: str) -> str:
             for f in r.folds
         ]
         lines.append("")
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines).rstrip("\n") + "\n"
 
 
 async def run() -> None:

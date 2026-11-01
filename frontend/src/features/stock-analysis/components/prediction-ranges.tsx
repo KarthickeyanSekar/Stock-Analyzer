@@ -1,3 +1,5 @@
+import { Award } from 'lucide-react';
+
 import { chanceOf, rangePosition, RANGE_MAX, RANGE_MIN } from '../model/ranges';
 import type { Prediction } from '../model/headline';
 import { cn } from '@/shared/lib/cn';
@@ -5,6 +7,8 @@ import { formatPct, formatProbability } from '@/shared/lib/format-number';
 
 interface PredictionRangesProps {
   predictions: Prediction[];
+  /** Best risk-adjusted holding period (Q68), marked with a label. */
+  best?: string | null;
   selected: string;
   target: number;
   onSelect: (category: string) => void;
@@ -13,6 +17,7 @@ interface PredictionRangesProps {
 /** One selectable row per holding category: p10–p90 band, median dot, zero line, odds, CAGR. */
 export function PredictionRanges({
   predictions,
+  best = null,
   selected,
   target,
   onSelect,
@@ -47,7 +52,14 @@ export function PredictionRanges({
                 isSelected && 'bg-accent hover:bg-accent',
               )}
             >
-              <span className="font-semibold">{p.category}</span>
+              <span className="flex flex-col font-semibold">
+                {p.category}
+                {p.category === best && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-primary">
+                    <Award className="size-3" aria-hidden="true" /> Best
+                  </span>
+                )}
+              </span>
               <span className="relative block h-5">
                 <span
                   className="absolute inset-y-0 w-px bg-muted-foreground/50"
