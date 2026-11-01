@@ -1,4 +1,5 @@
 export { useMe, type Me } from './api/use-auth';
+export { ProfileView } from './components/profile-view';
 export { PrivacyNotice } from './components/privacy-notice';
 export { RequireAuth } from './components/require-auth';
 export { SignInView } from './components/sign-in-view';

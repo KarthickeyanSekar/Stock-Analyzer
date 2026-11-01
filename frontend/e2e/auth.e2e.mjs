@@ -5,6 +5,10 @@ test('signed-out visitors are sent to the sign-in page', async ({ anonymousPage 
   await expect(anonymousPage).toHaveURL(/\/sign-in$/);
   await expect(anonymousPage.getByText('Sign in to Stock Analyzer')).toBeVisible();
   await expect(anonymousPage.getByText('Developer sign-in (local only)')).toBeVisible();
+  // One-click dev accounts (dev only): the admin emails from SA_ADMIN_EMAILS.
+  await expect(
+    anonymousPage.getByRole('button', { name: 'Sign in as admin@e2e.local' }),
+  ).toBeVisible();
 });
 
 test('an invite lets a new user in, without admin pages', async ({ page, anonymousPage }) => {
@@ -63,4 +67,18 @@ test('the star adds a stock to the watchlist', async ({ page, request }) => {
   expect(symbols).toContain('WIPRO');
   await page.getByRole('button', { name: 'Remove WIPRO from watchlist' }).click();
   await expect(page.getByRole('button', { name: 'Add WIPRO to watchlist' })).toBeVisible();
+});
+
+test('the profile page shows the signed-in account', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: 'Account' }).click();
+  await page.getByRole('menuitem', { name: 'Profile' }).click();
+
+  await expect(page).toHaveURL(/\/profile$/);
+  await expect(page.getByRole('heading', { name: 'Profile' })).toBeVisible();
+  const profile = page.getByRole('main');
+  await expect(profile.getByText('admin@e2e.local')).toBeVisible();
+  await expect(profile.getByText('Admin', { exact: true })).toBeVisible();
+  await expect(profile.getByText('Developer sign-in (local only)')).toBeVisible();
+  await expect(profile.getByRole('button', { name: 'Delete my account' })).toBeVisible();
 });

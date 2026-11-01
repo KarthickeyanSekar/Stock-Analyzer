@@ -51,6 +51,9 @@ export function UserMenu() {
             </DropdownMenuLabel>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
+          <DropdownMenuItem render={<Link to="/profile" />}>
+            <UserRound aria-hidden="true" /> Profile
+          </DropdownMenuItem>
           <DropdownMenuItem render={<Link to="/privacy" />}>
             <ShieldCheck aria-hidden="true" /> Privacy notice
           </DropdownMenuItem>
