@@ -3,7 +3,7 @@
 # Phase 5b – Users
 
 **Phase outcome:** Other people can sign up with OAuth and an invite code, and each user sees only their own data.
-**Status:** 🟡 Built and verified; waiting for your OAuth apps and a legal check before inviting others · **Branch:** `feature/phase5b-users` · **Plan:** [09 – Roadmap](../09-roadmap.md)
+**Status:** 🟡 Built and verified; waiting for your OAuth apps; legal check owned by you (Q74, educational purpose only) · **Branch:** `feature/phase5b-users` · **Plan:** [09 – Roadmap](../09-roadmap.md)
 
 ## Deliverables
 | ID | Deliverable | Outcome (what is true when done) | Status |
@@ -63,6 +63,8 @@
 ---
 
 ## Before inviting anyone (doc 19 "What changes with other users")
+**Decided (Q74):** educational purpose only; the owner does the legal check below.
+
 - Market-data licence: personal API plans usually forbid showing prices to others (redistribution).
 - SEBI: "hold N days → X%" for others can need Research Analyst registration; keep it free, invite-only, educational.
 - DPDP Act 2023: the privacy notice and account deletion are in place; keep data to email + name.

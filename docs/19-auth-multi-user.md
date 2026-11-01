@@ -173,6 +173,8 @@ OAuth redirect URLs then use that HTTPS domain (e.g., `https://stocks.<your-doma
 - Users can delete their account and data
 
 ## ⚠️ What changes with other users
+✅ **Q74:** the app is for **educational purposes only** (free, invite-only, no advice, no trading); the owner does the legal check before inviting anyone.
+
 | Topic | Personal only | With other users |
 |---|---|---|
 | **Market data licence** | Your data API key, personal use: fine | Showing personal-plan API prices to others counts as **redistribution**, which personal API terms usually forbid. Options: buy a data plan that allows display to other users, or a **redistribution licence** from an authorized NSE data vendor |
