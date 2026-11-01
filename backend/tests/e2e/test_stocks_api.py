@@ -49,3 +49,14 @@ def test_overview_lists_every_stock_with_moves_and_1y_prediction(seeded_client: 
     assert reliance["return_1y_pct"] is not None
     assert reliance["median_1y_pct"] is not None
     assert 0 <= reliance["prob_up_1y"] <= 1
+
+
+def test_fundamentals_are_quarterly_and_point_in_time(seeded_client: TestClient) -> None:
+    response = seeded_client.get("/api/stocks/INFY/fundamentals")
+
+    assert response.status_code == 200
+    quarters = response.json()
+    assert len(quarters) >= 10
+    assert [q["period_end"] for q in quarters] == sorted(q["period_end"] for q in quarters)
+    assert all(q["announced_date"] > q["period_end"] for q in quarters)
+    assert seeded_client.get("/api/stocks/NOPE/fundamentals").status_code == 404

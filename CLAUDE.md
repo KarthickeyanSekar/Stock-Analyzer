@@ -58,7 +58,8 @@ DB: plural `snake_case` tables, `<singular>_id` FKs. API: `/api/<plural-kebab>`.
 | Command | Use |
 |---|---|
 | `make dev` | api + web + Grafana with hot reload (runs `make dev-network` first) |
-| `make test` | pytest + Vitest in containers |
+| `make test` | pytest (incl. DB integration tests on a throwaway TimescaleDB) + Vitest in containers |
+| `make e2e` | Playwright browser tests on a throwaway seeded stack (never touches dev data) |
 | `make lint` | ruff, ruff format, mypy (strict), import-linter, ESLint/Prettier in containers |
 | `make api-client` | Regenerate the TS client after any API change |
 | `make bootstrap` | Fresh clone: `.env` + secrets, db + Redis, migrations |

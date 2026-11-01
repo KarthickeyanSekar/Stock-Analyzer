@@ -22,8 +22,13 @@ All notable changes to this project are documented here. Format: [Keep a Changel
   chart with ranges, range-bar predictions, target odds), guided Start-plan sheet, Close dialog with outcome preview,
   Journal tabs with track record, Providers cards; skeleton/empty/error states; `npm run lint:ui` rule check; `make ui-shots`.
 - API: `GET /api/stocks/overview`, `GET /api/trade-plans/summary`.
+- **POC completion:** `FundamentalsProvider` port + synthetic quarterly fundamentals (point-in-time), `GET /api/stocks/{symbol}/fundamentals`;
+  DB integration tests on a throwaway TimescaleDB inside `make test`; `make e2e` (Playwright on a throwaway seeded stack);
+  response examples on every API model; pre-commit hooks installed.
 
 ### Fixed
+- ⌘K palette crashed the app on open (cmdk input rendered without a `<Command>` root).
+- Journal tab panel had no visible keyboard focus ring.
 - Price chart blank when the browser locale is missing (explicit `en-IN` locale).
 - Percentage-point differences shown as "% pp".
 - Dev API replaced by test runs: tests now use their own compose project (`stock-analyzer-test`) and `--no-deps`.

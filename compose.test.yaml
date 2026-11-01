@@ -4,10 +4,22 @@ name: stock-analyzer-test
 
 services:
   db:
+    # Always on here (the base file puts db in the opt-in "data" profile); data lives only in the container.
+    profiles: !reset []
     volumes: !reset []
+    # Fixed throwaway credentials: this database has no port and is removed after the run.
+    environment:
+      POSTGRES_USER: sa_test
+      POSTGRES_PASSWORD: sa_test
+      POSTGRES_DB: sa_test
   api:
     build: { target: dev }
-    environment: { SA_ENV: test, SA_OTEL_ENABLED: "false" }
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      SA_ENV: test
+      SA_OTEL_ENABLED: "false"
+      SA_TEST_DATABASE_URL: postgresql+asyncpg://sa_test:sa_test@db:5432/sa_test
     command: ["pytest", "--cov=stock_analyzer"]
     restart: "no"
   web:

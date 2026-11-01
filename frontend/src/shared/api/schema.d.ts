@@ -104,6 +104,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stocks/{symbol}/fundamentals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Quarterly fundamentals
+         * @description Return the stock's quarterly results, oldest first.
+         */
+        get: operations["get_fundamentals_api_stocks__symbol__fundamentals_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stocks/{symbol}/predictions": {
         parameters: {
             query?: never;
@@ -255,6 +275,15 @@ export interface components {
         /**
          * CandleResponse
          * @description One daily candle.
+         * @example {
+         *       "adj_close": 4773.95,
+         *       "close": 4773.95,
+         *       "date": "2026-10-30",
+         *       "high": 4815.5,
+         *       "low": 4760.1,
+         *       "open": 4790,
+         *       "volume": 5120345
+         *     }
          */
         CandleResponse: {
             /**
@@ -278,6 +307,17 @@ export interface components {
         /**
          * CategoryRecordResponse
          * @description Track record for one holding category.
+         * @example {
+         *       "avg_bias_pp": 0.21,
+         *       "category": "1Y",
+         *       "closed": 1,
+         *       "outcomes": {
+         *         "EXITED_EARLY": 0,
+         *         "FAILURE": 0,
+         *         "PARTIAL": 1,
+         *         "SUCCESS": 1
+         *       }
+         *     }
          */
         CategoryRecordResponse: {
             category: components["schemas"]["HoldingCategory"];
@@ -347,6 +387,47 @@ export interface components {
             /** Notes */
             notes?: string | null;
         };
+        /**
+         * FundamentalsResponse
+         * @description Key figures for one quarter (money in crore of the stock's currency).
+         * @example {
+         *       "announced_date": "2026-07-17",
+         *       "book_value_per_share": 215.3,
+         *       "debt_to_equity": 0.12,
+         *       "eps": 16.45,
+         *       "net_profit_cr": 6820.1,
+         *       "period_end": "2026-06-30",
+         *       "revenue_cr": 41250.5,
+         *       "roe_pct": 31.7
+         *     }
+         */
+        FundamentalsResponse: {
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            /**
+             * Announced Date
+             * Format: date
+             */
+            announced_date: string;
+            /** Revenue Cr */
+            revenue_cr: number;
+            /** Net Profit Cr */
+            net_profit_cr: number;
+            /** Eps */
+            eps: number;
+            /** Book Value Per Share */
+            book_value_per_share: number;
+            /**
+             * Roe Pct
+             * @description Annualised return on equity, percent points
+             */
+            roe_pct: number;
+            /** Debt To Equity */
+            debt_to_equity: number;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -355,6 +436,12 @@ export interface components {
         /**
          * HealthResponse
          * @description Liveness information returned by ``GET /api/health``.
+         * @example {
+         *       "env": "dev",
+         *       "server_time": "2026-11-01T10:15:00Z",
+         *       "status": "ok",
+         *       "version": "0.1.0"
+         *     }
          */
         HealthResponse: {
             /** Status */
@@ -378,6 +465,31 @@ export interface components {
         /**
          * JournalSummaryResponse
          * @description Journal headline numbers; ``avg_bias_pp`` > 0 means the model was too cautious.
+         * @example {
+         *       "active": 0,
+         *       "avg_bias_pp": 2.61,
+         *       "by_category": [
+         *         {
+         *           "avg_bias_pp": 0.21,
+         *           "category": "1Y",
+         *           "closed": 1,
+         *           "outcomes": {
+         *             "EXITED_EARLY": 0,
+         *             "FAILURE": 0,
+         *             "PARTIAL": 0,
+         *             "SUCCESS": 1
+         *           }
+         *         }
+         *       ],
+         *       "closed": 2,
+         *       "outcomes": {
+         *         "EXITED_EARLY": 0,
+         *         "FAILURE": 0,
+         *         "PARTIAL": 1,
+         *         "SUCCESS": 1
+         *       },
+         *       "success_rate": 0.5
+         *     }
          */
         JournalSummaryResponse: {
             /** Active */
@@ -410,6 +522,22 @@ export interface components {
         /**
          * PredictionResponse
          * @description Prediction for one holding category (headline = median % with range + target odds).
+         * @example {
+         *       "as_of": "2026-10-30",
+         *       "cagr_p50_pct": 9.1,
+         *       "calendar_days": 365,
+         *       "category": "1Y",
+         *       "model_version": "baseline-empirical-v1",
+         *       "p10_pct": -6.2,
+         *       "p50_pct": 9.1,
+         *       "p90_pct": 24.3,
+         *       "prob_hit": {
+         *         "5": 0.62,
+         *         "10": 0.48,
+         *         "20": 0.27
+         *       },
+         *       "prob_up": 0.67
+         *     }
          */
         PredictionResponse: {
             category: components["schemas"]["HoldingCategory"];
@@ -449,6 +577,12 @@ export interface components {
         /**
          * ProviderResponse
          * @description A configured provider.
+         * @example {
+         *       "display_name": "Mock (synthetic data)",
+         *       "is_enabled": true,
+         *       "kind": "MARKET_DATA",
+         *       "plugin_name": "mock"
+         *     }
          */
         ProviderResponse: {
             /** Plugin Name */
@@ -463,6 +597,10 @@ export interface components {
         /**
          * ProviderTestResponse
          * @description Result of a connection test.
+         * @example {
+         *       "is_ok": true,
+         *       "plugin_name": "mock"
+         *     }
          */
         ProviderTestResponse: {
             /** Plugin Name */
@@ -473,6 +611,23 @@ export interface components {
         /**
          * StockOverviewResponse
          * @description One row of the Stocks table.
+         * @example {
+         *       "day_change_pct": -1.45,
+         *       "last_close": 4773.95,
+         *       "last_date": "2026-10-30",
+         *       "median_1y_pct": 9.1,
+         *       "prob_up_1y": 0.67,
+         *       "return_1y_pct": 12.8,
+         *       "stock": {
+         *         "currency": "INR",
+         *         "exchange": "NSE",
+         *         "is_synthetic": true,
+         *         "market": "IN",
+         *         "name": "Infosys Ltd",
+         *         "sector": "Information Technology",
+         *         "symbol": "INFY"
+         *       }
+         *     }
          */
         StockOverviewResponse: {
             stock: components["schemas"]["StockResponse"];
@@ -492,6 +647,44 @@ export interface components {
         /**
          * StockPredictionsResponse
          * @description A stock, its last close and the latest prediction per holding category.
+         * @example {
+         *       "last_close": {
+         *         "adj_close": 4773.95,
+         *         "close": 4773.95,
+         *         "date": "2026-10-30",
+         *         "high": 4815.5,
+         *         "low": 4760.1,
+         *         "open": 4790,
+         *         "volume": 5120345
+         *       },
+         *       "predictions": [
+         *         {
+         *           "as_of": "2026-10-30",
+         *           "cagr_p50_pct": 9.1,
+         *           "calendar_days": 365,
+         *           "category": "1Y",
+         *           "model_version": "baseline-empirical-v1",
+         *           "p10_pct": -6.2,
+         *           "p50_pct": 9.1,
+         *           "p90_pct": 24.3,
+         *           "prob_hit": {
+         *             "5": 0.62,
+         *             "10": 0.48,
+         *             "20": 0.27
+         *           },
+         *           "prob_up": 0.67
+         *         }
+         *       ],
+         *       "stock": {
+         *         "currency": "INR",
+         *         "exchange": "NSE",
+         *         "is_synthetic": true,
+         *         "market": "IN",
+         *         "name": "Infosys Ltd",
+         *         "sector": "Information Technology",
+         *         "symbol": "INFY"
+         *       }
+         *     }
          */
         StockPredictionsResponse: {
             stock: components["schemas"]["StockResponse"];
@@ -502,6 +695,15 @@ export interface components {
         /**
          * StockResponse
          * @description A stock and whether its data is synthetic (shown with a SYNTHETIC badge).
+         * @example {
+         *       "currency": "INR",
+         *       "exchange": "NSE",
+         *       "is_synthetic": true,
+         *       "market": "IN",
+         *       "name": "Infosys Ltd",
+         *       "sector": "Information Technology",
+         *       "symbol": "INFY"
+         *     }
          */
         StockResponse: {
             /** Symbol */
@@ -522,6 +724,25 @@ export interface components {
         /**
          * TradePlanResponse
          * @description A journal plan with its locked prediction values and outcome.
+         * @example {
+         *       "actual_return_pct": 10.7,
+         *       "category": "1Y",
+         *       "entry_price": 2950,
+         *       "exit_date": "2027-11-01",
+         *       "exit_price": 3265.65,
+         *       "id": 1,
+         *       "outcome": "SUCCESS",
+         *       "planned_end_date": "2027-11-01",
+         *       "prediction_id": 42,
+         *       "start_date": "2026-10-30",
+         *       "status": "CLOSED",
+         *       "stop_pct": -7,
+         *       "stop_price": 2743.5,
+         *       "success_tolerance_pp": 0.5,
+         *       "symbol": "RELIANCE",
+         *       "target_pct": 10.49,
+         *       "target_price": 3259.46
+         *     }
          */
         TradePlanResponse: {
             /** Id */
@@ -711,6 +932,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CandleResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_fundamentals_api_stocks__symbol__fundamentals_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FundamentalsResponse"][];
                 };
             };
             /** @description Validation Error */

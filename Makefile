@@ -1,6 +1,7 @@
 DEV  := docker compose -f compose.yaml -f compose.dev.yaml --profile telemetry
 DEV_FILE := SA_OTEL_EXPORTER=file docker compose -f compose.yaml -f compose.dev.yaml
 TEST := docker compose -f compose.yaml -f compose.test.yaml
+E2E  := docker compose -f compose.yaml -f compose.e2e.yaml
 PROD := docker compose -f compose.yaml -f compose.prod.yaml --profile telemetry
 # Dev database + Redis: their own compose project (compose.devdata.yaml), so `make down` never stops them.
 DEVDATA := docker compose -f compose.devdata.yaml
@@ -16,7 +17,7 @@ REDIS_CONTAINER ?= RedisDev
 LOAD_ENV := set -a; . ./.env; set +a
 
 .PHONY: help bootstrap setup dev-db dev-db-stop dev-network dev dev-file dev-data infra down prod \
-        test lint format api-client logs ui-shots \
+        test lint format api-client logs e2e ui-shots \
         seed predict poc-data db-upgrade db-downgrade db-revision db-current db-history db-shell db-reset \
         redis-shell redis-info redis-keys redis-flush
 
@@ -68,17 +69,20 @@ logs:          ## Follow container logs
 
 # --- Quality -----------------------------------------------------------------------------
 
-test:          ## pytest + Vitest in containers
-	$(TEST) run --rm --build api
+test:          ## pytest (incl. integration tests on a throwaway TimescaleDB) + Vitest in containers
+	$(TEST) run --rm --build api; status=$$?; $(TEST) down -v --remove-orphans; exit $$status
 	$(TEST) run --rm --build --no-deps web
 
 lint:          ## ruff, mypy, import-linter, ESLint, Prettier in containers
-	$(TEST) run --rm --build api sh -c "ruff check . && ruff format --check . && mypy src tests && lint-imports"
+	$(TEST) run --rm --build --no-deps api sh -c "ruff check . && ruff format --check . && mypy src tests && lint-imports"
 	$(TEST) run --rm --build --no-deps web npm run lint
 
 format:        ## Auto-format backend and frontend (in containers, writes to the mounted source)
 	$(API_RUN) sh -c "ruff format . && ruff check --fix ."
 	$(DEV) run --rm --no-deps web npm run format
+
+e2e:           ## Browser tests (Playwright) on a throwaway stack: db + seeded api + web; removed afterwards
+	$(E2E) up --build --abort-on-container-exit --exit-code-from e2e; status=$$?; $(E2E) down -v --remove-orphans; exit $$status
 
 ui-shots:      ## Screenshots of every screen (light, dark, phone) into frontend/screenshots; app must be running
 	docker run --rm --network container:stock-analyzer-web-1 -v "$(CURDIR)/frontend:/work" -w /work \

@@ -1,13 +1,15 @@
-"""Mock market data provider: synthetic NIFTY 50 data behind the real provider port."""
+"""Mock market data + fundamentals provider: synthetic NIFTY 50 data behind the real ports."""
 
 import random
 import zlib
 from collections.abc import Sequence
 from datetime import date
 
+from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
 from stock_analyzer.domain.market.trading_calendar import TradingCalendar
 from stock_analyzer.domain.pricing.candle import Candle
 from stock_analyzer.domain.stock.stock import Stock
+from stock_analyzer.infrastructure.providers.mock.fundamentals import synthetic_quarters
 from stock_analyzer.infrastructure.providers.mock.generator import StockProfile, SyntheticMarket
 from stock_analyzer.infrastructure.providers.mock.universe import (
     NIFTY50,
@@ -30,9 +32,11 @@ class MockMarketDataProvider:
     ) -> None:
         """Generate the market factor once; per-stock candles are generated on demand."""
         self._seed = seed
+        self._start, self._end = start, end
         self._market = SyntheticMarket(TradingCalendar(SAMPLE_HOLIDAYS), start, end, seed)
         self._splits = {symbol: (ex_date, ratio) for symbol, ex_date, ratio in SAMPLE_SPLITS}
         self._cache: dict[str, list[Candle]] = {}
+        self._quarters: dict[str, list[QuarterlyFundamentals]] = {}
 
     @property
     def name(self) -> str:
@@ -62,6 +66,20 @@ class MockMarketDataProvider:
                 self._profile(symbol), self._splits.get(symbol)
             )
         return [candle for candle in self._cache[symbol] if start <= candle.trade_date <= end]
+
+    def quarterly_fundamentals(
+        self, symbol: str, start: date, end: date
+    ) -> Sequence[QuarterlyFundamentals]:
+        """Return synthetic quarters ending ``start``..``end`` that were announced by ``end``."""
+        if symbol not in self._quarters:
+            self._quarters[symbol] = synthetic_quarters(
+                self._profile(symbol), self._start, self._end, self._seed
+            )
+        return [
+            q
+            for q in self._quarters[symbol]
+            if start <= q.period_end <= end and q.announced_date <= end
+        ]
 
     def test_connection(self) -> bool:
         """The mock provider is always available."""

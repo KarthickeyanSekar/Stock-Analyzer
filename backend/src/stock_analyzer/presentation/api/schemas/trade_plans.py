@@ -3,7 +3,7 @@
 from datetime import date
 from decimal import Decimal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from stock_analyzer.application.use_cases.journal.trade_plans import JournalSummary
 from stock_analyzer.domain.journal.trade_plan import (
@@ -40,6 +40,33 @@ class CloseTradePlanBody(BaseModel):
 
 class TradePlanResponse(BaseModel):
     """A journal plan with its locked prediction values and outcome."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "id": 1,
+                    "symbol": "RELIANCE",
+                    "category": "1Y",
+                    "start_date": "2026-10-30",
+                    "planned_end_date": "2027-11-01",
+                    "entry_price": 2950.0,
+                    "target_pct": 10.49,
+                    "target_price": 3259.46,
+                    "stop_pct": -7.0,
+                    "stop_price": 2743.5,
+                    "success_tolerance_pp": 0.5,
+                    "prediction_id": 42,
+                    "status": "CLOSED",
+                    "outcome": "SUCCESS",
+                    "exit_date": "2027-11-01",
+                    "exit_price": 3265.65,
+                    "actual_return_pct": 10.7,
+                    "notes": None,
+                }
+            ]
+        }
+    )
 
     id: int
     symbol: str
@@ -94,6 +121,19 @@ def _counts(outcomes: dict[PlanOutcome, int]) -> dict[str, int]:
 class CategoryRecordResponse(BaseModel):
     """Track record for one holding category."""
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "category": "1Y",
+                    "closed": 1,
+                    "outcomes": {"SUCCESS": 1, "PARTIAL": 1, "FAILURE": 0, "EXITED_EARLY": 0},
+                    "avg_bias_pp": 0.21,
+                }
+            ]
+        }
+    )
+
     category: HoldingCategory
     closed: int
     outcomes: dict[str, int]
@@ -102,6 +142,33 @@ class CategoryRecordResponse(BaseModel):
 
 class JournalSummaryResponse(BaseModel):
     """Journal headline numbers; ``avg_bias_pp`` > 0 means the model was too cautious."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "active": 0,
+                    "closed": 2,
+                    "outcomes": {"SUCCESS": 1, "PARTIAL": 1, "FAILURE": 0, "EXITED_EARLY": 0},
+                    "success_rate": 0.5,
+                    "avg_bias_pp": 2.61,
+                    "by_category": [
+                        {
+                            "category": "1Y",
+                            "closed": 1,
+                            "outcomes": {
+                                "SUCCESS": 1,
+                                "PARTIAL": 0,
+                                "FAILURE": 0,
+                                "EXITED_EARLY": 0,
+                            },
+                            "avg_bias_pp": 0.21,
+                        }
+                    ],
+                }
+            ]
+        }
+    )
 
     active: int
     closed: int

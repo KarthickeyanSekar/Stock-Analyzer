@@ -5,6 +5,7 @@ from datetime import date
 from types import TracebackType
 from typing import Protocol, Self
 
+from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
 from stock_analyzer.domain.journal.trade_plan import TradePlan
 from stock_analyzer.domain.prediction.prediction import Prediction
 from stock_analyzer.domain.pricing.candle import Candle
@@ -48,6 +49,22 @@ class PriceRepository(Protocol):
         self, stock_id: int, start: date | None = None, end: date | None = None
     ) -> list[Candle]:
         """Return candles in date order."""
+        ...
+
+
+class FundamentalsRepository(Protocol):
+    """Quarterly fundamentals."""
+
+    async def upsert_quarters(
+        self, stock_id: int, quarters: Sequence[QuarterlyFundamentals], source_provider: str
+    ) -> int:
+        """Insert or replace quarters by period end; return how many were written."""
+        ...
+
+    async def list_quarters(
+        self, stock_id: int, known_on: date | None = None
+    ) -> list[QuarterlyFundamentals]:
+        """Return quarters in period order; with ``known_on``, only those announced by then."""
         ...
 
 
@@ -106,6 +123,11 @@ class UnitOfWork(Protocol):
     @property
     def prices(self) -> PriceRepository:
         """Price repository bound to this transaction."""
+        ...
+
+    @property
+    def fundamentals(self) -> FundamentalsRepository:
+        """Fundamentals repository bound to this transaction."""
         ...
 
     @property
