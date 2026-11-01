@@ -22,10 +22,9 @@ class SqlAlchemyPredictionRepository:
     async def _model_version_id(self, name: str, algorithm: str) -> int:
         # Look up first: category is NULL for all-category models, and NULLs never conflict
         # in a unique constraint, so INSERT ... ON CONFLICT would create duplicates.
+        # ML versions (with a category) are registered by training, so they are always found.
         version_id = await self._session.scalar(
-            select(ModelVersionModel.id).where(
-                ModelVersionModel.name == name, ModelVersionModel.category.is_(None)
-            )
+            select(ModelVersionModel.id).where(ModelVersionModel.name == name)
         )
         if version_id is not None:
             return version_id

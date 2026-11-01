@@ -61,8 +61,8 @@ update its row **and** every doc it affects.
 | 47 | SPA (Vite) or Next.js? | Vite SPA, Next.js | Proposed: **Vite SPA** (backend handles auth and data) · _TBD_ |
 | 48 | Coding standards & architecture? | — | ✅ **Clean Architecture + OOP + naming conventions** ([24](../24-coding-standards.md)) |
 | 49 | Does the data provider include **delisted stocks** and **historical index membership** (to avoid survivorship bias)? | Check during the API trial | _TBD_ ([26](../26-ml-pipeline.md#1-data-preparation-avoiding-the-classic-traps)) |
-| 50 | Experiment tracking / model registry? | MLflow (local container), database only | Proposed: **MLflow** + `model_versions` table · _TBD_ |
-| 51 | Model quality gates? | Proposed in [26](../26-ml-pipeline.md#quality-gates-a-new-model-replaces-the-current-one-only-if-all-pass) | Proposed · _TBD_ |
+| 50 | Experiment tracking / model registry? | MLflow (local container), database only | ✅ **`model_versions` table + model files in a `models` volume** (2026-11-01): params, metrics and gate report stored as JSONB per version; MLflow deferred until experiments outgrow it (one less service to run) |
+| 51 | Model quality gates? | Proposed in [26](../26-ml-pipeline.md#quality-gates-a-new-model-replaces-the-current-one-only-if-all-pass) | ✅ **Adopted** (2026-11-01): beats every baseline on pinball loss, ECE ≤ 5 pp, 80% coverage 75–85%, worse than baseline in ≤ 30% of windows, no leakage alarm (direction accuracy ≤ 70%), not worse than the ACTIVE model; any failure keeps the current model |
 
 | 52 | Tolerance for "equal to the prediction"? | ±0.5 pp, ±1 pp, ±10% of the predicted value | ✅ **Default ±0.5 percentage points, configurable** (Settings; stored per plan when it starts) |
 
@@ -78,6 +78,7 @@ update its row **and** every doc it affects.
 | 61 | Phone support priority? | Desktop first, phone now | ✅ **Responsive now:** phone, tablet and desktop are all first-class in the redesign |
 | 62 | Design process? | Clickable HTML mockups first, straight to code | ✅ **Build in code directly**; two mockups (Stock detail, Home) on the design canvas serve as the visual reference |
 | 63 | Where do journal settings (paper capital, risk %, tolerance) live before user accounts? | One app-wide record, per browser | ✅ **One app-wide settings record** in the database (Settings page); becomes per-user with OAuth in Phase 5b (2026-11-01) |
+| 64 | Number type inside ML features and training? | Decimal everywhere, float inside ML | ✅ **float inside feature vectors and model training** (numpy/LightGBM need it); everything shown or stored for users (prices, returns, ranges, probabilities) stays `Decimal`, rounded at the boundary, as the baseline already does (2026-11-01) |
 
 ## Related
 - [00 – How to Plan This Project](../00-how-to-plan.md)

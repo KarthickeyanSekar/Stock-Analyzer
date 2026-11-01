@@ -1,11 +1,12 @@
 """Schema, migrations and SQLAlchemy repositories against a real PostgreSQL + TimescaleDB."""
 
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from functools import partial
 
 import pytest
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from stock_analyzer.application.use_cases.data.backfill_prices import BackfillPrices
@@ -15,11 +16,15 @@ from stock_analyzer.application.use_cases.journal.trade_plans import (
     CreateTradePlanRequest,
     TradePlanService,
 )
+from stock_analyzer.application.use_cases.ml.build_features import BuildFeaturesAndLabels
+from stock_analyzer.domain.analysis.features import FEATURE_SET_VERSION
 from stock_analyzer.domain.journal.progress import track
 from stock_analyzer.domain.journal.settings import JournalSettings
 from stock_analyzer.domain.journal.trade_plan import PlanOutcome, PlanStatus
 from stock_analyzer.domain.market.holding_category import HoldingCategory
 from stock_analyzer.domain.market.trading_calendar import TradingCalendar
+from stock_analyzer.domain.prediction.model_version import ModelVersion
+from stock_analyzer.domain.prediction.prediction import TARGET_PCTS
 from stock_analyzer.infrastructure.persistence.unit_of_work import SqlAlchemyUnitOfWork
 from stock_analyzer.infrastructure.providers.mock.provider import MockMarketDataProvider
 from stock_analyzer.infrastructure.providers.mock.universe import SAMPLE_HOLIDAYS
@@ -169,3 +174,43 @@ async def test_tracking_job_is_idempotent_and_point_in_time(
         assert snapshot == track(plan, past, calendar, snapshot.as_of)
     assert reloaded is not None and reloaded.status is PlanStatus.ACTIVE
     assert reloaded.predicted_pct == plan.predicted_pct
+
+
+async def test_feature_store_and_labels_round_trip(seeded: UowFactory) -> None:
+    built = await BuildFeaturesAndLabels(seeded).execute()
+    again = await BuildFeaturesAndLabels(seeded).execute()
+
+    async with seeded() as uow:
+        features = await uow.features.load_features(FEATURE_SET_VERSION)
+        latest = await uow.features.latest_features(FEATURE_SET_VERSION)
+        labels = await uow.features.load_labels(HoldingCategory.D50)
+    assert built == again  # idempotent
+    assert len(features) == built.features
+    assert len(latest) == 50
+    assert all(day == max(d for (_, d) in features) for day, _ in latest.values())
+    assert labels and all(set(label.hits) == set(TARGET_PCTS) for label in labels.values())
+
+
+async def test_registry_keeps_one_active_model_and_rolls_back(
+    uow_factory: UowFactory, engine: AsyncEngine
+) -> None:
+    now = datetime(2026, 11, 1, tzinfo=UTC)
+    async with uow_factory() as uow:
+        first = await uow.models.add(ModelVersion("m1", HoldingCategory.Y1, "lgbm"))
+        second = await uow.models.add(ModelVersion("m2", HoldingCategory.Y1, "lgbm"))
+        assert first.id and second.id
+        await uow.models.activate(first.id, now)
+        await uow.models.activate(second.id, now + timedelta(days=7))
+        await uow.commit()
+
+    async with uow_factory() as uow:
+        assert (active := await uow.models.active(HoldingCategory.Y1)) and active.name == "m2"
+        restored = await uow.models.rollback(HoldingCategory.Y1, now + timedelta(days=8))
+        await uow.commit()
+    assert restored and restored.name == "m1"
+
+    async with engine.begin() as connection:
+        with pytest.raises(IntegrityError):  # the database itself forbids two ACTIVE rows
+            await connection.execute(
+                text("UPDATE model_versions SET status = 'ACTIVE' WHERE category = '1Y'")
+            )

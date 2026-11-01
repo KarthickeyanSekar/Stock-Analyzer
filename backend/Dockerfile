@@ -3,6 +3,9 @@ FROM python:3.12-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 TZ=Asia/Kolkata
 WORKDIR /app
 RUN useradd --create-home --uid 1000 app
+# LightGBM needs the OpenMP runtime.
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
 
 FROM base AS dev
 COPY pyproject.toml ./
