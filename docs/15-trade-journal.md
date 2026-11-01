@@ -25,9 +25,11 @@ It compares the **actual return** at exit with the **predicted return** locked w
 
 - **Tolerance:** an exact match is rare, so "equal" means **within ± a tolerance**
   - ✅ **Default: ±0.5 percentage points**: predicted +10% → SUCCESS from **+9.5% to +10.5%**; +11% = PARTIAL; +9.4% = FAILURE
-  - **Configurable** in Settings › Journal (per user); it can also be changed on a plan **before it starts**
+  - **Configurable** on the Settings page (one app-wide record until user accounts, Q63); it can also be changed on a plan **before it starts**
   - The tolerance is **saved with each plan** when it starts, so changing the setting later never rewrites past outcomes
 - The outcome is **calculated automatically** from the exit price you enter; you can add a note but can't override it (keeps the record honest)
+- ✅ **Own target (Q31):** you may set your own target %. It drives the target price and the progress bar, but the outcome is always judged against the **locked prediction** (`predicted_pct`); whether you reached your own target is reported separately (`is_own_target_met`, 'Your targets reached' in the track record)
+- ✅ **Holding days (Q28):** categories are **calendar days** (50D = 50 calendar days); an end date on a weekend or holiday moves to the next trading day
 - The **net return** (profit/loss) is stored separately, so a plan can be a prediction *FAILURE* and still be profitable (e.g., +8% vs +10% predicted)
 - Every **PARTIAL (tuning required)** and **FAILURE** is fed back to the model monitoring ([26](26-ml-pipeline.md#8-monitoring)):
   many PARTIALs mean the model is **too cautious**; many FAILUREs mean it is **too optimistic**
@@ -46,7 +48,7 @@ flowchart LR
 flowchart TD
     A["🔍 Select stock<br/>(e.g., RELIANCE · NSE)"] --> B["System shows predictions<br/>for each holding category<br/>50D · 100D · 200D · 300D · 1Y · 2Y · 3Y"]
     B --> C["Choose a category<br/>e.g., 50 days → +20% predicted"]
-    C --> D["Enter start date & entry price<br/>(you enter it; the API close is suggested)"]
+    C --> D["Entry price = close on the start date<br/>(type your own buy price if it differs)"]
     D --> E["Plan created & prediction locked<br/>target price · stop-loss · planned end date"]
     E --> F["📈 Daily tracking<br/>day 12/50 · return +5.0% · progress to target"]
     F --> G{"What happened?"}
@@ -81,15 +83,16 @@ stateDiagram-v2
 | Stock & exchange | You | RELIANCE · NSE |
 | Holding category | You (from the system's options) | 50 days |
 | Start date | You | 2026-10-27 |
-| Entry price | **You (manual)**; the market data API close is pre-filled as a suggestion | ₹2,900 |
+| Entry price | ✅ Q29: the API close on the start date, **editable** to your actual buy price; the close is kept as `reference_close` and the source as CLOSE / MANUAL | ₹2,900 |
 | Planned end date | System (NSE trading calendar) | 2027-01-08 |
 | Predicted % (median + range) | System, locked | +20% target · median +9% · range −6% to +24% |
 | Probability of reaching target | System, locked | 41% |
 | Target price / stop-loss | System (editable before start only) | ₹3,480 / ₹2,700 |
-| Suggested amount | System: (capital × risk %) ÷ stop-loss %, default risk 1% | ₹14,300 (you can change it) |
+| Suggested amount | System (server-side, `POST /api/trade-plans/preview`): (capital × risk %) ÷ \|stop-loss %\|, capped at the capital, whole shares; capital and risk from Settings (default 1%) | 48 sh · ₹1,41,600 |
 | Success tolerance | From Settings (default ±0.5 pp), locked at start | ±0.5 pp |
 | Trailing stop | Optional, off by default (you switch it on per plan) | Activate at +10%, trail 8% |
-| Current price, return, day count | System, daily | ₹3,045 · +5.0% · day 12/50 |
+| Current price, return, day count | System, from EOD candles (`progress` on every plan; `make track` stores daily snapshots); stops at the planned end date | ₹3,045 · +5.0% · day 12 of 35 (trading days) |
+| Flags | System: target reached (day high ≥ target price), stop-loss crossed (day low ≤ stop price), end date reached; **never closes the plan**, you enter the exit | 🎯 Target reached 07 Jan |
 | Outcome | **System (calculated)** from actual vs predicted | SUCCESS / PARTIAL SUCCESS (tuning required) / FAILURE / EXITED EARLY |
 | Net return | System | Actual profit/loss after costs, stored separately from the outcome |
 | Exit date & price | You | 2026-12-30 · ₹3,490 |

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 
-import { useStockOverview } from '@/features/stock-analysis';
 import {
   ActivePlans,
   ClosedPlans,
@@ -17,11 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 export function JournalPage() {
   const plans = useTradePlans();
   const summary = useJournalSummary();
-  const overview = useStockOverview();
   const [closing, setClosing] = useState<TradePlan | null>(null);
-  const prices = Object.fromEntries(
-    (overview.data ?? []).map((r) => [r.stock.symbol, r.last_close ?? 0]),
-  );
   const active = (plans.data ?? []).filter((p) => p.status === 'ACTIVE');
   const closed = (plans.data ?? []).filter((p) => p.status === 'CLOSED');
 
@@ -48,7 +43,7 @@ export function JournalPage() {
           {plans.isPending ? (
             <SkeletonRows rows={2} className="h-36" />
           ) : (
-            <ActivePlans plans={active} prices={prices} onClose={setClosing} />
+            <ActivePlans plans={active} onClose={setClosing} />
           )}
         </TabsContent>
         <TabsContent value="closed" className="pt-4">
@@ -62,7 +57,7 @@ export function JournalPage() {
           <Card>
             <CardContent>
               {summary.data ? (
-                <TrackRecord summary={summary.data} />
+                <TrackRecord plans={closed} summary={summary.data} />
               ) : (
                 <SkeletonRows rows={3} className="h-6" />
               )}

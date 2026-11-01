@@ -15,6 +15,8 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: { '/api': { target: apiTarget, changeOrigin: true } },
+    // Test output is written into the mounted source; watching it reloads every open page.
+    watch: { ignored: ['**/e2e-results/**', '**/screenshots/**', '**/e2e/snapshots/**'] },
   },
   test: {
     environment: 'jsdom',

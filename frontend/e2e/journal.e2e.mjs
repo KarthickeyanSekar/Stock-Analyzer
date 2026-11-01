@@ -38,14 +38,14 @@ test('close dialog previews every outcome before confirming', async ({ page, req
   const exitPrice = dialog.getByLabel('Exit price (₹)');
   const preview = dialog.locator('[aria-live="polite"]');
 
-  // Prefilled with the target price → within tolerance.
+  // Prefilled with the price at the prediction → within tolerance (Q31: judged on the prediction).
   await expect(preview).toContainText('Success');
-  await exitPrice.fill((plan.target_price * 1.05).toFixed(2));
+  await exitPrice.fill((plan.benchmark_price * 1.05).toFixed(2));
   await expect(preview).toContainText('Partial');
   await exitPrice.fill((plan.entry_price * 0.9).toFixed(2));
   await expect(preview).toContainText('Failure');
 
-  await exitPrice.fill(plan.target_price.toFixed(2));
+  await exitPrice.fill(plan.benchmark_price.toFixed(2));
   await dialog.getByRole('button', { name: 'Close plan' }).click();
 
   await expect(page.getByText(`Plan #${plan.id} closed: SUCCESS`)).toBeVisible();
