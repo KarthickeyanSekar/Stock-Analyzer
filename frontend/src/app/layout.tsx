@@ -4,8 +4,9 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
 import { CommandPalette } from './command-palette';
 import { MarketStatus } from './market-status';
-import { NAV_ITEMS } from './nav';
+import { navItemsFor } from './nav';
 import { ThemeToggle } from './theme-toggle';
+import { UserMenu, useMe } from '@/features/auth';
 import { cn } from '@/shared/lib/cn';
 import { Badge } from '@/shared/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
@@ -14,6 +15,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 export function AppLayout() {
   const [isSearchOpen, setSearchOpen] = useState(false);
   const location = useLocation();
+  const me = useMe();
+  const navItems = navItemsFor(me.data?.role === 'admin');
 
   return (
     <div className="flex min-h-svh bg-surface">
@@ -23,7 +26,7 @@ export function AppLayout() {
           <span className="text-base font-semibold">Stock Analyzer</span>
         </div>
         <nav className="flex flex-col gap-1" aria-label="Main">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -74,6 +77,7 @@ export function AppLayout() {
             <TooltipContent>All prices come from the mock provider, not the market.</TooltipContent>
           </Tooltip>
           <ThemeToggle />
+          <UserMenu />
         </header>
 
         <main
@@ -88,7 +92,7 @@ export function AppLayout() {
         className="fixed inset-x-0 bottom-0 z-30 grid auto-cols-fr grid-flow-col border-t bg-background md:hidden"
         aria-label="Main"
       >
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

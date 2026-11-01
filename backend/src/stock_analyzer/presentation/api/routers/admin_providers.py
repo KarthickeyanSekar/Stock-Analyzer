@@ -5,14 +5,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Response, status
 
 from stock_analyzer.bootstrap import Container
-from stock_analyzer.presentation.api.dependencies import get_container
+from stock_analyzer.presentation.api.dependencies import current_admin, get_container
 from stock_analyzer.presentation.api.schemas.providers import (
     CredentialsBody,
     ProviderResponse,
     ProviderTestResponse,
 )
 
-router = APIRouter(prefix="/api/admin/providers", tags=["admin"])
+router = APIRouter(
+    prefix="/api/admin/providers", tags=["admin"], dependencies=[Depends(current_admin)]
+)
 ContainerDep = Annotated[Container, Depends(get_container)]
 
 

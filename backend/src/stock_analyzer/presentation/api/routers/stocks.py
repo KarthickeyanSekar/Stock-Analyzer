@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query
 from stock_analyzer.bootstrap import Container
 from stock_analyzer.domain.market.holding_category import HoldingCategory
 from stock_analyzer.domain.prediction.screening import best_category
-from stock_analyzer.presentation.api.dependencies import get_container
+from stock_analyzer.presentation.api.dependencies import current_user, get_container
 from stock_analyzer.presentation.api.schemas.screener import AnalogSummaryResponse
 from stock_analyzer.presentation.api.schemas.stocks import (
     CandleResponse,
@@ -19,7 +19,7 @@ from stock_analyzer.presentation.api.schemas.stocks import (
     StockResponse,
 )
 
-router = APIRouter(prefix="/api/stocks", tags=["stocks"])
+router = APIRouter(prefix="/api/stocks", tags=["stocks"], dependencies=[Depends(current_user)])
 ContainerDep = Annotated[Container, Depends(get_container)]
 
 

@@ -8,10 +8,10 @@ from fastapi import APIRouter, Depends, Query
 from stock_analyzer.bootstrap import Container
 from stock_analyzer.domain.market.holding_category import HoldingCategory
 from stock_analyzer.domain.prediction.screening import ScreenCriteria
-from stock_analyzer.presentation.api.dependencies import get_container
+from stock_analyzer.presentation.api.dependencies import current_user, get_container
 from stock_analyzer.presentation.api.schemas.screener import ScreenRowResponse
 
-router = APIRouter(prefix="/api/screener", tags=["screener"])
+router = APIRouter(prefix="/api/screener", tags=["screener"], dependencies=[Depends(current_user)])
 ContainerDep = Annotated[Container, Depends(get_container)]
 
 

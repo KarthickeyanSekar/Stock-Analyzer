@@ -13,3 +13,11 @@ class ConfigurationError(DomainError):
 
 class ProviderError(DomainError):
     """Raised when a data provider rejects a request or is unreachable (message has no secrets)."""
+
+
+class AuthError(DomainError):
+    """Sign-in failed or the session is not valid; the message is safe to show."""
+
+
+class ForbiddenError(DomainError):
+    """The signed-in user may not do this."""

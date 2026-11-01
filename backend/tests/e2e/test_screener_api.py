@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from stock_analyzer.application.use_cases.ml.build_features import BuildFeaturesAndLabels
 from stock_analyzer.main import create_app
-from tests.conftest import make_container
+from tests.conftest import make_container, sign_in
 from tests.fakes import FakeUnitOfWork, InMemoryStore
 
 
@@ -22,6 +22,7 @@ def featured_store(seeded_store: InMemoryStore) -> InMemoryStore:
 @pytest.fixture
 def api(featured_store: InMemoryStore) -> Iterator[TestClient]:
     with TestClient(create_app(make_container(featured_store))) as client:
+        sign_in(client)
         yield client
 
 

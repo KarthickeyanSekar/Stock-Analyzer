@@ -2,7 +2,8 @@ import { CornerDownLeft } from 'lucide-react';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { NAV_ITEMS } from './nav';
+import { navItemsFor } from './nav';
+import { useMe } from '@/features/auth';
 import { useStockOverview } from '@/features/stock-analysis';
 import { formatInr, formatPct } from '@/shared/lib/format-number';
 import {
@@ -23,6 +24,7 @@ interface CommandPaletteProps {
 /** ⌘K / Ctrl+K: jump to any stock or page. */
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate();
+  const me = useMe();
   const { data: stocks = [] } = useStockOverview();
 
   useEffect(() => {
@@ -74,7 +76,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             ))}
           </CommandGroup>
           <CommandGroup heading="Pages">
-            {NAV_ITEMS.map((item) => (
+            {navItemsFor(me.data?.role === 'admin').map((item) => (
               <CommandItem
                 key={item.to}
                 value={item.label}

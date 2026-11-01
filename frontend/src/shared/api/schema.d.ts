@@ -24,6 +24,130 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sign-in options
+         * @description The configured identity providers and whether the dev sign-in is on.
+         */
+        get: operations["sign_in_options_api_auth_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/login/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Start a sign-in
+         * @description Redirect to the provider (PKCE, state and nonce are kept server-side).
+         */
+        get: operations["start_sign_in_api_auth_login__provider__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/callback/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sign-in callback
+         * @description Verify the sign-in, start a session and go to the app (or back with a message).
+         */
+        get: operations["finish_sign_in_api_auth_callback__provider__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/dev-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dev-only sign-in
+         * @description Sign in with just an email (``SA_DEV_LOGIN=true``, never in prod).
+         */
+        post: operations["dev_login_api_auth_dev_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The signed-in user
+         * @description Who is signed in (401 when nobody).
+         */
+        get: operations["me_api_auth_me_get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete my account
+         * @description Delete the account with its plans, settings, watchlist and sessions.
+         */
+        delete: operations["delete_me_api_auth_me_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign out
+         * @description End this browser's session.
+         */
+        post: operations["logout_api_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stocks": {
         parameters: {
             query?: never;
@@ -213,7 +337,7 @@ export interface paths {
         };
         /**
          * List plans
-         * @description Return every plan, newest first.
+         * @description Return your plans, newest first.
          */
         get: operations["list_trade_plans_api_trade_plans_get"];
         put?: never;
@@ -257,7 +381,7 @@ export interface paths {
         };
         /**
          * Get one plan
-         * @description Return one plan.
+         * @description Return one of your plans.
          */
         get: operations["get_trade_plan_api_trade_plans__plan_id__get"];
         put?: never;
@@ -297,7 +421,7 @@ export interface paths {
         };
         /**
          * Journal settings
-         * @description Return the journal defaults (built-in defaults until saved).
+         * @description Return your journal defaults (built-in defaults until saved).
          */
         get: operations["get_journal_settings_api_settings_journal_get"];
         /**
@@ -307,6 +431,50 @@ export interface paths {
         put: operations["save_journal_settings_api_settings_journal_put"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/watchlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My watchlist
+         * @description Watched stocks in the order they were added.
+         */
+        get: operations["my_watchlist_api_watchlist_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/watchlist/{symbol}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Watch a stock
+         * @description Add the stock to the watchlist (no-op if already there).
+         */
+        put: operations["watch_api_watchlist__symbol__put"];
+        post?: never;
+        /**
+         * Unwatch a stock
+         * @description Remove the stock from the watchlist.
+         */
+        delete: operations["unwatch_api_watchlist__symbol__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -396,6 +564,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List invite codes
+         * @description Every code, newest first.
+         */
+        get: operations["list_invites_api_admin_invites_get"];
+        put?: never;
+        /**
+         * Create an invite code
+         * @description A new shareable code (default: 1 use, 7 days, role user).
+         */
+        post: operations["create_invite_api_admin_invites_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/invites/{invite_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke a code
+         * @description The code can't be used any more.
+         */
+        delete: operations["revoke_invite_api_admin_invites__invite_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List users
+         * @description Every user.
+         */
+        get: operations["list_users_api_admin_users_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{user_id}/disabled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Disable / enable
+         * @description Disabling signs the user out everywhere and blocks sign-in.
+         */
+        put: operations["set_disabled_api_admin_users__user_id__disabled_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Audit log
+         * @description Newest entries first.
+         */
+        get: operations["audit_log_api_admin_audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -467,6 +739,32 @@ export interface components {
             };
             /** Cases */
             cases: components["schemas"]["AnalogCaseResponse"][];
+        };
+        /**
+         * AuditEntryResponse
+         * @description An audit log entry.
+         * @example {
+         *       "action": "sign_in",
+         *       "at": "2026-11-01T08:00:00Z",
+         *       "details": {
+         *         "provider": "google"
+         *       }
+         *     }
+         */
+        AuditEntryResponse: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** User Id */
+            user_id: string | null;
+            /** Action */
+            action: string;
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            };
         };
         /**
          * CandleResponse
@@ -550,6 +848,24 @@ export interface components {
             notes?: string | null;
         };
         /**
+         * CreateInviteBody
+         * @description New invite code.
+         */
+        CreateInviteBody: {
+            /**
+             * Max Uses
+             * @default 1
+             */
+            max_uses: number;
+            /**
+             * Valid Days
+             * @default 7
+             */
+            valid_days: number;
+            /** @default user */
+            role: components["schemas"]["Role"];
+        };
+        /**
          * CreateTradePlanBody
          * @description Start a plan. Omitted values come from the close, the prediction and the settings.
          */
@@ -604,6 +920,19 @@ export interface components {
             values: {
                 [key: string]: string;
             };
+        };
+        /**
+         * DevLoginBody
+         * @description Dev-only sign-in.
+         */
+        DevLoginBody: {
+            /**
+             * Email
+             * @example dev@example.com
+             */
+            email: string;
+            /** Invite Code */
+            invite_code?: string | null;
         };
         /**
          * EntrySource
@@ -686,6 +1015,43 @@ export interface components {
          * @enum {string}
          */
         HoldingCategory: "50D" | "100D" | "200D" | "300D" | "1Y" | "2Y" | "3Y";
+        /**
+         * InviteResponse
+         * @description An invite code.
+         * @example {
+         *       "code": "SA-7K2M-QX9P",
+         *       "expires_at": "2026-11-08T08:00:00Z",
+         *       "id": "5b8f2c1e-1d0a-4f3b-8a9e-7c6d5e4f3a2b",
+         *       "is_revoked": false,
+         *       "is_usable": true,
+         *       "max_uses": 1,
+         *       "role_granted": "user",
+         *       "used_count": 0
+         *     }
+         */
+        InviteResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            role_granted: components["schemas"]["Role"];
+            /** Max Uses */
+            max_uses: number;
+            /** Used Count */
+            used_count: number;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Is Revoked */
+            is_revoked: boolean;
+            /** Is Usable */
+            is_usable: boolean;
+        };
         /**
          * JournalSettingsBody
          * @description Defaults for new plans (plans already started keep their own values).
@@ -783,6 +1149,40 @@ export interface components {
             own_target_hit_rate: number | null;
             /** By Category */
             by_category: components["schemas"]["CategoryRecordResponse"][];
+        };
+        /**
+         * MeResponse
+         * @description The signed-in user.
+         * @example {
+         *       "created_at": "2026-11-01T08:00:00Z",
+         *       "email": "you@example.com",
+         *       "id": "0d6c7b9e-8f0e-4a8e-9d5f-2f1f6c3a9b10",
+         *       "is_disabled": false,
+         *       "last_login_at": "2026-11-01T08:00:00Z",
+         *       "name": "You",
+         *       "provider": "google",
+         *       "role": "admin"
+         *     }
+         */
+        MeResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Email */
+            email: string;
+            /** Name */
+            name: string;
+            role: components["schemas"]["Role"];
+            /** Provider */
+            provider: string;
+            /** Is Disabled */
+            is_disabled: boolean;
+            /** Created At */
+            created_at: string | null;
+            /** Last Login At */
+            last_login_at: string | null;
         };
         /**
          * PlanOutcome
@@ -975,6 +1375,16 @@ export interface components {
             model_version: string;
         };
         /**
+         * ProviderOption
+         * @description A sign-in button.
+         */
+        ProviderOption: {
+            /** Name */
+            name: string;
+            /** Display Name */
+            display_name: string;
+        };
+        /**
          * ProviderResponse
          * @description A provider plugin with masked credentials.
          * @example {
@@ -1036,6 +1446,12 @@ export interface components {
             message: string;
         };
         /**
+         * Role
+         * @description What a user may do: admins also manage users, invites and data providers.
+         * @enum {string}
+         */
+        Role: "admin" | "user";
+        /**
          * ScreenRowResponse
          * @description One ranked screener result.
          * @example {
@@ -1086,6 +1502,33 @@ export interface components {
              * @description 0-10 quality score (Q67)
              */
             quality: number | null;
+        };
+        /**
+         * SetDisabledBody
+         * @description Disable or enable a user.
+         */
+        SetDisabledBody: {
+            /** Is Disabled */
+            is_disabled: boolean;
+        };
+        /**
+         * SignInOptionsResponse
+         * @description Which sign-in methods are available.
+         * @example {
+         *       "dev_login": false,
+         *       "providers": [
+         *         {
+         *           "display_name": "Google",
+         *           "name": "google"
+         *         }
+         *       ]
+         *     }
+         */
+        SignInOptionsResponse: {
+            /** Providers */
+            providers: components["schemas"]["ProviderOption"][];
+            /** Dev Login */
+            dev_login: boolean;
         };
         /**
          * StockOverviewResponse
@@ -1344,6 +1787,179 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
                 };
+            };
+        };
+    };
+    sign_in_options_api_auth_options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignInOptionsResponse"];
+                };
+            };
+        };
+    };
+    start_sign_in_api_auth_login__provider__get: {
+        parameters: {
+            query?: {
+                invite_code?: string | null;
+            };
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            307: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    finish_sign_in_api_auth_callback__provider__get: {
+        parameters: {
+            query?: {
+                state?: string;
+                code?: string;
+                error?: string;
+            };
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            307: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dev_login_api_auth_dev_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DevLoginBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_api_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+        };
+    };
+    delete_me_api_auth_me_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    logout_api_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -1825,6 +2441,84 @@ export interface operations {
             };
         };
     };
+    my_watchlist_api_watchlist_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockResponse"][];
+                };
+            };
+        };
+    };
+    watch_api_watchlist__symbol__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unwatch_api_watchlist__symbol__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_providers_api_admin_providers_get: {
         parameters: {
             query?: never;
@@ -1955,6 +2649,174 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_invites_api_admin_invites_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteResponse"][];
+                };
+            };
+        };
+    };
+    create_invite_api_admin_invites_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInviteBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_invite_api_admin_invites__invite_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invite_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_users_api_admin_users_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"][];
+                };
+            };
+        };
+    };
+    set_disabled_api_admin_users__user_id__disabled_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetDisabledBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    audit_log_api_admin_audit_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEntryResponse"][];
+                };
             };
             /** @description Validation Error */
             422: {

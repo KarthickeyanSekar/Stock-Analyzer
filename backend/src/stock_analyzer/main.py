@@ -8,11 +8,14 @@ from stock_analyzer.bootstrap import Container, build_container
 from stock_analyzer.presentation.api.error_handlers import register_error_handlers
 from stock_analyzer.presentation.api.routers import (
     admin_providers,
+    admin_users,
+    auth,
     health,
     screener,
     settings,
     stocks,
     trade_plans,
+    watchlist,
 )
 
 
@@ -29,7 +32,17 @@ def create_app(container: Container | None = None) -> FastAPI:
         allow_headers=["*"],
     )
     register_error_handlers(app)
-    for module in (health, stocks, screener, trade_plans, settings, admin_providers):
+    for module in (
+        health,
+        auth,
+        stocks,
+        screener,
+        trade_plans,
+        settings,
+        watchlist,
+        admin_providers,
+        admin_users,
+    ):
         app.include_router(module.router)
     if container.settings.otel_enabled:
         FastAPIInstrumentor.instrument_app(app)

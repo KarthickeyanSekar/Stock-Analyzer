@@ -25,6 +25,7 @@ from tests.fakes import FakeUnitOfWork, InMemoryStore
 
 # A fresh Fernet key per test run (never stored anywhere).
 TEST_MASTER_KEY = Fernet.generate_key().decode()
+ADMIN_EMAIL = "admin@test.local"
 FIXED_NOW = datetime(2026, 1, 2, 9, 15, tzinfo=UTC)
 SEED_START = date(2024, 1, 1)
 SEED_END = date(2026, 10, 30)
@@ -38,7 +39,7 @@ class FixedClock:
 def make_container(store: InMemoryStore) -> Container:
     provider = MockMarketDataProvider(start=SEED_START, end=SEED_END)
     return Container(
-        settings=Settings(env=Environment.TEST),
+        settings=Settings(env=Environment.TEST, dev_login=True, admin_emails=ADMIN_EMAIL),
         clock=FixedClock(),
         uow_factory=lambda: FakeUnitOfWork(store),
         calendar=TradingCalendar(SAMPLE_HOLIDAYS),
@@ -69,13 +70,27 @@ def seeded_store() -> InMemoryStore:
     return store
 
 
+def sign_in(client: TestClient, email: str = ADMIN_EMAIL, invite_code: str | None = None) -> None:
+    """Sign the test client in with the dev sign-in (the cookie stays on the client)."""
+    response = client.post("/api/auth/dev-login", json={"email": email, "invite_code": invite_code})
+    assert response.status_code == 200, response.text
+
+
+@pytest.fixture
+def anonymous_client() -> Iterator[TestClient]:
+    with TestClient(create_app(make_container(InMemoryStore()))) as test_client:
+        yield test_client
+
+
 @pytest.fixture
 def client() -> Iterator[TestClient]:
     with TestClient(create_app(make_container(InMemoryStore()))) as test_client:
+        sign_in(test_client)
         yield test_client
 
 
 @pytest.fixture
 def seeded_client(seeded_store: InMemoryStore) -> Iterator[TestClient]:
     with TestClient(create_app(make_container(seeded_store))) as test_client:
+        sign_in(test_client)
         yield test_client

@@ -42,6 +42,28 @@ class Settings(BaseSettings):
     models_dir: str = "var/models"
     reports_dir: str = "var/reports"
     code_version: str = "unknown"
+    # Sign-in (Phase 5b). OAuth apps are registered by the owner; a provider without a client id
+    # is simply not offered. Redirect URI: {public_url}/api/auth/callback/{provider}.
+    public_url: str = "http://localhost:5173"
+    google_client_id: str = ""
+    google_client_secret: SecretStr = SecretStr("")
+    microsoft_client_id: str = ""
+    microsoft_client_secret: SecretStr = SecretStr("")
+    # Comma-separated; these emails become admins on first sign-in (no invite code needed).
+    admin_emails: str = ""
+    # Local development only: sign in with just an email. Refused when env is prod.
+    dev_login: bool = False
+
+    @property
+    def admin_email_set(self) -> frozenset[str]:
+        """``admin_emails`` as a set of lower-case addresses."""
+        return frozenset(e.strip().lower() for e in self.admin_emails.split(",") if e.strip())
+
+    @property
+    def is_dev_login_enabled(self) -> bool:
+        """Dev sign-in is never available in production."""
+        return self.dev_login and self.env is not Environment.PROD
+
     otel_export_interval_ms: int = 15_000
     otel_service_name: str = "stock-analyzer-api"
 

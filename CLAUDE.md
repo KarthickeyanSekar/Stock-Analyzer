@@ -123,6 +123,12 @@ Use `make redis-keys`, `make redis-info`; `make redis-flush` deletes only `sa:<e
 - Diagrams are always **Mermaid**. Every doc has top and bottom nav bars and a Related section; the README index lists every doc.
 - When a decision is made, record it as ✅ in `docs/decisions/open-questions.md` **and** update every doc it affects. Keep the docs matching the code.
 
+## Sign-in (Phase 5b)
+- Every API except `/api/health` and `/api/auth/*` needs a session; admin APIs need the admin role.
+- Locally: `SA_DEV_LOGIN=true` + your email in `SA_ADMIN_EMAILS` (dev-only sign-in, refused in prod). Real Google /
+  Microsoft sign-in appears once their OAuth client id/secret are in `.env`.
+- Tests: API test clients sign in with `tests.conftest.sign_in`; Playwright fixtures sign in as `admin@e2e.local`.
+
 ## Working with the user
 - The user writes quickly and informally. Restate the interpretation when a request is ambiguous, and ask before anything hard to undo
   (deleting containers or volumes, recreating databases, force operations).
