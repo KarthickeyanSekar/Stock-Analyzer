@@ -1,6 +1,5 @@
 """Composition root: builds and wires every dependency in one place."""
 
-from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import partial
 
@@ -8,7 +7,9 @@ from stock_analyzer.application.ports.clock import Clock
 from stock_analyzer.application.ports.fundamentals import FundamentalsProvider
 from stock_analyzer.application.ports.market_data import MarketDataProvider
 from stock_analyzer.application.ports.ml import ModelTrainer
+from stock_analyzer.application.ports.providers import PluginCatalog
 from stock_analyzer.application.ports.repositories import UnitOfWorkFactory
+from stock_analyzer.application.ports.security import SecretCipher
 from stock_analyzer.application.use_cases.journal.settings import JournalSettingsService
 from stock_analyzer.application.use_cases.journal.trade_plans import TradePlanService
 from stock_analyzer.application.use_cases.providers.providers import ProviderAdmin
@@ -22,8 +23,10 @@ from stock_analyzer.infrastructure.persistence.database import (
     create_session_factory,
 )
 from stock_analyzer.infrastructure.persistence.unit_of_work import SqlAlchemyUnitOfWork
+from stock_analyzer.infrastructure.providers.catalog import StaticPluginCatalog
 from stock_analyzer.infrastructure.providers.mock.provider import MockMarketDataProvider
 from stock_analyzer.infrastructure.providers.mock.universe import SAMPLE_HOLIDAYS
+from stock_analyzer.infrastructure.security.fernet_cipher import FernetCipher
 from stock_analyzer.infrastructure.telemetry.setup import configure_telemetry
 from stock_analyzer.infrastructure.time.system_clock import SystemClock
 
@@ -38,7 +41,8 @@ class Container:
     calendar: TradingCalendar
     market_data: MarketDataProvider
     fundamentals: FundamentalsProvider
-    plugins: Mapping[str, MarketDataProvider]
+    catalog: PluginCatalog
+    cipher: SecretCipher
     trainer: ModelTrainer
 
     @property
@@ -59,7 +63,7 @@ class Container:
     @property
     def provider_admin(self) -> ProviderAdmin:
         """Admin > Data Providers use cases."""
-        return ProviderAdmin(self.uow_factory, self.plugins)
+        return ProviderAdmin(self.uow_factory, self.catalog, self.cipher)
 
 
 def build_container(settings: Settings | None = None) -> Container:
@@ -77,6 +81,7 @@ def build_container(settings: Settings | None = None) -> Container:
         calendar=TradingCalendar(SAMPLE_HOLIDAYS),
         market_data=market_data,
         fundamentals=market_data,
-        plugins={market_data.name: market_data},
+        catalog=StaticPluginCatalog(market_data),
+        cipher=FernetCipher(settings.master_key.get_secret_value()),
         trainer=LightGbmTrainer(),
     )

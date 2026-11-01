@@ -5,6 +5,7 @@ import zlib
 from collections.abc import Sequence
 from datetime import date
 
+from stock_analyzer.application.ports.market_data import ConnectionCheck
 from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
 from stock_analyzer.domain.market.trading_calendar import TradingCalendar
 from stock_analyzer.domain.pricing.candle import Candle
@@ -81,9 +82,9 @@ class MockMarketDataProvider:
             if start <= q.period_end <= end and q.announced_date <= end
         ]
 
-    def test_connection(self) -> bool:
+    def test_connection(self) -> ConnectionCheck:
         """The mock provider is always available."""
-        return True
+        return ConnectionCheck(is_ok=True, message="Synthetic data, always available")
 
     def _profile(self, symbol: str) -> StockProfile:
         sector = next(sector for sym, _, sector in NIFTY50 if sym == symbol)

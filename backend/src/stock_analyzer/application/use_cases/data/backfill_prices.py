@@ -7,6 +7,7 @@ from stock_analyzer.application.ports.market_data import MarketDataProvider
 from stock_analyzer.application.ports.repositories import UnitOfWorkFactory
 
 MARKETS = {"IN": ("India", "INR", "Asia/Kolkata")}
+DISPLAY_NAMES = {"mock": "Mock (synthetic data)", "eodhd": "EODHD"}
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,7 +33,12 @@ class BackfillPrices:
             for code in {stock.market_code for stock in instruments}:
                 name, currency, timezone = MARKETS[code]
                 await uow.stocks.ensure_market(code, name, currency, timezone)
-            await uow.providers.ensure(self._provider.name, "MARKET_DATA", "Mock (synthetic data)")
+            # Admin > Providers registers every plugin with its display name; this only fills a gap.
+            await uow.providers.ensure(
+                self._provider.name,
+                "MARKET_DATA",
+                DISPLAY_NAMES.get(self._provider.name, self._provider.name),
+            )
             stocks = await uow.stocks.upsert_many(instruments)
             await uow.commit()
 

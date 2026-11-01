@@ -30,3 +30,6 @@ def configure_logging(level: str) -> None:
     root = logging.getLogger()
     root.handlers = [handler]
     root.setLevel(level)
+    # httpx/httpcore log full request URLs at INFO; provider tokens travel in the query string.
+    for noisy in ("httpx", "httpcore"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)

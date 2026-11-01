@@ -3,7 +3,7 @@
 from collections.abc import Sequence
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -74,3 +74,10 @@ class SqlAlchemyPriceRepository:
             )
             for r in rows
         ]
+
+    async def delete_by_source(self, source_provider: str) -> int:
+        """Delete every candle from one provider; return how many."""
+        result = await self._session.execute(
+            delete(PriceDailyModel).where(PriceDailyModel.source_provider == source_provider)
+        )
+        return int(result.rowcount or 0)  # type: ignore[attr-defined]

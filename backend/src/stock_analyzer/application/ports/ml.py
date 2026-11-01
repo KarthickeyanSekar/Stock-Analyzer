@@ -49,6 +49,10 @@ class FeatureRepository(Protocol):
         """Return every label of a category keyed by (stock id, date)."""
         ...
 
+    async def delete_all(self) -> int:
+        """Delete every feature vector and label (rebuilt by ``make features``)."""
+        ...
+
 
 class ModelRegistry(Protocol):
     """Model versions and which one is ACTIVE per category."""
