@@ -1,5 +1,5 @@
 import { type ColumnDef } from '@tanstack/react-table';
-import { Search, Star } from 'lucide-react';
+import { Globe, Search, Star } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -7,13 +7,20 @@ import { useStockOverview } from '@/features/stock-analysis';
 import { useWatchlist } from '@/features/watchlist';
 import { EmptyState, ErrorState, SkeletonRows } from '@/shared/components/data-states';
 import { DataTable } from '@/shared/components/data-table';
-import { formatInr, formatPct, formatProbability } from '@/shared/lib/format-number';
+import { formatMoney, formatPct, formatProbability } from '@/shared/lib/format-number';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 
 type Row = NonNullable<ReturnType<typeof useStockOverview>['data']>[number];
 const ALL = 'all';
+// Markets shown as tabs; codes match ``stock.market`` (market-agnostic: add a row per market).
+const MARKETS = [
+  { code: 'IN', label: 'India', exchanges: 'NSE' },
+  { code: 'US', label: 'United States', exchanges: 'NYSE · NASDAQ' },
+] as const;
+type MarketCode = (typeof MARKETS)[number]['code'];
 const right = { align: 'right' as const };
 
 function Signed({ value, digits = 2 }: { value: number | null; digits?: number }) {
@@ -47,7 +54,9 @@ const COLUMNS: ColumnDef<Row>[] = [
     header: 'Last',
     accessorFn: (row) => row.last_close ?? -1,
     cell: ({ row }) =>
-      row.original.last_close === null ? '—' : formatInr(row.original.last_close),
+      row.original.last_close === null
+        ? '—'
+        : formatMoney(row.original.last_close, row.original.stock.currency),
     meta: right,
   },
   {
@@ -90,16 +99,22 @@ function matches(row: Row, search: string): boolean {
 export function StocksPage() {
   const { data = [], isPending, isError, refetch } = useStockOverview();
   const watchlist = useWatchlist();
+  const [market, setMarket] = useState<MarketCode>('IN');
   const [query, setQuery] = useState('');
   const [sector, setSector] = useState(ALL);
   const [watchedOnly, setWatchedOnly] = useState(false);
   const watched = new Set((watchlist.data ?? []).map((s) => s.symbol));
 
+  const counts = Object.fromEntries(
+    MARKETS.map((m) => [m.code, data.filter((r) => r.stock.market === m.code).length]),
+  ) as Record<MarketCode, number>;
+  const inMarket = useMemo(() => data.filter((r) => r.stock.market === market), [data, market]);
+  const current = MARKETS.find((m) => m.code === market) ?? MARKETS[0];
   const sectors = useMemo(
-    () => [ALL, ...[...new Set(data.map((r) => r.stock.sector ?? 'Other'))].sort()],
-    [data],
+    () => [ALL, ...[...new Set(inMarket.map((r) => r.stock.sector ?? 'Other'))].sort()],
+    [inMarket],
   );
-  const rows = data.filter(
+  const rows = inMarket.filter(
     (r) =>
       (sector === ALL || r.stock.sector === sector) &&
       (!watchedOnly || watched.has(r.stock.symbol)),
@@ -115,9 +130,25 @@ export function StocksPage() {
       <div>
         <h1 className="text-2xl font-semibold">Stocks</h1>
         <p className="text-sm text-muted-foreground">
-          {data.length} NIFTY 50 stocks · click a column to sort · open a stock for its predictions
+          {inMarket.length} {current.label} stocks ({current.exchanges}) · click a column to sort ·
+          open a stock for its predictions
         </p>
       </div>
+      <Tabs
+        value={market}
+        onValueChange={(value) => {
+          setMarket(value as MarketCode);
+          setSector(ALL);
+        }}
+      >
+        <TabsList aria-label="Market">
+          {MARKETS.map((m) => (
+            <TabsTrigger key={m.code} value={m.code}>
+              {m.label} ({counts[m.code]})
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-full max-w-xs">
           <Search
@@ -166,7 +197,24 @@ export function StocksPage() {
 
       {isError && <ErrorState message="Could not load stocks." onRetry={() => void refetch()} />}
       {isPending && <SkeletonRows rows={10} />}
-      {!isPending && !isError && (
+      {!isPending && !isError && inMarket.length === 0 && (
+        <EmptyState
+          icon={Globe}
+          title={`No ${current.label} stocks yet`}
+          description={`${current.label} markets (${current.exchanges}) come later; today the app covers NSE.`}
+          action={
+            <Button
+              variant="outline"
+              onClick={() => {
+                setMarket('IN');
+              }}
+            >
+              Show India
+            </Button>
+          }
+        />
+      )}
+      {!isPending && !isError && inMarket.length > 0 && (
         <DataTable
           label="Stocks"
           data={rows}
@@ -207,7 +255,9 @@ export function StocksPage() {
                 </span>
                 <span className="text-right text-sm">
                   <span className="block font-semibold">
-                    {row.original.last_close === null ? '—' : formatInr(row.original.last_close)}
+                    {row.original.last_close === null
+                      ? '—'
+                      : formatMoney(row.original.last_close, row.original.stock.currency)}
                   </span>
                   <Signed value={row.original.day_change_pct} />
                 </span>
