@@ -1,6 +1,7 @@
 """A user's watchlist."""
 
 from stock_analyzer.application.errors import NotFoundError
+from stock_analyzer.application.ports.auth import AuditEntry
 from stock_analyzer.application.ports.repositories import UnitOfWorkFactory
 from stock_analyzer.domain.stock.stock import Stock
 from stock_analyzer.domain.users.user import User
@@ -29,4 +30,12 @@ class WatchlistService:
                 await uow.watchlists.add(user.id, stock.id)
             else:
                 await uow.watchlists.remove(user.id, stock.id)
+            await uow.audit.add(
+                AuditEntry(
+                    None,
+                    user.id,
+                    "watchlist_added" if watched else "watchlist_removed",
+                    {"symbol": stock.symbol},
+                )
+            )
             await uow.commit()

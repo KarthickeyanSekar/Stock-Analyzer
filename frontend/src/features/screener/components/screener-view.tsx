@@ -1,13 +1,16 @@
-import { SearchX } from 'lucide-react';
+import { type ColumnDef } from '@tanstack/react-table';
+import { Search, SearchX } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useScreener, type ScreenQuery, type ScreenRow } from '../api/use-screener';
 import { targetsFor, useStockOverview } from '@/features/stock-analysis';
+import { DataTable } from '@/shared/components/data-table';
 import { EmptyState, ErrorState, SkeletonRows } from '@/shared/components/data-states';
 import { cn } from '@/shared/lib/cn';
 import { formatPct, formatProbability } from '@/shared/lib/format-number';
 import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group';
@@ -83,6 +86,7 @@ export function ScreenerView() {
   const [worst, setWorst] = useState(ANY);
   const [quality, setQuality] = useState(ANY);
   const [sector, setSector] = useState(ALL_SECTORS);
+  const [search, setSearch] = useState('');
   const overview = useStockOverview();
   const sectors = [
     ALL_SECTORS,
@@ -184,11 +188,25 @@ export function ScreenerView() {
         </div>
       </section>
 
-      <p className="text-sm text-muted-foreground" aria-live="polite">
-        {isPending
-          ? 'Screening…'
-          : `${String(rows.length)} stocks · hold ${category} · chance of ${formatPct(target, 0)} before a ${SHORT.has(category) ? '−3%' : '−7%'} stop`}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground" aria-live="polite">
+          {isPending
+            ? 'Screening…'
+            : `${String(rows.length)} stocks · hold ${category} · chance of ${formatPct(target, 0)} before a ${SHORT.has(category) ? '−3%' : '−7%'} stop`}
+        </p>
+        <label className="flex h-9 w-full max-w-xs items-center gap-2 rounded-lg border bg-background px-3 text-sm text-muted-foreground focus-within:ring-3 focus-within:ring-ring/50">
+          <Search className="size-4" aria-hidden="true" />
+          <Input
+            aria-label="Search results"
+            placeholder="Search symbol, name or sector"
+            className="h-8 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+            }}
+          />
+        </label>
+      </div>
 
       {isError && (
         <ErrorState message="Could not run the screener." onRetry={() => void refetch()} />
@@ -208,8 +226,7 @@ export function ScreenerView() {
       )}
       {rows.length > 0 && (
         <div className={cn('transition-opacity duration-150', isFetching && 'opacity-60')}>
-          <ResultsTable rows={rows} target={target} />
-          <ResultCards rows={rows} target={target} />
+          <ResultsTable rows={rows} target={target} search={search} />
         </div>
       )}
     </div>
@@ -224,78 +241,130 @@ function Median({ value }: { value: number }) {
   );
 }
 
-function ResultsTable({ rows, target }: { rows: ScreenRow[]; target: number }) {
+const right = { align: 'right' as const };
+
+function columnsFor(target: number): ColumnDef<ScreenRow>[] {
+  return [
+    {
+      id: 'symbol',
+      header: 'Stock',
+      accessorFn: (row) => row.stock.symbol,
+      cell: ({ row }) => (
+        <Link
+          to={`/stocks/${encodeURIComponent(row.original.stock.symbol)}`}
+          className="font-semibold hover:underline"
+        >
+          {row.original.stock.symbol}
+        </Link>
+      ),
+    },
+    {
+      id: 'sector',
+      header: 'Sector',
+      accessorFn: (row) => row.stock.sector ?? '',
+      cell: ({ getValue }) => <span className="text-muted-foreground">{String(getValue())}</span>,
+    },
+    {
+      id: 'probability',
+      header: `Chance of ${formatPct(target, 0)}`,
+      accessorFn: (row) => row.probability ?? -1,
+      cell: ({ row }) => (
+        <span className="font-semibold">
+          {row.original.probability === null ? '—' : formatProbability(row.original.probability)}
+        </span>
+      ),
+      meta: right,
+    },
+    {
+      id: 'median',
+      header: 'Median',
+      accessorFn: (row) => row.prediction.p50_pct,
+      cell: ({ row }) => <Median value={row.original.prediction.p50_pct} />,
+      meta: right,
+    },
+    {
+      id: 'worst',
+      header: '80% range',
+      // Sorts by the worst likely outcome (p10), the downside the filters use (Q66).
+      accessorFn: (row) => row.prediction.p10_pct,
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {formatPct(row.original.prediction.p10_pct)} …{' '}
+          {formatPct(row.original.prediction.p90_pct)}
+        </span>
+      ),
+      meta: right,
+    },
+    {
+      id: 'up',
+      header: 'Chance up',
+      accessorFn: (row) => row.prediction.prob_up,
+      cell: ({ row }) => formatProbability(row.original.prediction.prob_up),
+      meta: right,
+    },
+    {
+      id: 'quality',
+      header: 'Quality',
+      accessorFn: (row) => row.quality ?? -1,
+      cell: ({ row }) =>
+        row.original.quality === null ? '—' : `${String(row.original.quality)}/10`,
+      meta: right,
+    },
+  ];
+}
+
+function matches(row: ScreenRow, search: string): boolean {
   return (
-    <table className="hidden w-full rounded-xl border bg-card text-sm md:table">
-      <thead className="text-xs text-muted-foreground">
-        <tr className="border-b">
-          <th className="px-4 py-2 text-left font-medium">Stock</th>
-          <th className="px-4 py-2 text-right font-medium">Chance of {formatPct(target, 0)}</th>
-          <th className="px-4 py-2 text-right font-medium">Median</th>
-          <th className="px-4 py-2 text-right font-medium">80% range</th>
-          <th className="px-4 py-2 text-right font-medium">Chance up</th>
-          <th className="px-4 py-2 text-right font-medium">Quality</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.stock.symbol} className="border-b last:border-0 hover:bg-muted/60">
-            <td className="px-4 py-2">
-              <Link
-                to={`/stocks/${encodeURIComponent(row.stock.symbol)}`}
-                className="font-semibold hover:underline"
-              >
-                {row.stock.symbol}
-              </Link>{' '}
-              <span className="text-muted-foreground">{row.stock.sector}</span>
-            </td>
-            <td className="px-4 py-2 text-right font-semibold">
-              {row.probability === null ? '—' : formatProbability(row.probability)}
-            </td>
-            <td className="px-4 py-2 text-right">
-              <Median value={row.prediction.p50_pct} />
-            </td>
-            <td className="px-4 py-2 text-right text-muted-foreground">
-              {formatPct(row.prediction.p10_pct)} … {formatPct(row.prediction.p90_pct)}
-            </td>
-            <td className="px-4 py-2 text-right">{formatProbability(row.prediction.prob_up)}</td>
-            <td className="px-4 py-2 text-right">
-              {row.quality === null ? '—' : `${String(row.quality)}/10`}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    row.stock.symbol.toLowerCase().includes(search) ||
+    row.stock.name.toLowerCase().includes(search) ||
+    (row.stock.sector ?? '').toLowerCase().includes(search)
   );
 }
 
-function ResultCards({ rows, target }: { rows: ScreenRow[]; target: number }) {
+function ResultCard({ row, target }: { row: ScreenRow; target: number }) {
   return (
-    <ul className="grid gap-2 md:hidden">
-      {rows.map((row) => (
-        <li key={row.stock.symbol}>
-          <Link
-            to={`/stocks/${encodeURIComponent(row.stock.symbol)}`}
-            className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3"
-          >
-            <span>
-              <span className="block font-semibold">{row.stock.symbol}</span>
-              <span className="text-xs text-muted-foreground">
-                {formatPct(row.prediction.p10_pct)} … {formatPct(row.prediction.p90_pct)} ·{' '}
-                {row.quality === null ? '—' : `${String(row.quality)}/10`}
-              </span>
-            </span>
-            <span className="text-right text-sm">
-              <span className="block font-semibold">
-                {row.probability === null ? '—' : formatProbability(row.probability)}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                chance of {formatPct(target, 0)}
-              </span>
-            </span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <li>
+      <Link
+        to={`/stocks/${encodeURIComponent(row.stock.symbol)}`}
+        className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3"
+      >
+        <span>
+          <span className="block font-semibold">{row.stock.symbol}</span>
+          <span className="text-xs text-muted-foreground">
+            {formatPct(row.prediction.p10_pct)} … {formatPct(row.prediction.p90_pct)} ·{' '}
+            {row.quality === null ? '—' : `${String(row.quality)}/10`}
+          </span>
+        </span>
+        <span className="text-right text-sm">
+          <span className="block font-semibold">
+            {row.probability === null ? '—' : formatProbability(row.probability)}
+          </span>
+          <span className="text-xs text-muted-foreground">chance of {formatPct(target, 0)}</span>
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+function ResultsTable({
+  rows,
+  target,
+  search,
+}: {
+  rows: ScreenRow[];
+  target: number;
+  search: string;
+}) {
+  return (
+    <DataTable
+      label="Screener results"
+      data={rows}
+      columns={columnsFor(target)}
+      initialSorting={[{ id: 'probability', desc: true }]}
+      search={search}
+      matches={matches}
+      getRowId={(row) => row.stock.symbol}
+      renderCard={(row) => <ResultCard key={row.id} row={row.original} target={target} />}
+    />
   );
 }

@@ -1,63 +1,113 @@
-import { ArrowDown, ArrowUp, ArrowUpDown, Search } from 'lucide-react';
+import { type ColumnDef } from '@tanstack/react-table';
+import { Search, Star } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { useStockOverview } from '@/features/stock-analysis';
+import { useWatchlist } from '@/features/watchlist';
 import { EmptyState, ErrorState, SkeletonRows } from '@/shared/components/data-states';
-import { cn } from '@/shared/lib/cn';
+import { DataTable } from '@/shared/components/data-table';
 import { formatInr, formatPct, formatProbability } from '@/shared/lib/format-number';
-import { Card } from '@/shared/ui/card';
+import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 
-type SortKey =
-  'symbol' | 'last_close' | 'day_change_pct' | 'return_1y_pct' | 'median_1y_pct' | 'prob_up_1y';
-const ALL = 'All sectors';
-const COLUMNS: { key: SortKey; label: string; align?: 'right' }[] = [
-  { key: 'symbol', label: 'Stock' },
-  { key: 'last_close', label: 'Last', align: 'right' },
-  { key: 'day_change_pct', label: 'Day', align: 'right' },
-  { key: 'return_1y_pct', label: '1Y return', align: 'right' },
-  { key: 'median_1y_pct', label: '1Y prediction', align: 'right' },
-  { key: 'prob_up_1y', label: 'Chance up', align: 'right' },
-];
+type Row = NonNullable<ReturnType<typeof useStockOverview>['data']>[number];
+const ALL = 'all';
+const right = { align: 'right' as const };
 
 function Signed({ value, digits = 2 }: { value: number | null; digits?: number }) {
   if (value === null) return <span className="text-muted-foreground">—</span>;
   return <span className={value >= 0 ? 'text-gain' : 'text-loss'}>{formatPct(value, digits)}</span>;
 }
 
+const COLUMNS: ColumnDef<Row>[] = [
+  {
+    id: 'symbol',
+    header: 'Stock',
+    accessorFn: (row) => row.stock.symbol,
+    cell: ({ row }) => (
+      <Link
+        to={`/stocks/${encodeURIComponent(row.original.stock.symbol)}`}
+        className="flex flex-col hover:underline"
+      >
+        <span className="font-semibold">{row.original.stock.symbol}</span>
+        <span className="text-xs text-muted-foreground">{row.original.stock.name}</span>
+      </Link>
+    ),
+  },
+  {
+    id: 'sector',
+    header: 'Sector',
+    accessorFn: (row) => row.stock.sector ?? '',
+    cell: ({ getValue }) => <span className="text-muted-foreground">{String(getValue())}</span>,
+  },
+  {
+    id: 'last',
+    header: 'Last',
+    accessorFn: (row) => row.last_close ?? -1,
+    cell: ({ row }) =>
+      row.original.last_close === null ? '—' : formatInr(row.original.last_close),
+    meta: right,
+  },
+  {
+    id: 'day',
+    header: 'Day',
+    accessorFn: (row) => row.day_change_pct ?? -Infinity,
+    cell: ({ row }) => <Signed value={row.original.day_change_pct} />,
+    meta: right,
+  },
+  {
+    id: 'return_1y',
+    header: '1Y return',
+    accessorFn: (row) => row.return_1y_pct ?? -Infinity,
+    cell: ({ row }) => <Signed value={row.original.return_1y_pct} digits={1} />,
+    meta: right,
+  },
+  {
+    id: 'median_1y',
+    header: '1Y prediction',
+    accessorFn: (row) => row.median_1y_pct ?? -Infinity,
+    cell: ({ row }) => <Signed value={row.original.median_1y_pct} digits={1} />,
+    meta: right,
+  },
+  {
+    id: 'chance_up',
+    header: 'Chance up',
+    accessorFn: (row) => row.prob_up_1y ?? -1,
+    cell: ({ row }) =>
+      row.original.prob_up_1y === null ? '—' : formatProbability(row.original.prob_up_1y),
+    meta: right,
+  },
+];
+
+function matches(row: Row, search: string): boolean {
+  return (
+    row.stock.symbol.toLowerCase().includes(search) || row.stock.name.toLowerCase().includes(search)
+  );
+}
+
 export function StocksPage() {
-  const navigate = useNavigate();
   const { data = [], isPending, isError, refetch } = useStockOverview();
+  const watchlist = useWatchlist();
   const [query, setQuery] = useState('');
   const [sector, setSector] = useState(ALL);
-  const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: 'symbol', desc: false });
+  const [watchedOnly, setWatchedOnly] = useState(false);
+  const watched = new Set((watchlist.data ?? []).map((s) => s.symbol));
 
   const sectors = useMemo(
     () => [ALL, ...[...new Set(data.map((r) => r.stock.sector ?? 'Other'))].sort()],
     [data],
   );
-  const rows = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    const filtered = data.filter(
-      (r) =>
-        (sector === ALL || r.stock.sector === sector) &&
-        (!needle ||
-          r.stock.symbol.toLowerCase().includes(needle) ||
-          r.stock.name.toLowerCase().includes(needle)),
-    );
-    const value = (r: (typeof data)[number]) =>
-      sort.key === 'symbol' ? r.stock.symbol : (r[sort.key] ?? -Infinity);
-    return filtered.sort((a, b) => {
-      const [x, y] = [value(a), value(b)];
-      const order = x < y ? -1 : x > y ? 1 : 0;
-      return sort.desc ? -order : order;
-    });
-  }, [data, query, sector, sort]);
-
-  const toggleSort = (key: SortKey) => {
-    setSort((current) => ({ key, desc: current.key === key ? !current.desc : key !== 'symbol' }));
+  const rows = data.filter(
+    (r) =>
+      (sector === ALL || r.stock.sector === sector) &&
+      (!watchedOnly || watched.has(r.stock.symbol)),
+  );
+  const reset = () => {
+    setQuery('');
+    setSector(ALL);
+    setWatchedOnly(false);
   };
 
   return (
@@ -65,10 +115,10 @@ export function StocksPage() {
       <div>
         <h1 className="text-2xl font-semibold">Stocks</h1>
         <p className="text-sm text-muted-foreground">
-          {data.length} NIFTY 50 stocks · sort any column · open a stock for its predictions
+          {data.length} NIFTY 50 stocks · click a column to sort · open a stock for its predictions
         </p>
       </div>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-full max-w-xs">
           <Search
             className="absolute top-2.5 left-2.5 size-4 text-muted-foreground"
@@ -76,7 +126,7 @@ export function StocksPage() {
           />
           <Input
             className="h-9 pl-8"
-            placeholder="Filter by symbol or name"
+            placeholder="Search symbol or name"
             aria-label="Filter stocks"
             value={query}
             onChange={(event) => {
@@ -91,125 +141,80 @@ export function StocksPage() {
           }}
         >
           <SelectTrigger className="h-9 w-56" aria-label="Sector">
-            <SelectValue />
+            <SelectValue>{(value: string) => (value === ALL ? 'All sectors' : value)}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {sectors.map((s) => (
               <SelectItem key={s} value={s}>
-                {s}
+                {s === ALL ? 'All sectors' : s}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        <Button
+          variant={watchedOnly ? 'default' : 'outline'}
+          size="sm"
+          className="h-9"
+          aria-pressed={watchedOnly}
+          onClick={() => {
+            setWatchedOnly(!watchedOnly);
+          }}
+        >
+          <Star aria-hidden="true" /> Watchlist only ({watched.size})
+        </Button>
       </div>
 
       {isError && <ErrorState message="Could not load stocks." onRetry={() => void refetch()} />}
       {isPending && <SkeletonRows rows={10} />}
-      {!isPending && rows.length === 0 && (
-        <EmptyState
-          icon={Search}
-          title="No stocks match"
-          description="Try another name or sector."
+      {!isPending && !isError && (
+        <DataTable
+          label="Stocks"
+          data={rows}
+          columns={COLUMNS}
+          initialSorting={[{ id: 'symbol', desc: false }]}
+          search={query}
+          matches={matches}
+          getRowId={(row) => row.stock.symbol}
+          empty={
+            <EmptyState
+              icon={watchedOnly ? Star : Search}
+              title={
+                watchedOnly && watched.size === 0 ? 'Your watchlist is empty' : 'No stocks match'
+              }
+              description={
+                watchedOnly && watched.size === 0
+                  ? 'Open a stock and tap the star to add it.'
+                  : 'Try another name or sector.'
+              }
+              action={
+                <Button variant="outline" onClick={reset}>
+                  Clear filters
+                </Button>
+              }
+            />
+          }
+          renderCard={(row) => (
+            <li key={row.id}>
+              <Link
+                to={`/stocks/${encodeURIComponent(row.original.stock.symbol)}`}
+                className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3"
+              >
+                <span className="min-w-0">
+                  <span className="block font-semibold">{row.original.stock.symbol}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {row.original.stock.name}
+                  </span>
+                </span>
+                <span className="text-right text-sm">
+                  <span className="block font-semibold">
+                    {row.original.last_close === null ? '—' : formatInr(row.original.last_close)}
+                  </span>
+                  <Signed value={row.original.day_change_pct} />
+                </span>
+              </Link>
+            </li>
+          )}
         />
-      )}
-
-      {rows.length > 0 && (
-        <Card className="overflow-hidden p-0">
-          <table className="hidden w-full text-sm md:table">
-            <thead className="border-b bg-muted/50 text-xs text-muted-foreground">
-              <tr>
-                {COLUMNS.map((column) => {
-                  const active = sort.key === column.key;
-                  const Icon = !active ? ArrowUpDown : sort.desc ? ArrowDown : ArrowUp;
-                  return (
-                    <th
-                      key={column.key}
-                      scope="col"
-                      aria-sort={active ? (sort.desc ? 'descending' : 'ascending') : 'none'}
-                      className={cn(
-                        'px-4 py-2 text-left font-medium',
-                        column.align === 'right' && 'text-right',
-                      )}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          toggleSort(column.key);
-                        }}
-                        className={cn(
-                          'inline-flex items-center gap-1 hover:text-foreground',
-                          active && 'text-foreground',
-                        )}
-                      >
-                        {column.label}
-                        <Icon className="size-3.5" aria-hidden="true" />
-                      </button>
-                    </th>
-                  );
-                })}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr
-                  key={r.stock.symbol}
-                  onClick={() => void navigate(`/stocks/${encodeURIComponent(r.stock.symbol)}`)}
-                  className="cursor-pointer border-b transition-colors duration-150 last:border-0 hover:bg-muted/50"
-                >
-                  <td className="px-4 py-2.5">
-                    <Link
-                      to={`/stocks/${encodeURIComponent(r.stock.symbol)}`}
-                      className="font-semibold hover:underline"
-                    >
-                      {r.stock.symbol}
-                    </Link>
-                    <span className="block text-xs text-muted-foreground">
-                      {r.stock.name} · {r.stock.sector}
-                    </span>
-                  </td>
-                  <td className="px-4 text-right">
-                    {r.last_close === null ? '—' : formatInr(r.last_close)}
-                  </td>
-                  <td className="px-4 text-right">
-                    <Signed value={r.day_change_pct} />
-                  </td>
-                  <td className="px-4 text-right">
-                    <Signed value={r.return_1y_pct} digits={1} />
-                  </td>
-                  <td className="px-4 text-right font-medium">
-                    <Signed value={r.median_1y_pct} digits={1} />
-                  </td>
-                  <td className="px-4 text-right">
-                    {r.prob_up_1y === null ? '—' : formatProbability(r.prob_up_1y)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <ul className="divide-y md:hidden">
-            {rows.map((r) => (
-              <li key={r.stock.symbol}>
-                <Link
-                  to={`/stocks/${encodeURIComponent(r.stock.symbol)}`}
-                  className="flex items-center justify-between gap-3 p-4"
-                >
-                  <span>
-                    <span className="font-semibold">{r.stock.symbol}</span>
-                    <span className="block text-xs text-muted-foreground">
-                      1Y prediction <Signed value={r.median_1y_pct} digits={1} />
-                    </span>
-                  </span>
-                  <span className="text-right text-sm">
-                    {r.last_close === null ? '—' : formatInr(r.last_close)}
-                    <span className="block text-xs">
-                      <Signed value={r.day_change_pct} />
-                    </span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
       )}
     </div>
   );

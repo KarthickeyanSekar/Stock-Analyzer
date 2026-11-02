@@ -29,3 +29,29 @@ test('stock page shows similar past setups', async ({ page }) => {
   await expect(card.getByText('Median')).toBeVisible();
   await expect(card.getByRole('listitem').first()).toBeVisible();
 });
+
+test('screener table sorts, searches and pages', async ({ page }) => {
+  await page.goto('/screener', { waitUntil: 'networkidle' });
+  const table = page.getByRole('table', { name: 'Screener results' });
+  await expect(page.getByText('1–25 of 50')).toBeVisible();
+  await expect(table.locator('tbody tr')).toHaveCount(25);
+
+  await page.getByRole('button', { name: 'Next page' }).click();
+  await expect(page.getByText('26–50 of 50')).toBeVisible();
+  await expect(page.getByText('Page 2 of 2')).toBeVisible();
+
+  // Paging leaves the window scrolled down, where the sticky app header covers the table header.
+  await page.evaluate(() => {
+    window.scrollTo(0, 0);
+  });
+  const sortMedian = table.getByRole('button', { name: 'Median', exact: true });
+  const median = table.locator('th').filter({ hasText: /^Median$/ });
+  await sortMedian.click();
+  await expect(median).toHaveAttribute('aria-sort', 'descending');
+  await expect(page.getByText('Page 1 of 2')).toBeVisible(); // sorting returns to page 1
+
+  await page.getByLabel('Search results').fill('infy');
+  await expect(table.locator('tbody tr')).toHaveCount(1);
+  await expect(table.locator('tbody tr').first()).toContainText('INFY');
+  await expect(page.getByText('1–1 of 1')).toBeVisible();
+});

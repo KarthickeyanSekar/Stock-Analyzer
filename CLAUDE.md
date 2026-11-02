@@ -41,6 +41,8 @@ smooth motion, responsive (phone, tablet, desktop). Full spec: [docs/28-ui-ux-re
   or arrow as well as colour (never colour alone).
 - **Components:** shadcn/ui in `shared/ui` (Sheet, Dialog, Tooltip, Skeleton, Sonner toast, Progress, Command …). No native
   `<select>` or hand-rolled modals. Plans start in a **Sheet**; closing a plan uses a **Dialog** with an outcome preview.
+- **Tables:** sortable / searchable / paginated lists use the shared `DataTable` (`shared/components/data-table.tsx`,
+  TanStack Table 8, Q78), never a hand-rolled table with its own sorting.
 - **States:** every data view has skeleton, empty (icon + sentence + action) and error (message + retry) states.
 - **Motion:** 150–250 ms, ease-out in / ease-in out; animate to explain change (sheet slide, dialog fade-scale, bars grow, stagger);
   always respect `prefers-reduced-motion` (use the `motion-safe:` variant).
@@ -131,6 +133,7 @@ Use `make redis-keys`, `make redis-info`; `make redis-flush` deletes only `sa:<e
 - Roles: a **user** gets the whole app except Admin › Providers and Admin › Users (hidden, redirected, API 403);
   an **admin** gets everything. Each user sees only their own journal, settings and watchlist.
 - Profile: Account menu › Profile (`/profile`): name, email, provider, role, dates, sign out, delete account.
+- Audit (Q82): any use case that changes data adds `uow.audit.add(AuditEntry(...))` in the same unit of work; never put secrets in `details`.
 - Tests: API test clients sign in with `tests.conftest.sign_in`; Playwright fixtures sign in as `admin@e2e.local`.
 
 ## Working with the user
