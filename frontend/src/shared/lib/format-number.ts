@@ -9,6 +9,16 @@ export function formatInr(value: number): string {
   return INR.format(value);
 }
 
+/** Format an amount in the stock's own currency: rupees with Indian grouping, others en-US. */
+export function formatMoney(value: number, currency: string): string {
+  if (currency === 'INR') return formatInr(value);
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
 /** Format percent points with an explicit sign, e.g. +9.5% or −6.2%. */
 export function formatPct(value: number, digits = 1): string {
   const rounded = value.toFixed(digits);
