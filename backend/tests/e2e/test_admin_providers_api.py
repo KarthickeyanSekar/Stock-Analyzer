@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from tests.eodhd_fixtures import VALID_TOKEN
+from tests.fmp_fixtures import VALID_KEY as FMP_KEY
 
 
 def providers(client: TestClient) -> dict[str, dict[str, object]]:
@@ -10,7 +11,8 @@ def providers(client: TestClient) -> dict[str, dict[str, object]]:
 def test_mock_and_eodhd_are_listed_mock_is_primary(client: TestClient) -> None:
     listed = providers(client)
 
-    assert set(listed) == {"mock", "eodhd"}
+    assert set(listed) == {"mock", "eodhd", "fmp"}
+    assert listed["fmp"]["credential_fields"] == ["api_key"]
     assert listed["mock"]["is_primary"] is True
     assert listed["eodhd"]["credential_fields"] == ["api_token"]
     assert listed["eodhd"]["has_credentials"] is False
@@ -61,3 +63,18 @@ def test_primary_needs_credentials_and_blocks_removal(client: TestClient) -> Non
 
 def test_unknown_provider_returns_404(client: TestClient) -> None:
     assert client.post("/api/admin/providers/nope/test").status_code == 404
+
+
+def test_fmp_key_can_be_saved_tested_and_made_primary(client: TestClient) -> None:
+    saved = client.put(
+        "/api/admin/providers/fmp/credentials", json={"values": {"api_key": FMP_KEY}}
+    )
+
+    assert saved.status_code == 204
+    assert FMP_KEY not in client.get("/api/admin/providers").text
+    test = client.post("/api/admin/providers/fmp/test").json()
+    assert test["is_ok"] is True and "NSE data available" in test["message"]
+    assert client.put("/api/admin/providers/fmp/primary").status_code == 204
+    assert providers(client)["fmp"]["is_primary"] is True
+    client.put("/api/admin/providers/mock/primary")  # the app is shared between tests
+    client.delete("/api/admin/providers/fmp/credentials")
