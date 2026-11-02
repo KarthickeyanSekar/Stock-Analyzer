@@ -81,3 +81,13 @@ class SqlAlchemyPriceRepository:
             delete(PriceDailyModel).where(PriceDailyModel.source_provider == source_provider)
         )
         return int(result.rowcount or 0)  # type: ignore[attr-defined]
+
+    async def delete_for_stock(self, stock_id: int, source_provider: str) -> int:
+        """Delete one stock's candles from one provider; return how many."""
+        result = await self._session.execute(
+            delete(PriceDailyModel).where(
+                PriceDailyModel.stock_id == stock_id,
+                PriceDailyModel.source_provider == source_provider,
+            )
+        )
+        return int(result.rowcount or 0)  # type: ignore[attr-defined]

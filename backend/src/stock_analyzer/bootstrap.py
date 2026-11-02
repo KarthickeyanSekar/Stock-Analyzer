@@ -15,6 +15,7 @@ from stock_analyzer.application.ports.security import SecretCipher
 from stock_analyzer.application.use_cases.auth.admin import UserAdmin
 from stock_analyzer.application.use_cases.auth.auth import AuthService
 from stock_analyzer.application.use_cases.auth.watchlist import WatchlistService
+from stock_analyzer.application.use_cases.data.real_data_sync import RealDataSync
 from stock_analyzer.application.use_cases.journal.settings import JournalSettingsService
 from stock_analyzer.application.use_cases.journal.trade_plans import TradePlanService
 from stock_analyzer.application.use_cases.providers.providers import ProviderAdmin
@@ -37,6 +38,7 @@ from stock_analyzer.infrastructure.persistence.unit_of_work import SqlAlchemyUni
 from stock_analyzer.infrastructure.providers.catalog import StaticPluginCatalog
 from stock_analyzer.infrastructure.providers.mock.provider import MockMarketDataProvider
 from stock_analyzer.infrastructure.providers.mock.universe import SAMPLE_HOLIDAYS
+from stock_analyzer.infrastructure.providers.raw_archive import RawResponseArchive
 from stock_analyzer.infrastructure.security.fernet_cipher import FernetCipher
 from stock_analyzer.infrastructure.telemetry.setup import configure_telemetry
 from stock_analyzer.infrastructure.time.system_clock import SystemClock
@@ -103,6 +105,11 @@ class Container:
         """Admin > Data Providers use cases."""
         return ProviderAdmin(self.uow_factory, self.catalog, self.cipher)
 
+    @property
+    def real_data_sync(self) -> RealDataSync:
+        """Admin > Data sources: per-stock real-data sync."""
+        return RealDataSync(self.uow_factory, self.provider_admin)
+
 
 def build_container(settings: Settings | None = None) -> Container:
     """Create the dependency container for the running process."""
@@ -119,7 +126,9 @@ def build_container(settings: Settings | None = None) -> Container:
         calendar=TradingCalendar(SAMPLE_HOLIDAYS),
         market_data=market_data,
         fundamentals=market_data,
-        catalog=StaticPluginCatalog(market_data),
+        catalog=StaticPluginCatalog(
+            market_data, archive=RawResponseArchive(settings.raw_responses_dir)
+        ),
         cipher=FernetCipher(settings.master_key.get_secret_value()),
         trainer=LightGbmTrainer(),
         identity_providers=_identity_providers(settings),

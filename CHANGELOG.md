@@ -3,6 +3,9 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
 ## [Unreleased]
+- **Ask AI (Q84):** stock page menu opens Perplexity, ChatGPT or Gemini with a ready-made trend question (news & trends, sector outlook, risks & events); Settings › AI research chooses the assistant and direct search or a project (Perplexity project preset). No API key; the app never calls the assistant.
+- **Admin › Data sources (Q85):** real vs synthetic data per stock with last candle and candle count; pick up to 5 stocks for `make real-sync`, which loads only their real prices from the primary provider. Migration 0009.
+- **Raw response archive (Q86):** every EODHD / FMP response saved as gzip JSON in `backend/var/raw/` (no API key), so data can be rebuilt without new API calls.
 - **Stocks page by market:** India / United States tabs (counts per market, sector filter per market, empty state for markets without data yet); prices shown in each stock's own currency (`formatMoney`).
 - **FMP provider (Q83):** Financial Modeling Prep plugin next to EODHD: NSE daily prices (dividend-adjusted close), quarterly fundamentals (point-in-time by filing date), connection test with an NSE quote; key saved encrypted in Admin › Providers, can be made primary and used by `make real-data`. Indian data usually needs a paid FMP plan.
 - **Audit everything (Q82):** the audit log now records plans started / closed, journal settings, watchlist add / remove, sign-out, provider key saved / removed / tested, primary provider, model rollback and the real-data switch, besides sign-ins, invites and user changes. `GET /api/admin/audit` returns the actor's email; Admin › Users shows who, what, details with event and person filters. Secrets are never logged.

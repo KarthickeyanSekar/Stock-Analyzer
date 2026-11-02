@@ -36,4 +36,5 @@ class StockModel(Base):
     timezone: Mapped[str] = mapped_column(String(64))
     is_active: Mapped[bool] = mapped_column(Boolean, server_default="true")
     source_provider: Mapped[str] = mapped_column(String(32))
+    is_real_sync_enabled: Mapped[bool] = mapped_column(Boolean, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -668,6 +668,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/data-sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Data source per stock
+         * @description Every stock: real or synthetic prices, last candle, and whether it syncs real data.
+         */
+        get: operations["list_data_sources_api_admin_data_sources_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/data-sources/{symbol}/real-sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Pick / unpick for the real-data sync
+         * @description At most five stocks can be picked; ``make real-sync`` then loads their real prices.
+         */
+        put: operations["set_real_sync_api_admin_data_sources__symbol__real_sync_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -922,6 +962,36 @@ export interface components {
             values: {
                 [key: string]: string;
             };
+        };
+        /**
+         * DataSourceResponse
+         * @description Where one stock's prices come from, and whether it is picked for the real-data sync.
+         */
+        DataSourceResponse: {
+            /** Symbol */
+            symbol: string;
+            /** Name */
+            name: string;
+            /** Latest Source */
+            latest_source: string | null;
+            /** Is Real */
+            is_real: boolean;
+            /** Last Trade Date */
+            last_trade_date: string | null;
+            /** Candles */
+            candles: number;
+            /** Is Real Sync Enabled */
+            is_real_sync_enabled: boolean;
+        };
+        /**
+         * DataSourcesResponse
+         * @description Every stock's data source plus the sync limit.
+         */
+        DataSourcesResponse: {
+            /** Max Real Sync */
+            max_real_sync: number;
+            /** Stocks */
+            stocks: components["schemas"]["DataSourceResponse"][];
         };
         /**
          * DevLoginBody
@@ -1520,6 +1590,14 @@ export interface components {
         SetDisabledBody: {
             /** Is Disabled */
             is_disabled: boolean;
+        };
+        /**
+         * SetRealSyncBody
+         * @description Pick or unpick a stock for the real-data sync.
+         */
+        SetRealSyncBody: {
+            /** Is Enabled */
+            is_enabled: boolean;
         };
         /**
          * Setup
@@ -2841,6 +2919,59 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AuditEntryResponse"][];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_data_sources_api_admin_data_sources_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataSourcesResponse"];
+                };
+            };
+        };
+    };
+    set_real_sync_api_admin_data_sources__symbol__real_sync_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetRealSyncBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     # Trained model files and evaluation reports (relative to the backend directory).
     models_dir: str = "var/models"
     reports_dir: str = "var/reports"
+    # Raw provider API responses (gzip JSON), kept so data can be rebuilt without new API calls.
+    raw_responses_dir: str = "var/raw"
     code_version: str = "unknown"
     # Sign-in (Phase 5b). OAuth apps are registered by the owner; a provider without a client id
     # is simply not offered. Redirect URI: {public_url}/api/auth/callback/{provider}.

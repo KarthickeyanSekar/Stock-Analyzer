@@ -22,6 +22,7 @@ from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyF
 from stock_analyzer.domain.pricing.candle import Candle
 from stock_analyzer.domain.stock.stock import Stock
 from stock_analyzer.infrastructure.providers.mock.universe import NIFTY50
+from stock_analyzer.infrastructure.providers.raw_archive import RawResponseArchive
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,7 @@ class EodhdProvider:
         client: httpx.Client | None = None,
         max_retries: int = 3,
         sleep: Callable[[float], None] = time.sleep,
+        archive: RawResponseArchive | None = None,
     ) -> None:
         """Use ``api_token``; ``client`` and ``sleep`` are injectable for tests."""
         if not api_token:
@@ -80,6 +82,7 @@ class EodhdProvider:
         self._client = client or httpx.Client(base_url=BASE_URL, timeout=30.0)
         self._max_retries = max_retries
         self._sleep = sleep
+        self._archive = archive
 
     @property
     def name(self) -> str:
@@ -108,7 +111,10 @@ class EodhdProvider:
                 return None
             if response.status_code != httpx.codes.OK:
                 raise ProviderError(f"EODHD request failed (HTTP {response.status_code})")
-            return response.json()
+            data = response.json()
+            if self._archive is not None:
+                self._archive.save(self.name, path, params or {}, data)
+            return data
         raise ProviderError("EODHD request failed after retries")  # pragma: no cover
 
     def list_instruments(self) -> Sequence[Stock]:
