@@ -6,7 +6,7 @@
 to add, configure, test, prioritise and switch providers **without code changes or restarts**.
 
 
-> **Status (2026-11-01, Phase 3b):** the mock and **EODHD** plugins are built. API keys are saved in
+> **Status (2026-11-02):** the mock, **EODHD** and **FMP** (Q83) plugins are built. API keys are saved in
 > Admin › Providers, stored encrypted (Fernet, `SA_MASTER_KEY`) and shown only as `•••• last4`;
 > "Use as primary" sets the provider for prices and fundamentals; `make real-data` loads real NSE data.
 > Failover order, per-field mapping and the coverage report below are still planned.

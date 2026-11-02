@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/sha
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 
-const FIELD_LABELS: Record<string, string> = { api_token: 'API key' };
+const FIELD_LABELS: Record<string, string> = { api_token: 'API key', api_key: 'API key' };
 
 /** Admin > Data Providers: credentials (write-only), connection test with quota, primary. */
 export function ProvidersList() {
