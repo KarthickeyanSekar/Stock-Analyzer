@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatInr, formatPct, formatPp, formatProbability } from './format-number';
+import { formatInr, formatMoney, formatPct, formatPp, formatProbability } from './format-number';
 
 describe('formatInr', () => {
   it('uses Indian digit grouping', () => {
@@ -26,5 +26,12 @@ describe('formatPp', () => {
   it('uses percentage points, not percent', () => {
     expect(formatPp(2.61)).toBe('+2.6 pp');
     expect(formatPp(-0.42, 2)).toBe('−0.42 pp');
+  });
+});
+
+describe('formatMoney', () => {
+  it('uses Indian grouping for rupees and the currency symbol otherwise', () => {
+    expect(formatMoney(104250.5, 'INR')).toBe('₹1,04,250.50');
+    expect(formatMoney(104250.5, 'USD')).toBe('$104,250.50');
   });
 });
