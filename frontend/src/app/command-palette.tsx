@@ -51,26 +51,40 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       onOpenChange={onOpenChange}
       title="Search"
       description="Find a stock or page"
+      className="sm:max-w-2xl"
     >
       {/* cmdk needs a <Command> root: without it the input crashes the app on open. */}
       <Command>
-        <CommandInput placeholder="Search stocks or pages…" />
-        <CommandList>
+        <CommandInput placeholder="Search stocks, sectors or pages…" />
+        <CommandList className="max-h-[min(60vh,32rem)]">
           <CommandEmpty>No match.</CommandEmpty>
           <CommandGroup heading="Stocks">
             {stocks.map((row) => (
               <CommandItem
                 key={row.stock.symbol}
-                value={`${row.stock.symbol} ${row.stock.name}`}
+                value={`${row.stock.symbol} ${row.stock.name} ${row.stock.sector ?? ''}`}
                 onSelect={() => {
                   go(`/stocks/${encodeURIComponent(row.stock.symbol)}`);
                 }}
               >
-                <span className="font-medium">{row.stock.symbol}</span>
-                <span className="truncate text-muted-foreground">{row.stock.name}</span>
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {row.last_close !== null ? formatInr(row.last_close) : ''}
-                  {row.day_change_pct !== null ? ` · ${formatPct(row.day_change_pct, 2)}` : ''}
+                {/* Fixed columns so symbols, names and prices line up row to row. */}
+                <span className="grid w-full grid-cols-[7rem_minmax(0,1fr)_auto] items-center gap-3 sm:grid-cols-[8rem_minmax(0,1fr)_6.5rem_4.5rem]">
+                  <span className="truncate font-medium">{row.stock.symbol}</span>
+                  <span className="truncate text-muted-foreground">{row.stock.name}</span>
+                  <span className="hidden text-right text-xs tabular-nums text-muted-foreground sm:block">
+                    {row.last_close !== null ? formatInr(row.last_close) : ''}
+                  </span>
+                  <span
+                    className={`text-right text-xs tabular-nums ${
+                      row.day_change_pct === null
+                        ? 'text-muted-foreground'
+                        : row.day_change_pct >= 0
+                          ? 'text-gain'
+                          : 'text-loss'
+                    }`}
+                  >
+                    {row.day_change_pct !== null ? formatPct(row.day_change_pct, 2) : ''}
+                  </span>
                 </span>
               </CommandItem>
             ))}

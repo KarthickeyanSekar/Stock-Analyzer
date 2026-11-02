@@ -169,7 +169,9 @@ OAuth redirect URLs then use that HTTPS domain (e.g., `https://stocks.<your-doma
 - Validate `state`, `nonce` and PKCE; verify ID token signatures via the provider's JWKS
 - HttpOnly + Secure + SameSite cookies; short session lifetime with refresh
 - Rate-limit the login and API endpoints
-- Audit log of sign-ins and admin actions
+- Audit log of **every activity** (Q82): sign-in / sign-up / sign-out, invites, users, account deletion, plans started / closed, journal settings, watchlist, provider keys (never the value), primary provider, model rollback, real-data switch
+  - Admin › Users › Audit log: who (email, or `system` for jobs), when, what, details; search plus filters by event and by person (last 500 entries)
+  - Entries are written in the same transaction as the change (unit of work), so a rolled-back change leaves no entry
 - Users can delete their account and data
 
 ## ⚠️ What changes with other users

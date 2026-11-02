@@ -1,5 +1,6 @@
 """Admin > Users: invite codes, users, audit log."""
 
+from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -72,8 +73,15 @@ async def audit_log(
     container: ContainerDep,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
 ) -> list[AuditEntryResponse]:
-    """Newest entries first."""
+    """Newest entries first, with the actor's email."""
+    emails = {u.id: u.email for u in await container.user_admin.users(admin)}
     return [
-        AuditEntryResponse(at=e.at, user_id=e.user_id, action=e.action, details=e.details)
+        AuditEntryResponse(
+            at=e.at or datetime.now(tz=UTC),
+            user_id=e.user_id,
+            user_email=emails.get(e.user_id) if e.user_id else None,
+            action=e.action,
+            details=e.details,
+        )
         for e in await container.user_admin.audit_log(admin, limit)
     ]

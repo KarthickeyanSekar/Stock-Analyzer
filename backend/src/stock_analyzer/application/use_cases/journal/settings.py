@@ -2,8 +2,11 @@
 
 from uuid import UUID
 
+from stock_analyzer.application.ports.auth import AuditEntry
 from stock_analyzer.application.ports.repositories import UnitOfWorkFactory
 from stock_analyzer.domain.journal.settings import JournalSettings
+
+AUDITED_SETTINGS = ("paper_capital", "risk_pct", "success_tolerance_pp", "default_stop_pct")
 
 
 class JournalSettingsService:
@@ -24,5 +27,13 @@ class JournalSettingsService:
         """Save new settings; plans already started keep the values they were started with."""
         async with self._uow_factory() as uow:
             await uow.settings.save(settings, user_id)
+            await uow.audit.add(
+                AuditEntry(
+                    None,
+                    user_id,
+                    "settings_changed",
+                    {name: str(getattr(settings, name)) for name in AUDITED_SETTINGS},
+                )
+            )
             await uow.commit()
         return settings

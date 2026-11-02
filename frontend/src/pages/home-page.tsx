@@ -1,14 +1,15 @@
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { Archive, ArrowDownRight, ArrowUpRight, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useStockOverview } from '@/features/stock-analysis';
+import { useWatchlist } from '@/features/watchlist';
 import {
   ActivePlans,
   OutcomeBadge,
   useJournalSummary,
   useTradePlans,
 } from '@/features/trade-journal';
-import { ErrorState, SkeletonRows } from '@/shared/components/data-states';
+import { EmptyState, ErrorState, SkeletonRows } from '@/shared/components/data-states';
 import { cn } from '@/shared/lib/cn';
 import { formatDate } from '@/shared/lib/format-date';
 import { formatInr, formatPct, formatPp, formatProbability } from '@/shared/lib/format-number';
@@ -41,6 +42,7 @@ export function HomePage() {
   const summary = useJournalSummary();
   const plans = useTradePlans();
   const overview = useStockOverview();
+  const watchlist = useWatchlist();
   const active = (plans.data ?? []).filter((p) => p.status === 'ACTIVE');
   const recent = (plans.data ?? []).filter((p) => p.status === 'CLOSED').slice(0, 4);
   const byMove = [...(overview.data ?? [])].sort(
@@ -56,7 +58,7 @@ export function HomePage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold">Overview</h1>
+        <h1 className="text-2xl font-semibold">Home</h1>
         <p className="text-sm text-muted-foreground">
           {lastDate ? `Prices as of ${formatDate(lastDate)} close` : 'Loading prices…'} · NIFTY 50
           universe
@@ -78,7 +80,11 @@ export function HomePage() {
           <Kpi
             label="Success rate"
             value={s.success_rate === null ? '—' : formatProbability(s.success_rate)}
-            hint="within the tolerance of the prediction"
+            hint={
+              s.success_rate === null
+                ? 'close a plan to see it'
+                : 'within the tolerance of the prediction'
+            }
           />
           <Kpi
             label="Model bias"
@@ -102,47 +108,7 @@ export function HomePage() {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Active plans</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {plans.isPending ? (
-              <SkeletonRows rows={2} className="h-28" />
-            ) : (
-              <ActivePlans plans={active} />
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent outcomes</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col divide-y">
-            {recent.length === 0 && (
-              <p className="text-sm text-muted-foreground">No closed plans yet.</p>
-            )}
-            {recent.map((p) => (
-              <div key={p.id} className="flex items-center justify-between gap-2 py-2.5 text-sm">
-                <div>
-                  <span className="font-semibold">{p.symbol}</span>{' '}
-                  <span className="text-muted-foreground">· {p.category}</span>
-                  <p className="text-xs text-muted-foreground">
-                    {formatPct(p.actual_return_pct ?? 0, 2)} vs {formatPct(p.target_pct, 2)}
-                  </p>
-                </div>
-                {p.outcome && <OutcomeBadge outcome={p.outcome} />}
-              </div>
-            ))}
-            <Link to="/journal" className="pt-3 text-sm text-primary hover:underline">
-              Open journal
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>Today&apos;s movers</CardTitle>
@@ -180,6 +146,49 @@ export function HomePage() {
           </CardContent>
         </Card>
         <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Star className="size-4 text-warning" aria-hidden="true" /> Watchlist
+            </CardTitle>
+            <Link to="/stocks" className="text-sm text-primary hover:underline">
+              All stocks
+            </Link>
+          </CardHeader>
+          <CardContent className="flex flex-col divide-y">
+            {watchlist.isPending && <SkeletonRows rows={3} className="h-8" />}
+            {watchlist.data?.length === 0 && (
+              <EmptyState
+                compact
+                icon={Star}
+                title="Nothing watched yet"
+                description="Open a stock and tap the star to follow it here."
+              />
+            )}
+            {(watchlist.data ?? []).map((stock) => {
+              const row = (overview.data ?? []).find((r) => r.stock.symbol === stock.symbol);
+              return (
+                <Link
+                  key={stock.symbol}
+                  to={`/stocks/${encodeURIComponent(stock.symbol)}`}
+                  className="flex items-center justify-between py-2.5 text-sm hover:text-primary"
+                >
+                  <span className="font-semibold">{stock.symbol}</span>
+                  <span className="flex items-center gap-3">
+                    {row?.last_close !== null && row?.last_close !== undefined && (
+                      <span>{formatInr(row.last_close)}</span>
+                    )}
+                    {row?.day_change_pct !== null && row?.day_change_pct !== undefined && (
+                      <span className={row.day_change_pct >= 0 ? 'text-gain' : 'text-loss'}>
+                        {formatPct(row.day_change_pct, 2)}
+                      </span>
+                    )}
+                  </span>
+                </Link>
+              );
+            })}
+          </CardContent>
+        </Card>
+        <Card>
           <CardHeader>
             <CardTitle>Highest 1Y median prediction</CardTitle>
           </CardHeader>
@@ -200,6 +209,51 @@ export function HomePage() {
                 <span className="font-semibold text-gain">{formatPct(r.median_1y_pct ?? 0)}</span>
               </Link>
             ))}
+          </CardContent>
+        </Card>
+      </div>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Active plans</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {plans.isPending ? (
+              <SkeletonRows rows={2} className="h-28" />
+            ) : (
+              <ActivePlans plans={active} />
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent outcomes</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col divide-y">
+            {recent.length === 0 && (
+              <EmptyState
+                compact
+                icon={Archive}
+                title="No closed plans yet"
+                description="Outcomes appear here when you close a plan."
+              />
+            )}
+            {recent.map((p) => (
+              <div key={p.id} className="flex items-center justify-between gap-2 py-2.5 text-sm">
+                <div>
+                  <span className="font-semibold">{p.symbol}</span>{' '}
+                  <span className="text-muted-foreground">· {p.category}</span>
+                  <p className="text-xs text-muted-foreground">
+                    {formatPct(p.actual_return_pct ?? 0, 2)} vs {formatPct(p.benchmark_pct, 2)}{' '}
+                    predicted
+                  </p>
+                </div>
+                {p.outcome && <OutcomeBadge outcome={p.outcome} />}
+              </div>
+            ))}
+            <Link to="/journal" className="pt-3 text-sm text-primary hover:underline">
+              Open journal
+            </Link>
           </CardContent>
         </Card>
       </div>

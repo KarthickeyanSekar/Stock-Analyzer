@@ -1,6 +1,7 @@
 """Re-activate the previous model of a category (``make model-rollback c=1Y``)."""
 
 from stock_analyzer.application.errors import NotFoundError
+from stock_analyzer.application.ports.auth import AuditEntry
 from stock_analyzer.application.ports.clock import Clock
 from stock_analyzer.application.ports.repositories import UnitOfWorkFactory
 from stock_analyzer.domain.market.holding_category import HoldingCategory
@@ -21,5 +22,13 @@ class RollbackModel:
             restored = await uow.models.rollback(category, self._clock.now())
             if restored is None:
                 raise NotFoundError(f"no earlier {category.value} model to roll back to")
+            await uow.audit.add(
+                AuditEntry(
+                    None,
+                    None,
+                    "model_rolled_back",
+                    {"category": category.value, "model": restored.name},
+                )
+            )
             await uow.commit()
         return restored

@@ -657,7 +657,7 @@ export interface paths {
         };
         /**
          * Audit log
-         * @description Newest entries first.
+         * @description Newest entries first, with the actor's email.
          */
         get: operations["audit_log_api_admin_audit_get"];
         put?: never;
@@ -759,6 +759,8 @@ export interface components {
             at: string;
             /** User Id */
             user_id: string | null;
+            /** User Email */
+            user_email?: string | null;
             /** Action */
             action: string;
             /** Details */

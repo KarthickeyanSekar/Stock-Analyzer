@@ -265,6 +265,7 @@ components focus on display; data fetching lives in hooks; no business calculati
 | Motion | 150–250 ms; `motion-safe:` variants so `prefers-reduced-motion` disables animation |
 | Responsive | Phone (< 640 px), tablet, desktop; bottom navigation on phones; touch targets ≥ 40 px |
 | Theme | Light and dark through the `dark` class; follows the system unless the user toggles |
+| Tables | Sortable / paginated lists use the shared `DataTable` (`shared/components/data-table.tsx`, TanStack Table, Q78): sort buttons in headers with `aria-sort`, numbers sort highest first, a search box via `search` + `matches`, pagination with a page-size choice, `renderCard` for phones; numeric columns set `meta: { align: 'right' }` |
 
 Spec and screen designs: [28 – UI/UX Redesign Plan (End to End) 🎨](28-ui-ux-redesign-plan.md).
 

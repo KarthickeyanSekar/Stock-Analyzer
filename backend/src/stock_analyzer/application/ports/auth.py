@@ -69,9 +69,9 @@ class SessionRecord:
 
 @dataclass(frozen=True, slots=True)
 class AuditEntry:
-    """Something security-relevant that happened."""
+    """Something that happened, by whom (``None``: a job or a deleted user)."""
 
-    at: datetime
+    at: datetime | None  # ``None``: stamped by the audit log when stored
     user_id: UUID | None
     action: str
     details: dict[str, Any]

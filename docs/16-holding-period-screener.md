@@ -11,6 +11,9 @@ Long-term only for now.
 > the sidebar. Each stock's best risk-adjusted holding period is marked (Q68), and "Similar past setups"
 > (pgvector, cosine distance over universe-ranked features) shows what happened after the closest
 > finished setups. Benchmark: 2,000 stocks × 7 periods answered in < 2 s.
+> **Results table (2026-11-02):** every column sortable (click the header; numbers highest first), a search box
+> for symbol / name / sector on top of the filters, and pagination (25 per page by default; 10 / 25 / 50).
+> Short holds 1D–10D are available too (Phase 7).
 
 ## Holding categories
 | Category | Calendar days | ≈ Trading days | Tax treatment (India) |
