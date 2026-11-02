@@ -189,3 +189,40 @@ def test_watchlist(admin: TestClient) -> None:
     assert admin.delete("/api/watchlist/INFY").status_code == 204
     assert [s["symbol"] for s in admin.get("/api/watchlist").json()] == ["TCS"]
     assert admin.put("/api/watchlist/NOPE").status_code == 404
+
+
+def test_every_activity_is_audited_with_who_did_it(
+    app_store: InMemoryStore, admin: TestClient
+) -> None:
+    plan = admin.post("/api/trade-plans", json=PLAN | {"entry_price": 1000}).json()
+    admin.post(
+        f"/api/trade-plans/{plan['id']}/close",
+        json={"exit_date": "2026-12-21", "exit_price": 1100},
+    )
+    admin.put(
+        "/api/settings/journal",
+        json={
+            "paper_capital": 500000,
+            "risk_pct": 2,
+            "success_tolerance_pp": 1,
+            "default_stop_pct": -10,
+        },
+    )
+    admin.put("/api/watchlist/INFY")
+    admin.delete("/api/watchlist/INFY")
+
+    entries = admin.get("/api/admin/audit").json()
+    actions = {e["action"] for e in entries}
+    assert {
+        "plan_started",
+        "plan_closed",
+        "settings_changed",
+        "watchlist_added",
+        "watchlist_removed",
+    } <= actions
+    assert all(e["user_email"] == ADMIN_EMAIL for e in entries if e["action"] != "sign_up")
+    closed = next(e for e in entries if e["action"] == "plan_closed")
+    assert closed["details"]["exit_price"] == "1100"
+
+    admin.post("/api/auth/logout")
+    assert any(e.action == "sign_out" for e in app_store.audit)

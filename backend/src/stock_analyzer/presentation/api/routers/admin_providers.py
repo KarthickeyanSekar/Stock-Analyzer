@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Response, status
 
 from stock_analyzer.bootstrap import Container
-from stock_analyzer.presentation.api.dependencies import current_admin, get_container
+from stock_analyzer.presentation.api.dependencies import CurrentAdmin, current_admin, get_container
 from stock_analyzer.presentation.api.schemas.providers import (
     CredentialsBody,
     ProviderResponse,
@@ -43,10 +43,10 @@ async def list_providers(container: ContainerDep) -> list[ProviderResponse]:
     summary="Save credentials",
 )
 async def save_credentials(
-    plugin_name: str, body: CredentialsBody, container: ContainerDep
+    plugin_name: str, body: CredentialsBody, admin: CurrentAdmin, container: ContainerDep
 ) -> Response:
     """Encrypt and store credentials. They are never returned, only their last 4 characters."""
-    await container.provider_admin.save_credentials(plugin_name, body.values)
+    await container.provider_admin.save_credentials(plugin_name, body.values, admin.id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -55,23 +55,27 @@ async def save_credentials(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Remove credentials",
 )
-async def delete_credentials(plugin_name: str, container: ContainerDep) -> Response:
+async def delete_credentials(
+    plugin_name: str, admin: CurrentAdmin, container: ContainerDep
+) -> Response:
     """Remove the stored credentials (not while the provider is primary)."""
-    await container.provider_admin.delete_credentials(plugin_name)
+    await container.provider_admin.delete_credentials(plugin_name, admin.id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
     "/{plugin_name}/test", response_model=ProviderTestResponse, summary="Test a connection"
 )
-async def test_provider(plugin_name: str, container: ContainerDep) -> ProviderTestResponse:
+async def test_provider(
+    plugin_name: str, admin: CurrentAdmin, container: ContainerDep
+) -> ProviderTestResponse:
     """Check that the provider can reach its data source with the stored credentials."""
-    check = await container.provider_admin.test_connection(plugin_name)
+    check = await container.provider_admin.test_connection(plugin_name, admin.id)
     return ProviderTestResponse(plugin_name=plugin_name, is_ok=check.is_ok, message=check.message)
 
 
 @router.put("/{plugin_name}/primary", status_code=status.HTTP_204_NO_CONTENT, summary="Set primary")
-async def set_primary(plugin_name: str, container: ContainerDep) -> Response:
+async def set_primary(plugin_name: str, admin: CurrentAdmin, container: ContainerDep) -> Response:
     """Use this provider for prices and fundamentals (its credentials must be set)."""
-    await container.provider_admin.set_primary(plugin_name)
+    await container.provider_admin.set_primary(plugin_name, admin.id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

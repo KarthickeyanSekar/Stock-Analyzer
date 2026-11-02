@@ -12,6 +12,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from stock_analyzer.application.errors import NotFoundError
+from stock_analyzer.application.ports.auth import AuditEntry
 from stock_analyzer.application.ports.repositories import UnitOfWork, UnitOfWorkFactory
 from stock_analyzer.domain.journal.progress import PlanProgress, track
 from stock_analyzer.domain.journal.settings import PositionSize, suggest_position
@@ -206,6 +207,20 @@ class TradePlanService:
         """Start a plan, locking the latest prediction and the current settings."""
         async with self._uow_factory() as uow:
             plan = await uow.trade_plans.add(await self._draft(uow, request, owner_id))
+            await uow.audit.add(
+                AuditEntry(
+                    None,
+                    owner_id,
+                    "plan_started",
+                    {
+                        "plan": plan.id,
+                        "symbol": request.symbol,
+                        "category": plan.category.value,
+                        "target_pct": str(plan.target_pct),
+                        "entry_price": str(plan.entry_price),
+                    },
+                )
+            )
             await uow.commit()
             return plan
 
@@ -224,6 +239,19 @@ class TradePlanService:
                 notes=request.notes,
             )
             await uow.trade_plans.update(plan)
+            await uow.audit.add(
+                AuditEntry(
+                    None,
+                    owner_id,
+                    "plan_closed",
+                    {
+                        "plan": plan.id,
+                        "outcome": plan.outcome.value if plan.outcome else None,
+                        "exit_price": str(request.exit_price),
+                        "actual_return_pct": str(plan.actual_return_pct),
+                    },
+                )
+            )
             await uow.commit()
             return plan
 

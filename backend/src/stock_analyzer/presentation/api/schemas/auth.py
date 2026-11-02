@@ -158,6 +158,7 @@ class AuditEntryResponse(BaseModel):
                 {
                     "at": "2026-11-01T08:00:00Z",
                     "user_id": None,
+                    "user_email": None,
                     "action": "sign_in",
                     "details": {"provider": "google"},
                 }
@@ -167,5 +168,6 @@ class AuditEntryResponse(BaseModel):
 
     at: datetime
     user_id: UUID | None
+    user_email: str | None = None  # ``None``: a job, or the user was deleted
     action: str
     details: dict[str, object]

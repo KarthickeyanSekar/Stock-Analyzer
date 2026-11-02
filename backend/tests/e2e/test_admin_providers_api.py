@@ -28,6 +28,9 @@ def test_credentials_are_write_only(client: TestClient) -> None:
     assert providers(client)["eodhd"]["credential_hints"] == {"api_token": "1a2b"}
     test = client.post("/api/admin/providers/eodhd/test").json()
     assert test["is_ok"] is True and "API calls used today" in test["message"]
+    audit = client.get("/api/admin/audit").text
+    assert '"provider_key_saved"' in audit and '"provider_tested"' in audit
+    assert VALID_TOKEN not in audit  # never the secret, only which fields changed
 
 
 def test_credential_validation(client: TestClient) -> None:

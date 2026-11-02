@@ -6,8 +6,10 @@ Secrets go in, never out: listings show only the last 4 characters of each crede
 import asyncio
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from uuid import UUID
 
 from stock_analyzer.application.errors import ConfigurationError, NotFoundError
+from stock_analyzer.application.ports.auth import AuditEntry
 from stock_analyzer.application.ports.market_data import ConnectionCheck
 from stock_analyzer.application.ports.providers import DataProvider, PluginCatalog, PluginInfo
 from stock_analyzer.application.ports.repositories import UnitOfWorkFactory
@@ -80,7 +82,9 @@ class ProviderAdmin:
                 )
         return result
 
-    async def save_credentials(self, plugin_name: str, values: Mapping[str, str]) -> None:
+    async def save_credentials(
+        self, plugin_name: str, values: Mapping[str, str], actor: UUID | None = None
+    ) -> None:
         """Encrypt and store credential fields (unknown or too-short values are rejected)."""
         info = self._info(plugin_name)
         unknown = set(values) - set(info.credential_fields)
@@ -97,15 +101,27 @@ class ProviderAdmin:
                 await uow.providers.set_credential(
                     plugin_name, name, self._cipher.encrypt(secret), secret[-4:]
                 )
+            # Never the value: only which provider and which fields changed.
+            await uow.audit.add(
+                AuditEntry(
+                    None,
+                    actor,
+                    "provider_key_saved",
+                    {"provider": plugin_name, "fields": sorted(values)},
+                )
+            )
             await uow.commit()
 
-    async def delete_credentials(self, plugin_name: str) -> None:
+    async def delete_credentials(self, plugin_name: str, actor: UUID | None = None) -> None:
         """Remove the credentials (not allowed while the provider is primary)."""
         self._info(plugin_name)
         async with self._uow_factory() as uow:
             if await uow.providers.primary(MARKET, DATA_TYPES[0]) == plugin_name:
                 raise ConfigurationError("choose another primary provider before removing the key")
             await uow.providers.delete_credentials(plugin_name)
+            await uow.audit.add(
+                AuditEntry(None, actor, "provider_key_removed", {"provider": plugin_name})
+            )
             await uow.commit()
 
     async def _build(self, plugin_name: str) -> DataProvider:
@@ -121,20 +137,31 @@ class ProviderAdmin:
             plugin_name, {k: self._cipher.decrypt(v) for k, v in encrypted.items()}
         )
 
-    async def test_connection(self, plugin_name: str) -> ConnectionCheck:
+    async def test_connection(self, plugin_name: str, actor: UUID | None = None) -> ConnectionCheck:
         """Check the provider with its stored credentials (network call off the event loop)."""
         try:
             provider = await self._build(plugin_name)
+            check = await asyncio.to_thread(provider.test_connection)
         except ConfigurationError as error:
-            return ConnectionCheck(is_ok=False, message=str(error))
-        return await asyncio.to_thread(provider.test_connection)
+            check = ConnectionCheck(is_ok=False, message=str(error))
+        async with self._uow_factory() as uow:
+            await uow.audit.add(
+                AuditEntry(
+                    None, actor, "provider_tested", {"provider": plugin_name, "ok": check.is_ok}
+                )
+            )
+            await uow.commit()
+        return check
 
-    async def set_primary(self, plugin_name: str) -> None:
+    async def set_primary(self, plugin_name: str, actor: UUID | None = None) -> None:
         """Make the provider primary for prices and fundamentals (credentials must be set)."""
         await self._build(plugin_name)
         async with self._uow_factory() as uow:
             for data_type in DATA_TYPES:
                 await uow.providers.set_primary(MARKET, data_type, plugin_name)
+            await uow.audit.add(
+                AuditEntry(None, actor, "provider_primary_set", {"provider": plugin_name})
+            )
             await uow.commit()
 
     async def primary_provider(self) -> DataProvider:

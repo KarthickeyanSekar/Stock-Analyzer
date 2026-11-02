@@ -37,7 +37,7 @@ Frontend and API are served from the **same origin** (`/` and `/api`), so there 
 | Routing | React Router |
 | Server data, caching | TanStack Query |
 | UI components | ✅ **shadcn/ui** (Radix UI + Tailwind CSS 4); light and dark themes. Components are copied into `shared/ui/` and owned by the project. daisyUI was considered and not chosen (CSS-only, no built-in interactive behaviour) |
-| Tables (screener, journal, providers) | TanStack Table: sorting, filtering, column choice |
+| Tables (screener, journal, providers) | ✅ **TanStack Table 8.21.3** (pinned, Q78) behind the shared `DataTable` (`shared/components/data-table.tsx`): click-to-sort headers with `aria-sort`, text search, pagination (10 / 25 / 50 per page), phone cards; used by the Screener |
 | Forms + validation | React Hook Form + Zod (validation rules shared with the API schema) |
 | Price charts | **TradingView Lightweight Charts** (candlesticks, moving averages, plan target/stop lines) |
 | Other charts | Recharts (returns, accuracy, distributions) |

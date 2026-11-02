@@ -1,6 +1,7 @@
 import { CircleAlert, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
 
@@ -10,15 +11,26 @@ export function EmptyState({
   title,
   description,
   action,
+  compact = false,
 }: {
   icon: LucideIcon;
   title: string;
   description: string;
   action?: ReactNode;
+  /** Smaller padding and icon, for empty states inside dashboard cards. */
+  compact?: boolean;
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 px-4 py-10 text-center motion-safe:animate-in motion-safe:fade-in">
-      <Icon className="size-10 text-muted-foreground" aria-hidden="true" />
+    <div
+      className={cn(
+        'flex flex-col items-center gap-2 px-4 text-center motion-safe:animate-in motion-safe:fade-in',
+        compact ? 'py-4' : 'py-10',
+      )}
+    >
+      <Icon
+        className={cn('text-muted-foreground', compact ? 'size-6' : 'size-10')}
+        aria-hidden="true"
+      />
       <p className="font-medium">{title}</p>
       <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
       {action && <div className="mt-2">{action}</div>}

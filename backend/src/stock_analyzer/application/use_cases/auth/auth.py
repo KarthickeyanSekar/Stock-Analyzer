@@ -215,7 +215,10 @@ class AuthService:
     async def sign_out(self, token: str) -> None:
         """End this browser's session."""
         async with self._uow_factory() as uow:
+            session = await uow.sessions.get(hash_token(token))
             await uow.sessions.delete(hash_token(token))
+            if session is not None:
+                await uow.audit.add(AuditEntry(self._clock.now(), session.user_id, "sign_out", {}))
             await uow.commit()
 
     async def delete_account(self, user: User) -> None:

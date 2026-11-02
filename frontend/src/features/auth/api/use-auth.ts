@@ -154,7 +154,7 @@ export function useAuditLog() {
     queryKey: [...ADMIN_KEY, 'audit'],
     queryFn: async () => {
       const { data, response } = await apiClient.GET('/api/admin/audit', {
-        params: { query: { limit: 50 } },
+        params: { query: { limit: 500 } },
       });
       if (!response.ok || !data) throw new Error(`Audit failed: ${String(response.status)}`);
       return data;

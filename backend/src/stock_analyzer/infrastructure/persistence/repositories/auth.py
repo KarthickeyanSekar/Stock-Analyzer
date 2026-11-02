@@ -1,7 +1,7 @@
 """SQLAlchemy repositories: accounts, sessions, sign-ins, invites, audit log, watchlists."""
 
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import delete, select, update
@@ -266,7 +266,10 @@ class SqlAlchemyAuditLog:
         """Record an entry."""
         self._session.add(
             AuditLogModel(
-                user_id=entry.user_id, action=entry.action, details=entry.details, at=entry.at
+                user_id=entry.user_id,
+                action=entry.action,
+                details=entry.details,
+                at=entry.at or datetime.now(tz=UTC),
             )
         )
         await self._session.flush()

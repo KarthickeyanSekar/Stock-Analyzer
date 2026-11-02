@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from stock_analyzer.application.errors import ConfigurationError
+from stock_analyzer.application.ports.auth import AuditEntry
 from stock_analyzer.application.ports.repositories import UnitOfWorkFactory
 from stock_analyzer.application.use_cases.data.backfill_fundamentals import BackfillFundamentals
 from stock_analyzer.application.use_cases.data.backfill_prices import BackfillPrices
@@ -51,6 +52,14 @@ class SwitchToRealData:
             candles = await uow.prices.delete_by_source(SYNTHETIC_SOURCE)
             quarters = await uow.fundamentals.delete_by_source(SYNTHETIC_SOURCE)
             derived = await uow.features.delete_all() + await uow.plan_statuses.delete_all()
+            await uow.audit.add(
+                AuditEntry(
+                    None,
+                    None,
+                    "switched_to_real_data",
+                    {"provider": provider.name, "deleted_candles": candles},
+                )
+            )
             await uow.commit()
         loaded = await BackfillPrices(self._uow_factory, provider).execute(start, end)
         loaded_quarters = await BackfillFundamentals(self._uow_factory, provider).execute(
