@@ -3,6 +3,7 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
 ## [Unreleased]
+- **FMP provider (Q83):** Financial Modeling Prep plugin next to EODHD: NSE daily prices (dividend-adjusted close), quarterly fundamentals (point-in-time by filing date), connection test with an NSE quote; key saved encrypted in Admin › Providers, can be made primary and used by `make real-data`. Indian data usually needs a paid FMP plan.
 - **Audit everything (Q82):** the audit log now records plans started / closed, journal settings, watchlist add / remove, sign-out, provider key saved / removed / tested, primary provider, model rollback and the real-data switch, besides sign-ins, invites and user changes. `GET /api/admin/audit` returns the actor's email; Admin › Users shows who, what, details with event and person filters. Secrets are never logged.
 - **UI shell:** grouped navigation, collapsible desktop sidebar, hamburger drawer below `lg`, phone bottom bar (Home, Stocks, Screener, Journal, More); larger search palette (⌘K) with aligned columns (symbol · name · price · day change); Home gains a Watchlist card; Stocks, closed plans, users and audit log use `DataTable` with pagination.
 - **Screener table:** sortable columns (with `aria-sort`), search by symbol / name / sector, pagination (10 / 25 / 50 per page) via a shared `DataTable` built on TanStack Table 8.21.3 (Q78).

@@ -22,6 +22,7 @@ from stock_analyzer.infrastructure.security.fernet_cipher import FernetCipher
 from stock_analyzer.main import create_app
 from tests.eodhd_fixtures import client as eodhd_client
 from tests.fakes import FakeUnitOfWork, InMemoryStore
+from tests.fmp_fixtures import client as fmp_client
 
 # A fresh Fernet key per test run (never stored anywhere).
 TEST_MASTER_KEY = Fernet.generate_key().decode()
@@ -45,7 +46,7 @@ def make_container(store: InMemoryStore) -> Container:
         calendar=TradingCalendar(SAMPLE_HOLIDAYS),
         market_data=provider,
         fundamentals=provider,
-        catalog=StaticPluginCatalog(provider, eodhd_client=eodhd_client()),
+        catalog=StaticPluginCatalog(provider, eodhd_client=eodhd_client(), fmp_client=fmp_client()),
         cipher=FernetCipher(TEST_MASTER_KEY),
         trainer=LightGbmTrainer(rounds=30),
     )

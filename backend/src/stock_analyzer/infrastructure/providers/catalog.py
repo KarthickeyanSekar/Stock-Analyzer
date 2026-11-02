@@ -8,6 +8,7 @@ import httpx
 from stock_analyzer.application.errors import NotFoundError
 from stock_analyzer.application.ports.providers import DataProvider, PluginInfo
 from stock_analyzer.infrastructure.providers.eodhd.provider import EodhdProvider
+from stock_analyzer.infrastructure.providers.fmp.provider import FmpProvider
 from stock_analyzer.infrastructure.providers.mock.provider import MockMarketDataProvider
 
 Factory = Callable[[Mapping[str, str]], DataProvider]
@@ -24,8 +25,9 @@ class StaticPluginCatalog:
         self,
         mock: MockMarketDataProvider | None = None,
         eodhd_client: httpx.Client | None = None,
+        fmp_client: httpx.Client | None = None,
     ) -> None:
-        """Reuse ``mock`` (it caches data); ``eodhd_client`` lets tests replay HTTP fixtures."""
+        """Reuse ``mock`` (it caches data); the clients let tests replay HTTP fixtures."""
         mock_instance = mock or MockMarketDataProvider()
         self._entries: dict[str, tuple[PluginInfo, Factory]] = {
             "mock": (
@@ -38,6 +40,14 @@ class StaticPluginCatalog:
                     credentials.get("api_token", ""),
                     client=eodhd_client,
                     sleep=_no_wait if eodhd_client else time.sleep,
+                ),
+            ),
+            "fmp": (
+                PluginInfo("fmp", "Financial Modeling Prep", ("api_key",), is_synthetic=False),
+                lambda credentials: FmpProvider(
+                    credentials.get("api_key", ""),
+                    client=fmp_client,
+                    sleep=_no_wait if fmp_client else time.sleep,
                 ),
             ),
         }
