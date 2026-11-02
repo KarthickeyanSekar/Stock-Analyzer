@@ -7,6 +7,7 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from stock_analyzer.bootstrap import Container, build_container
 from stock_analyzer.presentation.api.error_handlers import register_error_handlers
 from stock_analyzer.presentation.api.routers import (
+    admin_data_sources,
     admin_providers,
     admin_users,
     auth,
@@ -42,6 +43,7 @@ def create_app(container: Container | None = None) -> FastAPI:
         watchlist,
         admin_providers,
         admin_users,
+        admin_data_sources,
     ):
         app.include_router(module.router)
     if container.settings.otel_enabled:

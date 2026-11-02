@@ -15,6 +15,7 @@ const SCREENS = [
   ['settings', '/settings'],
   ['profile', '/profile'],
   ['users', '/admin/users'],
+  ['data-sources', '/admin/data-sources'],
   ['providers', '/admin/providers'],
 ];
 // The app needs a session: sign in with the dev-only sign-in (SA_DEV_LOGIN=true in .env).

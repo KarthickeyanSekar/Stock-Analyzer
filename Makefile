@@ -18,7 +18,7 @@ LOAD_ENV := set -a; . ./.env; set +a
 
 .PHONY: help bootstrap setup dev-db dev-db-stop dev-network dev dev-file dev-data infra down prod \
         test lint format api-client logs e2e e2e-update ui-shots \
-        seed predict track features train model-rollback ml-data validate real-data poc-data db-upgrade db-downgrade db-revision db-current db-history db-shell db-reset \
+        seed predict track features train model-rollback ml-data validate real-data real-sync poc-data db-upgrade db-downgrade db-revision db-current db-history db-shell db-reset \
         redis-shell redis-info redis-keys redis-flush
 
 help:          ## List targets
@@ -125,6 +125,10 @@ real-data:     ## Replace synthetic data with the primary provider's (asks for c
 	@printf 'This DELETES the synthetic prices, fundamentals, features and labels (journal plans stay).\nType REAL to continue: '; \
 	read answer; [ "$$answer" = "REAL" ] || { echo "Cancelled."; exit 1; }
 	$(JOB_RUN) python -m stock_analyzer.presentation.jobs.real_data
+	$(MAKE) ml-data track
+
+real-sync:     ## Load real prices for the (max 5) stocks picked in Admin > Data sources, then rebuild ML
+	$(JOB_RUN) python -m stock_analyzer.presentation.jobs.real_sync
 	$(MAKE) ml-data track
 
 ml-data: features train predict  ## Whole ML pipeline: features -> train/gate -> predictions

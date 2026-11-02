@@ -24,6 +24,7 @@ from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyF
 from stock_analyzer.domain.pricing.candle import Candle
 from stock_analyzer.domain.stock.stock import Stock
 from stock_analyzer.infrastructure.providers.mock.universe import NIFTY50
+from stock_analyzer.infrastructure.providers.raw_archive import RawResponseArchive
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,7 @@ class FmpProvider:
         client: httpx.Client | None = None,
         max_retries: int = 3,
         sleep: Callable[[float], None] = time.sleep,
+        archive: RawResponseArchive | None = None,
     ) -> None:
         """Use ``api_key``; ``client`` and ``sleep`` are injectable for tests."""
         if not api_key:
@@ -72,6 +74,7 @@ class FmpProvider:
         self._client = client or httpx.Client(base_url=BASE_URL, timeout=30.0)
         self._max_retries = max_retries
         self._sleep = sleep
+        self._archive = archive
 
     @property
     def name(self) -> str:
@@ -105,6 +108,8 @@ class FmpProvider:
             if response.status_code != httpx.codes.OK:
                 raise ProviderError(f"FMP request failed (HTTP {response.status_code})")
             data = response.json()
+            if self._archive is not None:
+                self._archive.save(self.name, path, params, data)
             # FMP reports some errors as HTTP 200 with {"Error Message": "..."}.
             if isinstance(data, dict) and "Error Message" in data:
                 raise ProviderError("FMP refused the request: check the key and plan")

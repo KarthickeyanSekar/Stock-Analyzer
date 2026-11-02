@@ -74,6 +74,7 @@ DB: plural `snake_case` tables, `<singular>_id` FKs. API: `/api/<plural-kebab>`.
 | `make track` | Daily progress snapshots of active journal plans (`plan_daily_status`) |
 | `make validate` | Phase 5: point-in-time backtest (net of costs/tax), calibration, journal review, go/no-go → `docs/reports/validation.md` |
 | `make real-data` | After an EODHD key is saved and set primary in Admin › Providers: replace synthetic data with real NSE data (asks first), then rebuild ML |
+| `make real-sync` | Load real prices for only the (max 5) stocks picked in Admin › Data sources, then rebuild ML; raw responses go to `backend/var/raw/` |
 | `make features` / `make train` / `make ml-data` / `make model-rollback c=1Y` | ML engine: point-in-time features + labels, train/evaluate/gate (report in `docs/reports/`), whole pipeline, rollback |
 URLs: web http://localhost:5173 · api http://localhost:8000/docs · Grafana http://localhost:3000.
 The Makefile must stay compatible with **GNU Make 3.81** (macOS default): no `.ONESHELL` or newer functions.

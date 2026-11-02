@@ -19,6 +19,7 @@ import {
 import { OutcomeBadge, StartPlanSheet, useTradePlans } from '@/features/trade-journal';
 import { ErrorState, SkeletonRows } from '@/shared/components/data-states';
 import { WatchButton } from '@/features/watchlist';
+import { AskAiButton } from '@/features/ai-research';
 import { cn } from '@/shared/lib/cn';
 import { formatDate } from '@/shared/lib/format-date';
 import { formatInr, formatPct } from '@/shared/lib/format-number';
@@ -132,6 +133,7 @@ export function StockPage() {
         </div>
         <div className="flex items-center gap-2">
           <WatchButton symbol={symbol} />
+          <AskAiButton symbol={symbol} />
           <Button
             size="lg"
             disabled={!data || !last}

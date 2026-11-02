@@ -1,3 +1,4 @@
+import { ResearchSettingsForm } from '@/features/ai-research';
 import { JournalSettingsForm } from '@/features/trade-journal';
 
 export function SettingsPage() {
@@ -11,6 +12,14 @@ export function SettingsPage() {
         </p>
       </div>
       <JournalSettingsForm />
+      <div className="mt-4">
+        <h2 className="text-lg font-semibold">AI research</h2>
+        <p className="max-w-3xl text-sm text-muted-foreground">
+          The stock page's Ask AI button opens this assistant in a new tab. The app never calls it
+          and its answers never change a prediction. Saved in this browser only.
+        </p>
+      </div>
+      <ResearchSettingsForm />
     </div>
   );
 }

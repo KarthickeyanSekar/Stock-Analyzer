@@ -2,12 +2,17 @@
 
 from collections.abc import Sequence
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from stock_analyzer.application.ports.repositories import StockDataSource
 from stock_analyzer.domain.stock.stock import Stock
-from stock_analyzer.infrastructure.persistence.models import MarketModel, StockModel
+from stock_analyzer.infrastructure.persistence.models import (
+    MarketModel,
+    PriceDailyModel,
+    StockModel,
+)
 
 
 def _to_domain(row: StockModel) -> Stock:
@@ -89,3 +94,65 @@ class SqlAlchemyStockRepository:
         """Return one stock by id, or ``None``."""
         row = await self._session.get(StockModel, stock_id)
         return _to_domain(row) if row else None
+
+    async def data_sources(self) -> list[StockDataSource]:
+        """Every active stock with its price source and sync flag, by symbol."""
+        latest = (
+            select(
+                PriceDailyModel.stock_id,
+                func.max(PriceDailyModel.trade_date).label("last_date"),
+                func.count().label("candles"),
+            )
+            .group_by(PriceDailyModel.stock_id)
+            .subquery()
+        )
+        source = (
+            select(PriceDailyModel.source_provider)
+            .where(
+                PriceDailyModel.stock_id == latest.c.stock_id,
+                PriceDailyModel.trade_date == latest.c.last_date,
+            )
+            .scalar_subquery()
+        )
+        statement = (
+            select(StockModel, latest.c.last_date, latest.c.candles, source)
+            .outerjoin(latest, latest.c.stock_id == StockModel.id)
+            .where(StockModel.is_active.is_(True))
+            .order_by(StockModel.symbol)
+        )
+        rows = await self._session.execute(statement)
+        return [
+            StockDataSource(
+                stock=_to_domain(row),
+                is_real_sync_enabled=row.is_real_sync_enabled,
+                latest_source=latest_source,
+                last_trade_date=last_date,
+                candles=int(candles or 0),
+            )
+            for row, last_date, candles, latest_source in rows
+        ]
+
+    async def set_real_sync(self, stock_id: int, *, is_enabled: bool) -> None:
+        """Pick or unpick the stock for the real-data sync."""
+        await self._session.execute(
+            update(StockModel)
+            .where(StockModel.id == stock_id)
+            .values(is_real_sync_enabled=is_enabled)
+        )
+
+    async def real_sync_stocks(self) -> list[Stock]:
+        """Stocks picked for the real-data sync, by symbol."""
+        result = await self._session.scalars(
+            select(StockModel)
+            .where(StockModel.is_real_sync_enabled.is_(True), StockModel.is_active.is_(True))
+            .order_by(StockModel.symbol)
+        )
+        return [_to_domain(row) for row in result]
+
+    async def set_source_provider(self, stock_id: int, source_provider: str) -> None:
+        """Record which provider the stock's data now comes from."""
+        await self._session.execute(
+            update(StockModel)
+            .where(StockModel.id == stock_id)
+            .values(source_provider=source_provider)
+        )
