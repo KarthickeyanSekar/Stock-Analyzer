@@ -1,6 +1,7 @@
 """Repository ports and the unit of work that groups them in one transaction."""
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import date
 from types import TracebackType
 from typing import Protocol, Self
@@ -23,6 +24,17 @@ from stock_analyzer.domain.market.holding_category import HoldingCategory
 from stock_analyzer.domain.prediction.prediction import Prediction
 from stock_analyzer.domain.pricing.candle import Candle
 from stock_analyzer.domain.stock.stock import Stock
+
+
+@dataclass(frozen=True, slots=True)
+class StockDataSource:
+    """Where a stock's prices come from, and whether it is picked for the real-data sync."""
+
+    stock: Stock
+    is_real_sync_enabled: bool
+    latest_source: str | None
+    last_trade_date: date | None
+    candles: int
 
 
 class StockRepository(Protocol):
@@ -48,6 +60,22 @@ class StockRepository(Protocol):
         """Return one stock by id, or ``None``."""
         ...
 
+    async def data_sources(self) -> list[StockDataSource]:
+        """Every active stock with its price source and sync flag, by symbol."""
+        ...
+
+    async def set_real_sync(self, stock_id: int, *, is_enabled: bool) -> None:
+        """Pick or unpick the stock for the real-data sync."""
+        ...
+
+    async def real_sync_stocks(self) -> list[Stock]:
+        """Stocks picked for the real-data sync, by symbol."""
+        ...
+
+    async def set_source_provider(self, stock_id: int, source_provider: str) -> None:
+        """Record which provider the stock's data now comes from."""
+        ...
+
 
 class PriceRepository(Protocol):
     """Daily candles."""
@@ -66,6 +94,10 @@ class PriceRepository(Protocol):
 
     async def delete_by_source(self, source_provider: str) -> int:
         """Delete every candle from one provider; return how many."""
+        ...
+
+    async def delete_for_stock(self, stock_id: int, source_provider: str) -> int:
+        """Delete one stock's candles from one provider; return how many."""
         ...
 
 

@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 
 import { AppLayout } from './layout';
 import { RequireAuth } from '@/features/auth';
+import { DataSourcesPage } from '@/pages/data-sources-page';
 import { HomePage } from '@/pages/home-page';
 import { JournalPage } from '@/pages/journal-page';
 import { PrivacyPage } from '@/pages/privacy-page';
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
             children: [
               { path: '/admin/providers', element: <ProvidersPage /> },
               { path: '/admin/users', element: <UsersPage /> },
+              { path: '/admin/data-sources', element: <DataSourcesPage /> },
             ],
           },
           { path: '*', element: <Navigate to="/" replace /> },

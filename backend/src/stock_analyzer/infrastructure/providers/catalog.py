@@ -10,6 +10,7 @@ from stock_analyzer.application.ports.providers import DataProvider, PluginInfo
 from stock_analyzer.infrastructure.providers.eodhd.provider import EodhdProvider
 from stock_analyzer.infrastructure.providers.fmp.provider import FmpProvider
 from stock_analyzer.infrastructure.providers.mock.provider import MockMarketDataProvider
+from stock_analyzer.infrastructure.providers.raw_archive import RawResponseArchive
 
 Factory = Callable[[Mapping[str, str]], DataProvider]
 
@@ -26,8 +27,12 @@ class StaticPluginCatalog:
         mock: MockMarketDataProvider | None = None,
         eodhd_client: httpx.Client | None = None,
         fmp_client: httpx.Client | None = None,
+        archive: RawResponseArchive | None = None,
     ) -> None:
-        """Reuse ``mock`` (it caches data); the clients let tests replay HTTP fixtures."""
+        """Reuse ``mock`` (it caches data); the clients let tests replay HTTP fixtures.
+
+        ``archive`` keeps every raw response so a re-parse or retune needs no new API calls.
+        """
         mock_instance = mock or MockMarketDataProvider()
         self._entries: dict[str, tuple[PluginInfo, Factory]] = {
             "mock": (
@@ -40,6 +45,7 @@ class StaticPluginCatalog:
                     credentials.get("api_token", ""),
                     client=eodhd_client,
                     sleep=_no_wait if eodhd_client else time.sleep,
+                    archive=archive,
                 ),
             ),
             "fmp": (
@@ -48,6 +54,7 @@ class StaticPluginCatalog:
                     credentials.get("api_key", ""),
                     client=fmp_client,
                     sleep=_no_wait if fmp_client else time.sleep,
+                    archive=archive,
                 ),
             ),
         }

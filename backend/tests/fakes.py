@@ -10,6 +10,7 @@ from uuid import UUID
 
 from stock_analyzer.application.ports.auth import AuditEntry, LoginRequest, SessionRecord
 from stock_analyzer.application.ports.ml import Analog
+from stock_analyzer.application.ports.repositories import StockDataSource
 from stock_analyzer.domain.analysis.features import Features, embedding
 from stock_analyzer.domain.fundamentals.quarterly_fundamentals import QuarterlyFundamentals
 from stock_analyzer.domain.journal.progress import PlanProgress
@@ -50,6 +51,7 @@ class InMemoryStore:
         self.providers: dict[str, tuple[str, str, str, bool]] = {}
         self.credentials: dict[str, dict[str, tuple[bytes, str]]] = {}
         self.primary: dict[tuple[str, str], str] = {}
+        self.real_sync: set[int] = set()
 
 
 class FakeStocks:
@@ -86,6 +88,32 @@ class FakeStocks:
     async def get(self, stock_id: int) -> Stock | None:
         return self._s.stocks.get(stock_id)
 
+    async def data_sources(self) -> list[StockDataSource]:
+        # The fake store keeps no per-candle source: the stock's source stands in for it.
+        return [
+            StockDataSource(
+                stock=s,
+                is_real_sync_enabled=stock_id in self._s.real_sync,
+                latest_source=s.source_provider if self._s.candles.get(stock_id) else None,
+                last_trade_date=max(self._s.candles.get(stock_id, {}), default=None),
+                candles=len(self._s.candles.get(stock_id, {})),
+            )
+            for stock_id, s in sorted(self._s.stocks.items(), key=lambda i: i[1].symbol)
+        ]
+
+    async def set_real_sync(self, stock_id: int, *, is_enabled: bool) -> None:
+        if is_enabled:
+            self._s.real_sync.add(stock_id)
+        else:
+            self._s.real_sync.discard(stock_id)
+
+    async def real_sync_stocks(self) -> list[Stock]:
+        return sorted((self._s.stocks[i] for i in self._s.real_sync), key=lambda s: s.symbol)
+
+    async def set_source_provider(self, stock_id: int, source_provider: str) -> None:
+        stock = self._s.stocks[stock_id]
+        self._s.stocks[stock_id] = replace(stock, source_provider=source_provider)
+
 
 class FakePrices:
     def __init__(self, store: InMemoryStore) -> None:
@@ -101,6 +129,9 @@ class FakePrices:
         count = sum(len(c) for c in self._s.candles.values())
         self._s.candles.clear()  # the fake store holds a single (synthetic) source
         return count
+
+    async def delete_for_stock(self, stock_id: int, source_provider: str) -> int:
+        return len(self._s.candles.pop(stock_id, {}))
 
     async def get_candles(
         self, stock_id: int, start: date | None = None, end: date | None = None

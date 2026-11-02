@@ -1,6 +1,7 @@
 import {
   BookOpen,
   ChartLine,
+  Database,
   House,
   ListFilter,
   Settings,
@@ -31,6 +32,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/profile', label: 'Profile', icon: UserRound, group: 'account' },
   { to: '/admin/providers', label: 'Providers', icon: SlidersHorizontal, group: 'admin' },
   { to: '/admin/users', label: 'Users', icon: Users, group: 'admin' },
+  { to: '/admin/data-sources', label: 'Data sources', icon: Database, group: 'admin' },
 ];
 
 export const GROUP_LABELS: Record<NavGroup, string> = {
